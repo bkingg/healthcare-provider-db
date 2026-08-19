@@ -1,0 +1,364 @@
+/// The hub table. Every other domain table relates back via providerId.
+model Provider {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Short human-facing ID, shown as NMD-000123 (see lib/providerNumber.ts).
+  /// The uuid stays the internal key and what URLs use; this is what staff
+  /// read out, type into search, and see in reports.
+  providerNumber   Int              @unique @default(autoincrement()) @map("provider_number")
+  countryId        String           @map("country_id") @db.Uuid
+  country          CountryRef       @relation(fields: [countryId], references: [id])
+  status           ProviderStatus   @default(PENDING_REVIEW)
+  operatingStatus  OperatingStatus  @default(UNKNOWN) @map("operating_status")
+  /// Set once at creation (see the New Provider wizard's Identity & type
+  /// step): whether this provider is an organization/facility or a named
+  /// individual. Drives which ProviderName fields (facilityName vs.
+  /// title/first/last) are used for every name row on this provider.
+  nameKind         ProviderNameKind @default(ENTITY) @map("name_kind")
+  profileSummary   String?          @map("profile_summary")
+  /// The two fixed provider-level summary notes shown as the "Notes" sidebar
+  /// widget on the profile page — distinct from NoteAttachment (the freeform,
+  /// many-per-provider collection behind the "Notes & documents" tab). Exactly
+  /// one of each per provider, so plain nullable columns rather than a table.
+  internalNotes    String?          @map("internal_notes")
+  externalNotes    String?          @map("external_notes")
+  /// Facility-level availability flags, edited from the Clinical services tab
+  /// alongside provider type/specialty/capability — not modeled as Capability
+  /// rows since those are about *what* the facility offers, not a schedule
+  /// attribute of the facility (or its ER) as a whole.
+  isOpen24_7       Boolean          @default(false) @map("is_open_24_7")
+  erOpen24_7       Boolean          @default(false) @map("er_open_24_7")
+  /// Links to the provider's own website, shown on the Contacts & locations
+  /// tab as clickable "open in a new tab" links — two plain optional fields
+  /// rather than a table since a provider has at most a couple of sites
+  /// worth documenting (main site, a secondary/booking page), not an
+  /// open-ended list.
+  websiteUrl1      String?          @map("website_url_1")
+  websiteUrl2      String?          @map("website_url_2")
+  /// 1-5 star ratings staff set on the profile page's sidebar (null = not
+  /// rated yet). The database also enforces the 1-5 range (see the
+  /// add_provider_star_ratings migration).
+  qualityRating    Int?             @map("quality_rating")
+  accessRating     Int?             @map("access_rating")
+  /// Legacy/source-system identifier, used by Phase 4 duplicate-candidate detection.
+  externalId       String?          @unique @map("external_id")
+  /// Manual "I checked every field on this record and it's accurate" stamp,
+  /// set only by the Validate record button (see providers.ts::verifyProviderRecord)
+  /// — never touched by ordinary edits, unlike ProviderName/Address's
+  /// updatedBy/updatedAt, which double as an implicit "last touched" stamp.
+  lastVerifiedAt   DateTime?        @map("last_verified_at")
+  lastVerifiedById String?          @map("last_verified_by") @db.Uuid
+  lastVerifiedBy   User?            @relation("ProviderVerifiedBy", fields: [lastVerifiedById], references: [id])
+  createdAt        DateTime         @default(now()) @map("created_at")
+  /// Bumped alongside updatedById on every save anywhere in the record — not
+  /// just edits to core fields — so the header's "Last updated by ... on ..."
+  /// stamp reflects the record as a whole. See providers.ts::touchProvider,
+  /// called from every child-record mutation in actions.ts.
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  createdBy        String?          @map("created_by") @db.Uuid
+  updatedById      String?          @map("updated_by") @db.Uuid
+  updatedBy        User?            @relation("ProviderUpdatedBy", fields: [updatedById], references: [id])
+
+  names                  ProviderName[]
+  addresses              Address[]
+  phones                 Phone[]
+  emails                 Email[]
+  administrativeContacts AdministrativeContact[]
+  providerTypes          ProviderProviderType[]
+  specialties            ProviderSpecialty[]
+  languages              ProviderLanguage[]
+  capabilities           ProviderCapability[]
+  credentials            Credential[]
+  networkContracts       NetworkContract[]
+  specializedNetworks    ProviderSpecializedNetwork[]
+  customizedClientNetworks ProviderCustomizedClientNetwork[]
+  bankingPayments        BankingPayment[]
+  visits                 ProviderVisit[]
+  notes                  NoteAttachment[]
+  rates                  Rate[]
+  affiliationsAsSubject  Affiliation[]           @relation("AffiliationSubject")
+  affiliationsAsRelated  Affiliation[]           @relation("AffiliationRelated")
+  stagingMatches         ProviderStaging[]
+  dataQualityExceptions  DataQualityException[]
+  officeHours            ProviderOfficeHours[]
+
+  @@index([status])
+  @@index([countryId])
+  @@map("provider")
+}
+
+model ProviderName {
+  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerId           String            @map("provider_id") @db.Uuid
+  provider             Provider          @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  nameType             ProviderNameType  @map("name_type")
+  organizationName     String?           @map("organization_name")
+  facilityName         String?           @map("facility_name")
+  /// Honorific/title (Dr., Prof., Registered Nurse (RN), ...) — a dropdown
+  /// against ProviderTitleRef, not free text, so the set stays curated.
+  individualTitleId    String?           @map("individual_title_id") @db.Uuid
+  individualTitle      ProviderTitleRef? @relation(fields: [individualTitleId], references: [id])
+  individualFirstName  String?           @map("individual_first_name")
+  individualMiddleName String?           @map("individual_middle_name")
+  individualLastName   String?           @map("individual_last_name")
+  individualSuffix     String?           @map("individual_suffix")
+  /// Denormalized display/search string, kept in sync by application code.
+  fullNameText         String            @map("full_name_text")
+  isPrimary            Boolean           @default(false) @map("is_primary")
+  // No `searchVector Unsupported("tsvector")` field here — same lesson as
+  // Address.location: Prisma Migrate emits the raw type text verbatim for
+  // Unsupported columns, creating a plain (non-generated, always-NULL) column
+  // instead of the computed one prisma/sql/enable-search.sql defines, and
+  // silently shadowing that script's `ADD COLUMN IF NOT EXISTS` (found the
+  // hard way — full-text search was returning empty results because of this).
+  // The column is added purely by that script and queried purely via
+  // $queryRaw; nothing about it needs to appear in the Prisma-managed schema.
+  createdAt            DateTime          @default(now()) @map("created_at")
+  updatedAt            DateTime          @updatedAt @map("updated_at")
+  createdBy            String?           @map("created_by") @db.Uuid
+  updatedBy            String?           @map("updated_by") @db.Uuid
+
+  @@index([providerId])
+  @@index([fullNameText])
+  @@map("provider_name")
+}
+
+model Address {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerId       String           @map("provider_id") @db.Uuid
+  provider         Provider         @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  addressTypeId    String           @map("address_type_id") @db.Uuid
+  addressType      AddressTypeRef   @relation(fields: [addressTypeId], references: [id])
+  line1            String
+  line2            String?
+  city             String
+  stateProvince    String?          @map("state_province")
+  postalCode       String?          @map("postal_code")
+  countryId        String           @map("country_id") @db.Uuid
+  country          CountryRef       @relation(fields: [countryId], references: [id])
+  latitude         Float?
+  longitude        Float?
+  /// Modeled explicitly rather than inferred — Phase 3 geospatial search and Phase 6
+  /// coordinate-exceptions reporting both branch on this directly.
+  coordinateStatus CoordinateStatus @default(MISSING) @map("coordinate_status")
+  isPrimary        Boolean          @default(false) @map("is_primary")
+  notes            String?
+  // No `location Unsupported("geography(Point,4326)")` field here: Prisma
+  // Migrate emits the raw type text verbatim for Unsupported columns even
+  // though it never manages their contents, so declaring it would make the
+  // *base* migration fail on a fresh database until PostGIS is installed
+  // (found the hard way — see conversation). The column is added purely by
+  // `prisma/sql/enable-search.sql` and queried purely via $queryRaw; nothing
+  // about it needs to appear in the Prisma-managed schema at all.
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  createdBy        String?          @map("created_by") @db.Uuid
+  updatedById      String?          @map("updated_by") @db.Uuid
+  /// Who last saved the record (add, or edit's "Save address") and when
+  /// (`updatedAt`) — surfaced in the UI as the "Validated by ... on ..."
+  /// stamp next to each address.
+  updatedBy        User?            @relation("AddressUpdatedBy", fields: [updatedById], references: [id])
+
+  @@index([providerId])
+  @@index([countryId, city])
+  @@map("address")
+}
+
+model Phone {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerId  String       @map("provider_id") @db.Uuid
+  provider    Provider     @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  phoneTypeId String       @map("phone_type_id") @db.Uuid
+  phoneType   PhoneTypeRef @relation(fields: [phoneTypeId], references: [id])
+  number      String
+  extension   String?
+  notes       String?
+  isActive    Boolean      @default(true) @map("is_active")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  createdBy   String?      @map("created_by") @db.Uuid
+  updatedBy   String?      @map("updated_by") @db.Uuid
+
+  @@index([providerId])
+  @@map("phone")
+}
+
+model Email {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerId  String       @map("provider_id") @db.Uuid
+  provider    Provider     @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  emailTypeId String       @map("email_type_id") @db.Uuid
+  emailType   EmailTypeRef @relation(fields: [emailTypeId], references: [id])
+  address     String
+  notes       String?
+  isActive    Boolean      @default(true) @map("is_active")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  createdBy   String?      @map("created_by") @db.Uuid
+  updatedBy   String?      @map("updated_by") @db.Uuid
+
+  @@index([providerId])
+  @@map("email")
+}
+
+model AdministrativeContact {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerId String   @map("provider_id") @db.Uuid
+  provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  title      String?
+  firstName  String   @map("first_name")
+  lastName   String   @map("last_name")
+  jobTitle   String?  @map("job_title")
+  /// Picked from the admin-managed DepartmentRef list (was free text).
+  departmentId String?       @map("department_id") @db.Uuid
+  department   DepartmentRef? @relation(fields: [departmentId], references: [id])
+  notes      String?
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  createdBy  String?  @map("created_by") @db.Uuid
+  updatedBy  String?  @map("updated_by") @db.Uuid
+
+  phones AdministrativeContactPhone[]
+  emails AdministrativeContactEmail[]
+
+  @@index([providerId])
+  @@map("administrative_contact")
+}
+
+/// Was a single nullable scalar on AdministrativeContact — split out so a
+/// contact can carry more than one number (office line + mobile, etc.),
+/// same shape as Provider's own Phone[]/Email[] rather than the one-each
+/// AdministrativeContact used to have.
+model AdministrativeContactPhone {
+  id        String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contactId String                @map("contact_id") @db.Uuid
+  contact   AdministrativeContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  /// Same PhoneTypeRef list as the provider's own phones. Nullable only
+  /// because numbers saved before types existed have none; the forms
+  /// require one for anything new.
+  phoneTypeId String?             @map("phone_type_id") @db.Uuid
+  phoneType   PhoneTypeRef?       @relation(fields: [phoneTypeId], references: [id])
+  number    String
+  createdAt DateTime              @default(now()) @map("created_at")
+  createdBy String?               @map("created_by") @db.Uuid
+
+  @@index([contactId])
+  @@map("administrative_contact_phone")
+}
+
+model AdministrativeContactEmail {
+  id        String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contactId String                @map("contact_id") @db.Uuid
+  contact   AdministrativeContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  /// Same EmailTypeRef list as the provider's own emails (nullable for the
+  /// same legacy-row reason as AdministrativeContactPhone.phoneTypeId).
+  emailTypeId String?             @map("email_type_id") @db.Uuid
+  emailType   EmailTypeRef?       @relation(fields: [emailTypeId], references: [id])
+  address   String
+  createdAt DateTime              @default(now()) @map("created_at")
+  createdBy String?               @map("created_by") @db.Uuid
+
+  @@index([contactId])
+  @@map("administrative_contact_email")
+}
+
+/// Provider type works like Specialty: a to-many assignment with one marked
+/// `isPrimary`, not a single required scalar FK — a provider can be e.g. both
+/// "Hospital" and "Teaching Facility". The double "Provider" in the name
+/// mirrors the existing convention (Provider<Ref-model-name-without-"Ref">,
+/// e.g. ProviderSpecialty/ProviderLanguage) applied to ProviderTypeRef.
+model ProviderProviderType {
+  providerId     String          @map("provider_id") @db.Uuid
+  provider       Provider        @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  providerTypeId String          @map("provider_type_id") @db.Uuid
+  providerType   ProviderTypeRef @relation(fields: [providerTypeId], references: [id])
+  isPrimary      Boolean         @default(false) @map("is_primary")
+  createdAt      DateTime        @default(now()) @map("created_at")
+
+  @@id([providerId, providerTypeId])
+  @@map("provider_provider_type")
+}
+
+model ProviderSpecialty {
+  providerId  String    @map("provider_id") @db.Uuid
+  provider    Provider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  specialtyId String    @map("specialty_id") @db.Uuid
+  specialty   Specialty @relation(fields: [specialtyId], references: [id])
+  isPrimary   Boolean   @default(false) @map("is_primary")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@id([providerId, specialtyId])
+  @@map("provider_specialty")
+}
+
+model ProviderLanguage {
+  providerId String   @map("provider_id") @db.Uuid
+  provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  languageId String   @map("language_id") @db.Uuid
+  language   Language @relation(fields: [languageId], references: [id])
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@id([providerId, languageId])
+  @@map("provider_language")
+}
+
+/// Provider <-> Specialized Network (admin-managed value list), shown on the
+/// Contracts & networks tab and the Overview. Plain many-to-many like
+/// ProviderLanguage.
+model ProviderSpecializedNetwork {
+  providerId           String                @map("provider_id") @db.Uuid
+  provider             Provider              @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  specializedNetworkId String                @map("specialized_network_id") @db.Uuid
+  specializedNetwork   SpecializedNetworkRef @relation(fields: [specializedNetworkId], references: [id])
+  createdAt            DateTime              @default(now()) @map("created_at")
+
+  @@id([providerId, specializedNetworkId])
+  @@map("provider_specialized_network")
+}
+
+/// Provider <-> Customized Client Network (admin-managed value list).
+model ProviderCustomizedClientNetwork {
+  providerId                String                     @map("provider_id") @db.Uuid
+  provider                  Provider                   @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  customizedClientNetworkId String                     @map("customized_client_network_id") @db.Uuid
+  customizedClientNetwork   CustomizedClientNetworkRef @relation(fields: [customizedClientNetworkId], references: [id])
+  createdAt                 DateTime                   @default(now()) @map("created_at")
+
+  @@id([providerId, customizedClientNetworkId])
+  @@map("provider_customized_client_network")
+}
+
+model ProviderCapability {
+  providerId   String     @map("provider_id") @db.Uuid
+  provider     Provider   @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  capabilityId String     @map("capability_id") @db.Uuid
+  capability   Capability @relation(fields: [capabilityId], references: [id])
+  notes        String?
+  isActive     Boolean    @default(true) @map("is_active")
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  @@id([providerId, capabilityId])
+  @@map("provider_capability")
+}
+
+/// Posted office hours — distinct from Provider.isOpen24_7/erOpen24_7 (which
+/// stay independent booleans, not derived from this table, per the Clinical
+/// services "Availability" panel's design). One row per open interval, not
+/// one row per day: a day with a lunch closure (e.g. 9am-12pm, 2pm-6pm) is
+/// just two rows sharing a dayOfWeek, same shape as any other add/delete-only
+/// child record (Phone, Email, ...) rather than a single wide per-day row.
+model ProviderOfficeHours {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerId String    @map("provider_id") @db.Uuid
+  provider   Provider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  dayOfWeek  DayOfWeek @map("day_of_week")
+  /// Wall-clock time only (Postgres TIME, no date/timezone) — see
+  /// requiredTimeOfDay in validation/common.ts for how it's built and read.
+  openTime   DateTime  @map("open_time") @db.Time
+  closeTime  DateTime  @map("close_time") @db.Time
+  createdAt  DateTime  @default(now()) @map("created_at")
+  createdBy  String?   @map("created_by") @db.Uuid
+
+  @@index([providerId])
+  @@map("provider_office_hours")
+}

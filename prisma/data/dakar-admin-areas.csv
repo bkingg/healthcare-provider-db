@@ -1,0 +1,61 @@
+level,code,name,parent_code,arrondissement,notes
+region,dakar,Dakar,,,
+departement,dakar,Dakar,dakar,,
+commune,dakar-mermoz-sacre-cur,Mermoz-Sacré-Cœur,dakar,Almadies,
+commune,dakar-ngor,Ngor,dakar,Almadies,
+commune,dakar-ouakam,Ouakam,dakar,Almadies,
+commune,dakar-yoff,Yoff,dakar,Almadies,
+commune,dakar-dakar-plateau,Dakar-Plateau,dakar,Dakar Plateau,
+commune,dakar-fann-point-e-amitie,Fann-Point E-Amitié,dakar,Dakar Plateau,
+commune,dakar-goree,Gorée,dakar,Dakar Plateau,
+commune,dakar-gueule-tapee-fass-colobane,Gueule Tapée-Fass-Colobane,dakar,Dakar Plateau,
+commune,dakar-medina,Médina,dakar,Dakar Plateau,
+commune,dakar-biscuiterie,Biscuiterie,dakar,Grand Dakar,
+commune,dakar-dieuppeul-derkle,Dieuppeul-Derklé,dakar,Grand Dakar,
+commune,dakar-grand-dakar,Grand Dakar,dakar,Grand Dakar,
+commune,dakar-hann-bel-air,Hann Bel-Air,dakar,Grand Dakar,
+commune,dakar-hlm,HLM,dakar,Grand Dakar,
+commune,dakar-sicap-liberte,Sicap-Liberté,dakar,Grand Dakar,
+commune,dakar-camberene,Cambérène,dakar,Parcelles Assainies,
+commune,dakar-grand-yoff,Grand Yoff,dakar,Parcelles Assainies,
+commune,dakar-parcelles-assainies,Parcelles Assainies,dakar,Parcelles Assainies,
+commune,dakar-patte-d-oie,Patte d'Oie,dakar,Parcelles Assainies,
+departement,pikine,Pikine,dakar,,
+commune,pikine-dalifort,Dalifort,pikine,Dagoudane (Pikine Dagoudane),
+commune,pikine-djidah-thiaroye-kaw,Djidah Thiaroye Kaw,pikine,Dagoudane (Pikine Dagoudane),
+commune,pikine-guinaw-rail-nord,Guinaw Rail Nord,pikine,Dagoudane (Pikine Dagoudane),
+commune,pikine-guinaw-rail-sud,Guinaw Rail Sud,pikine,Dagoudane (Pikine Dagoudane),
+commune,pikine-pikine-est,Pikine Est,pikine,Dagoudane (Pikine Dagoudane),
+commune,pikine-pikine-nord,Pikine Nord,pikine,Dagoudane (Pikine Dagoudane),
+commune,pikine-pikine-ouest,Pikine Ouest,pikine,Dagoudane (Pikine Dagoudane),
+commune,pikine-tivaouane-diacksao,Tivaouane Diacksao,pikine,Thiaroye,
+commune,pikine-diamaguene-sicap-mbao,Diamaguène Sicap Mbao,pikine,Thiaroye,
+commune,pikine-mbao,Mbao,pikine,Thiaroye,
+commune,pikine-thiaroye-sur-mer,Thiaroye-sur-Mer,pikine,Thiaroye,
+commune,pikine-thiaroye-gare,Thiaroye Gare,pikine,Thiaroye,
+departement,guediawaye,Guédiawaye,dakar,,
+commune,guediawaye-golf-sud,Golf Sud,guediawaye,,Commune→arrondissement mapping (Sam Notaire / Wakhinane Nimzatt) not confirmed — left blank
+commune,guediawaye-medina-gounass,Médina Gounass,guediawaye,,Commune→arrondissement mapping (Sam Notaire / Wakhinane Nimzatt) not confirmed — left blank
+commune,guediawaye-ndiareme-limamoulaye,Ndiarème Limamoulaye,guediawaye,,Commune→arrondissement mapping (Sam Notaire / Wakhinane Nimzatt) not confirmed — left blank
+commune,guediawaye-sam-notaire,Sam Notaire,guediawaye,,Commune→arrondissement mapping (Sam Notaire / Wakhinane Nimzatt) not confirmed — left blank
+commune,guediawaye-wakhinane-nimzatt,Wakhinane Nimzatt,guediawaye,,Commune→arrondissement mapping (Sam Notaire / Wakhinane Nimzatt) not confirmed — left blank
+departement,keur-massar,Keur Massar,dakar,,Created 2021 (46th département of Senegal)
+commune,keur-massar-yeumbeul-nord,Yeumbeul Nord,keur-massar,Yeumbeul,
+commune,keur-massar-yeumbeul-sud,Yeumbeul Sud,keur-massar,Yeumbeul,
+commune,keur-massar-keur-massar-nord,Keur Massar Nord,keur-massar,Malika,
+commune,keur-massar-malika,Malika,keur-massar,Malika,
+commune,keur-massar-keur-massar-sud,Keur Massar Sud,keur-massar,Jaxaay-Parcelles,
+commune,keur-massar-jaxaay-parcelles,Jaxaay-Parcelles,keur-massar,Jaxaay-Parcelles,
+departement,rufisque,Rufisque,dakar,,
+commune,rufisque-rufisque-est,Rufisque Est,rufisque,Rufisque,
+commune,rufisque-rufisque-nord,Rufisque Nord,rufisque,Rufisque,
+commune,rufisque-rufisque-ouest,Rufisque Ouest,rufisque,Rufisque,
+commune,rufisque-bargny,Bargny,rufisque,Sangalkam,Arrondissement grouping of these communes differs between sources — verify
+commune,rufisque-sebikotane,Sébikotane,rufisque,Sangalkam,Arrondissement grouping of these communes differs between sources — verify
+commune,rufisque-diamniadio,Diamniadio,rufisque,Sangalkam,Arrondissement grouping of these communes differs between sources — verify
+commune,rufisque-jaxaay-parcelles-niakoul-rap,Jaxaay-Parcelles-Niakoul Rap,rufisque,Sangalkam,Arrondissement grouping of these communes differs between sources — verify; spelled 'Rab' in some sources
+commune,rufisque-sangalkam,Sangalkam,rufisque,Sangalkam,Arrondissement grouping of these communes differs between sources — verify
+commune,rufisque-sendou,Sendou,rufisque,Sangalkam,Arrondissement grouping of these communes differs between sources — verify
+commune,rufisque-bambylor,Bambylor,rufisque,Bambylor,Arrondissement grouping differs between sources (some list Diamniadio as its own arrondissement) — verify; Also spelled Bambilor
+commune,rufisque-tivaouane-peulh-niaga,Tivaouane Peulh-Niaga,rufisque,Bambylor,Arrondissement grouping differs between sources (some list Diamniadio as its own arrondissement) — verify
+commune,rufisque-yenne,Yenne,rufisque,Bambylor,Also spelled Yène

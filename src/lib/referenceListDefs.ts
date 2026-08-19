@@ -1,0 +1,422 @@
+/** Pure metadata for the Admin tab's generic reference-list editor — no
+ * Prisma import here (unlike src/data/adminReferenceLists.ts, which maps
+ * these same keys to live delegates) so this is safe for the client
+ * component that renders the add/edit form fields to import directly.
+ *
+ * Every one of these ~20 tables is a "business taxonomy/config" reference
+ * table per the rule documented at the top of prisma/schema/reference.prisma
+ * — small, admin-editable value lists, as opposed to the fixed enums the
+ * app's own code branches on. All of them share `id`/`isActive`/
+ * `createdAt`/`updatedAt` (handled generically, not listed per field below)
+ * and a unique "code" column — except CountryRef, which uses `iso2` for
+ * that role instead, hence `codeField` being per-list rather than a
+ * hardcoded "code" everywhere.
+ *
+ * `labelKey`s are translation keys under the "Admin" messages namespace
+ * ("Admin.lists.<key>" for a list, "Admin.fields.<key>" for a field) —
+ * reused across lists wherever the concept is the same (most fields are
+ * just "name" or "description"), list-specific only where the field itself
+ * is (e.g. "level", "sortOrder", "iso2").
+ */
+
+// Declared as an explicit literal-string tuple (not `keyof typeof
+// REFERENCE_LIST_DEFS`) so ReferenceListKey doesn't depend on
+// REFERENCE_LIST_DEFS, which itself depends on FieldDef's refSelect variant
+// depending on ReferenceListKey — that cycle made every type below
+// (FieldDef, ReferenceListDef, REFERENCE_LIST_DEFS) resolve to `any`.
+export const REFERENCE_LIST_KEYS = [
+  "providerTypes",
+  "specialties",
+  "languages",
+  "capabilities",
+  "countries",
+  "regions",
+  "addressTypes",
+  "phoneTypes",
+  "emailTypes",
+  "departments",
+  "providerTitles",
+  "credentialTypes",
+  "credentialStatuses",
+  "networks",
+  "specializedNetworks",
+  "customizedClientNetworks",
+  "paymentTypes",
+  "bankAccountTypes",
+  "ratingScales",
+  "ratingCriteria",
+  "affiliationTypes",
+  "documentCategories",
+  "retentionClasses",
+  "serviceTypes",
+  "dataQualityRules",
+  "userRoles",
+  "uiHints",
+] as const;
+
+export type ReferenceListKey = (typeof REFERENCE_LIST_KEYS)[number];
+
+export type FieldDef =
+  | { key: string; labelKey: string; kind: "text"; required?: boolean }
+  | { key: string; labelKey: string; kind: "textarea"; required?: boolean }
+  | { key: string; labelKey: string; kind: "number"; required?: boolean; integer?: boolean }
+  | { key: string; labelKey: string; kind: "select"; required?: boolean; options: string[] }
+  | { key: string; labelKey: string; kind: "refSelect"; required?: boolean; refListKey: ReferenceListKey }
+  | { key: string; labelKey: string; kind: "checkbox" };
+
+/** Narrows a FieldDef to its refSelect variant — a plain `f.kind ===
+ * "refSelect"` inline predicate doesn't type-check against the individual
+ * lists' more specific (literal-narrowed, since REFERENCE_LIST_DEFS below
+ * uses `satisfies` rather than a `:` annotation) field types, so callers
+ * (e.g. the admin page building refSelect options) use this helper instead. */
+export function isRefSelectField(f: FieldDef): f is Extract<FieldDef, { kind: "refSelect" }> {
+  return f.kind === "refSelect";
+}
+
+/** A Prisma orderBy direction, optionally with where nulls go. */
+type OrderDirection = "asc" | "desc" | { sort: "asc" | "desc"; nulls?: "first" | "last" };
+
+export type ReferenceListDef = {
+  key: string;
+  labelKey: string;
+  /** Prisma model name — used both for audit-log entityType and (in
+   * src/data/adminReferenceLists.ts) to look up the matching delegate. */
+  model: string;
+  codeField: { key: string; labelKey: string };
+  /** Which field's value is shown as the row's main label — "name" for
+   * almost everything, but RatingScaleRef calls it "label" and DqRuleRef has
+   * no name at all (just "description"). */
+  primaryLabelField: string;
+  fields: FieldDef[];
+  /** A fixed set of rows the app's code looks up by `code` (e.g. the
+   * Quality/Access rating criteria): admins can edit a row's text but not add
+   * rows, deactivate them, or change their code. */
+  editOnly?: boolean;
+  defaultOrderBy: Record<string, OrderDirection> | Record<string, OrderDirection>[];
+};
+
+export const REFERENCE_LIST_DEFS = {
+  providerTypes: {
+    key: "providerTypes",
+    labelKey: "providerTypes",
+    model: "ProviderTypeRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "nameEn",
+    fields: [
+      { key: "nameEn", labelKey: "nameEn", kind: "text", required: true },
+      { key: "nameFr", labelKey: "nameFr", kind: "text" },
+      { key: "level", labelKey: "level", kind: "select", required: true, options: ["CATEGORY", "TYPE", "SUBTYPE", "SERVICE_GROUP"] },
+      { key: "parentId", labelKey: "parent", kind: "refSelect", refListKey: "providerTypes" },
+      { key: "description", labelKey: "description", kind: "textarea" },
+      { key: "sortOrder", labelKey: "sortOrder", kind: "number", integer: true },
+    ],
+    defaultOrderBy: [{ level: "asc" }, { sortOrder: "asc" }] as Record<string, "asc" | "desc">[],
+  },
+  specialties: {
+    key: "specialties",
+    labelKey: "specialties",
+    model: "Specialty",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "nameEn",
+    fields: [
+      { key: "nameEn", labelKey: "nameEn", kind: "text", required: true },
+      { key: "nameFr", labelKey: "nameFr", kind: "text" },
+      { key: "description", labelKey: "description", kind: "textarea" },
+    ],
+    defaultOrderBy: { nameEn: "asc" },
+  },
+  languages: {
+    key: "languages",
+    labelKey: "languages",
+    model: "Language",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "nameEn",
+    fields: [
+      { key: "nameEn", labelKey: "nameEn", kind: "text", required: true },
+      { key: "nameFr", labelKey: "nameFr", kind: "text" },
+    ],
+    defaultOrderBy: { nameEn: "asc" },
+  },
+  capabilities: {
+    key: "capabilities",
+    labelKey: "capabilities",
+    model: "Capability",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "nameEn",
+    fields: [
+      { key: "nameEn", labelKey: "nameEn", kind: "text", required: true },
+      { key: "nameFr", labelKey: "nameFr", kind: "text" },
+      { key: "category", labelKey: "category", kind: "text" },
+      { key: "description", labelKey: "description", kind: "textarea" },
+    ],
+    defaultOrderBy: { nameEn: "asc" },
+  },
+  countries: {
+    key: "countries",
+    labelKey: "countries",
+    model: "CountryRef",
+    codeField: { key: "iso2", labelKey: "iso2" },
+    primaryLabelField: "name",
+    fields: [
+      { key: "name", labelKey: "name", kind: "text", required: true },
+      { key: "regionId", labelKey: "region", kind: "refSelect", refListKey: "regions" },
+      { key: "qualityRatingId", labelKey: "qualityRating", kind: "refSelect", refListKey: "ratingScales" },
+    ],
+    defaultOrderBy: { name: "asc" },
+  },
+  regions: {
+    key: "regions",
+    labelKey: "regions",
+    model: "RegionRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "name",
+    fields: [{ key: "name", labelKey: "name", kind: "text", required: true }],
+    defaultOrderBy: { name: "asc" },
+  },
+  addressTypes: {
+    key: "addressTypes",
+    labelKey: "addressTypes",
+    model: "AddressTypeRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "name",
+    fields: [{ key: "name", labelKey: "name", kind: "text", required: true }],
+    defaultOrderBy: { name: "asc" },
+  },
+  phoneTypes: {
+    key: "phoneTypes",
+    labelKey: "phoneTypes",
+    model: "PhoneTypeRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "name",
+    fields: [{ key: "name", labelKey: "name", kind: "text", required: true }],
+    defaultOrderBy: { name: "asc" },
+  },
+  emailTypes: {
+    key: "emailTypes",
+    labelKey: "emailTypes",
+    model: "EmailTypeRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "name",
+    fields: [{ key: "name", labelKey: "name", kind: "text", required: true }],
+    defaultOrderBy: { name: "asc" },
+  },
+  departments: {
+    key: "departments",
+    labelKey: "departments",
+    model: "DepartmentRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "name",
+    fields: [{ key: "name", labelKey: "name", kind: "text", required: true }],
+    defaultOrderBy: { name: "asc" },
+  },
+  providerTitles: {
+    key: "providerTitles",
+    labelKey: "providerTitles",
+    model: "ProviderTitleRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "name",
+    fields: [{ key: "name", labelKey: "name", kind: "text", required: true }],
+    defaultOrderBy: { name: "asc" },
+  },
+  specializedNetworks: {
+    key: "specializedNetworks",
+    labelKey: "specializedNetworks",
+    model: "SpecializedNetworkRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "name",
+    fields: [{ key: "name", labelKey: "name", kind: "text", required: true }],
+    defaultOrderBy: { name: "asc" },
+  },
+  customizedClientNetworks: {
+    key: "customizedClientNetworks",
+    labelKey: "customizedClientNetworks",
+    model: "CustomizedClientNetworkRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "name",
+    fields: [{ key: "name", labelKey: "name", kind: "text", required: true }],
+    defaultOrderBy: { name: "asc" },
+  },
+  credentialTypes: {
+    key: "credentialTypes",
+    labelKey: "credentialTypes",
+    model: "CredentialTypeRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "name",
+    fields: [
+      { key: "name", labelKey: "name", kind: "text", required: true },
+      { key: "description", labelKey: "description", kind: "textarea" },
+    ],
+    defaultOrderBy: { name: "asc" },
+  },
+  credentialStatuses: {
+    key: "credentialStatuses",
+    labelKey: "credentialStatuses",
+    model: "CredentialStatusRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "name",
+    fields: [
+      { key: "name", labelKey: "name", kind: "text", required: true },
+      { key: "description", labelKey: "description", kind: "textarea" },
+    ],
+    defaultOrderBy: { name: "asc" },
+  },
+  networks: {
+    key: "networks",
+    labelKey: "networks",
+    model: "NetworkRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "name",
+    fields: [
+      { key: "name", labelKey: "name", kind: "text", required: true },
+      { key: "description", labelKey: "description", kind: "textarea" },
+    ],
+    defaultOrderBy: { name: "asc" },
+  },
+  paymentTypes: {
+    key: "paymentTypes",
+    labelKey: "paymentTypes",
+    model: "PaymentTypeRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "name",
+    fields: [
+      { key: "name", labelKey: "name", kind: "text", required: true },
+      { key: "category", labelKey: "paymentCategory", kind: "select", required: true, options: ["BANK", "MOBILE_MONEY"] },
+    ],
+    defaultOrderBy: { name: "asc" },
+  },
+  bankAccountTypes: {
+    key: "bankAccountTypes",
+    labelKey: "bankAccountTypes",
+    model: "BankAccountTypeRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "name",
+    fields: [{ key: "name", labelKey: "name", kind: "text", required: true }],
+    defaultOrderBy: { name: "asc" },
+  },
+  ratingScales: {
+    key: "ratingScales",
+    labelKey: "ratingScales",
+    model: "RatingScaleRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "label",
+    fields: [
+      { key: "label", labelKey: "label", kind: "text", required: true },
+      { key: "numericValue", labelKey: "numericValue", kind: "number" },
+      { key: "descriptionEn", labelKey: "descriptionEn", kind: "textarea" },
+      { key: "descriptionFr", labelKey: "descriptionFr", kind: "textarea" },
+    ],
+    // Highest rating first (5 down to 1), "Unrated" (no number) last.
+    defaultOrderBy: { numericValue: { sort: "desc", nulls: "last" } },
+  },
+  ratingCriteria: {
+    key: "ratingCriteria",
+    labelKey: "ratingCriteria",
+    model: "RatingCriterionRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "name",
+    editOnly: true,
+    fields: [
+      { key: "name", labelKey: "name", kind: "text", required: true },
+      { key: "descriptionEn", labelKey: "ratingDescriptionEn", kind: "textarea" },
+      { key: "descriptionFr", labelKey: "ratingDescriptionFr", kind: "textarea" },
+      { key: "level1MeaningEn", labelKey: "level1MeaningEn", kind: "textarea" },
+      { key: "level1MeaningFr", labelKey: "level1MeaningFr", kind: "textarea" },
+      { key: "level2MeaningEn", labelKey: "level2MeaningEn", kind: "textarea" },
+      { key: "level2MeaningFr", labelKey: "level2MeaningFr", kind: "textarea" },
+      { key: "level3MeaningEn", labelKey: "level3MeaningEn", kind: "textarea" },
+      { key: "level3MeaningFr", labelKey: "level3MeaningFr", kind: "textarea" },
+      { key: "level4MeaningEn", labelKey: "level4MeaningEn", kind: "textarea" },
+      { key: "level4MeaningFr", labelKey: "level4MeaningFr", kind: "textarea" },
+      { key: "level5MeaningEn", labelKey: "level5MeaningEn", kind: "textarea" },
+      { key: "level5MeaningFr", labelKey: "level5MeaningFr", kind: "textarea" },
+    ],
+    defaultOrderBy: { code: "asc" },
+  },
+  affiliationTypes: {
+    key: "affiliationTypes",
+    labelKey: "affiliationTypes",
+    model: "AffiliationTypeRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "name",
+    fields: [
+      { key: "name", labelKey: "name", kind: "text", required: true },
+      { key: "description", labelKey: "description", kind: "textarea" },
+    ],
+    defaultOrderBy: { name: "asc" },
+  },
+  documentCategories: {
+    key: "documentCategories",
+    labelKey: "documentCategories",
+    model: "DocumentCategoryRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "name",
+    fields: [{ key: "name", labelKey: "name", kind: "text", required: true }],
+    defaultOrderBy: { name: "asc" },
+  },
+  retentionClasses: {
+    key: "retentionClasses",
+    labelKey: "retentionClasses",
+    model: "RetentionClassRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "name",
+    fields: [
+      { key: "name", labelKey: "name", kind: "text", required: true },
+      { key: "retentionPeriodMonths", labelKey: "retentionPeriodMonths", kind: "number", integer: true },
+    ],
+    defaultOrderBy: { name: "asc" },
+  },
+  serviceTypes: {
+    key: "serviceTypes",
+    labelKey: "serviceTypes",
+    model: "ServiceTypeRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "name",
+    fields: [
+      { key: "name", labelKey: "name", kind: "text", required: true },
+      { key: "description", labelKey: "description", kind: "textarea" },
+    ],
+    defaultOrderBy: { name: "asc" },
+  },
+  dataQualityRules: {
+    key: "dataQualityRules",
+    labelKey: "dataQualityRules",
+    model: "DqRuleRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "description",
+    fields: [
+      { key: "description", labelKey: "description", kind: "textarea", required: true },
+      { key: "defaultSeverity", labelKey: "defaultSeverity", kind: "select", required: true, options: ["INFO", "WARNING", "ERROR", "CRITICAL"] },
+    ],
+    defaultOrderBy: { code: "asc" },
+  },
+  userRoles: {
+    key: "userRoles",
+    labelKey: "userRoles",
+    model: "UserRole",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "name",
+    fields: [
+      { key: "name", labelKey: "name", kind: "text", required: true },
+      { key: "description", labelKey: "description", kind: "textarea" },
+      { key: "canEditValueLists", labelKey: "canEditValueLists", kind: "checkbox" },
+      { key: "canViewReports", labelKey: "canViewReports", kind: "checkbox" },
+      { key: "canManageUsers", labelKey: "canManageUsers", kind: "checkbox" },
+      { key: "canEditProviderData", labelKey: "canEditProviderData", kind: "checkbox" },
+      { key: "maxSearchResults", labelKey: "maxSearchResults", kind: "number", integer: true },
+    ],
+    defaultOrderBy: { name: "asc" },
+  },
+  uiHints: {
+    key: "uiHints",
+    labelKey: "uiHints",
+    model: "UiHintRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "descriptionEn",
+    editOnly: true,
+    fields: [
+      { key: "descriptionEn", labelKey: "descriptionEn", kind: "textarea", required: true },
+      { key: "descriptionFr", labelKey: "descriptionFr", kind: "textarea" },
+    ],
+    defaultOrderBy: { code: "asc" },
+  },
+} satisfies Record<ReferenceListKey, ReferenceListDef>;

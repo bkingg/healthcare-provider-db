@@ -1,0 +1,93 @@
+model ImportBatch {
+  id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fileName         String            @map("file_name")
+  loadedById       String            @map("loaded_by") @db.Uuid
+  loadedBy         User              @relation("ImportBatchLoadedBy", fields: [loadedById], references: [id])
+  loadedAt         DateTime          @default(now()) @map("loaded_at")
+  totalRecordCount Int               @default(0) @map("total_record_count")
+  stagedCount      Int               @default(0) @map("staged_count")
+  approvedCount    Int               @default(0) @map("approved_count")
+  rejectedCount    Int               @default(0) @map("rejected_count")
+  exceptionCount   Int               @default(0) @map("exception_count")
+  status           ImportBatchStatus @default(UPLOADED)
+  /// Set once input file count vs. staged vs. approved vs. rejected vs. exceptions
+  /// have been reconciled (Phase 4 requirement).
+  reconciledAt     DateTime?         @map("reconciled_at")
+  notes            String?
+  /// Free-text instructions for the (not-yet-connected) AI data-scrub tool —
+  /// e.g. "standardize phone formatting, flag likely duplicate facilities."
+  /// Captured at upload time so it's ready to hand to that tool once it's
+  /// wired up; until then it's just displayed back on the review page.
+  aiPrompt         String?           @map("ai_prompt")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+
+  stagingRows     ProviderStaging[]
+  exceptions      DataQualityException[]
+  auditLogEntries AuditLog[]
+
+  @@map("import_batch")
+}
+
+/// Raw, unvalidated staging row — flattened subset of the minimum-required-profile
+/// plus the fields Phase 4's validation rules check. Deliberately all-nullable
+/// strings: nothing is coerced/typed until the validation pipeline runs. Never
+/// written directly to production tables.
+model ProviderStaging {
+  id                  String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  importBatchId       String                  @map("import_batch_id") @db.Uuid
+  importBatch         ImportBatch             @relation(fields: [importBatchId], references: [id], onDelete: Cascade)
+  rowNumber           Int                     @map("row_number")
+  rawProviderName     String?                 @map("raw_provider_name")
+  rawProviderTypeCode String?                 @map("raw_provider_type_code")
+  rawActiveIndicator  String?                 @map("raw_active_indicator")
+  rawCountryCode      String?                 @map("raw_country_code")
+  rawCity             String?                 @map("raw_city")
+  rawAddressLine1     String?                 @map("raw_address_line1")
+  rawPhone            String?                 @map("raw_phone")
+  rawPhoneType        String?                 @map("raw_phone_type")
+  rawEmail            String?                 @map("raw_email")
+  rawLatitude         String?                 @map("raw_latitude")
+  rawLongitude        String?                 @map("raw_longitude")
+  rawExternalId       String?                 @map("raw_external_id")
+  matchedProviderId   String?                 @map("matched_provider_id") @db.Uuid
+  matchedProvider     Provider?               @relation(fields: [matchedProviderId], references: [id])
+  validationStatus    StagingValidationStatus @default(PENDING) @map("validation_status")
+  createdAt           DateTime                @default(now()) @map("created_at")
+  updatedAt           DateTime                @updatedAt @map("updated_at")
+
+  exceptions DataQualityException[]
+
+  @@index([importBatchId])
+  @@map("provider_staging")
+}
+
+model DataQualityException {
+  id                 String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  importBatchId      String?          @map("import_batch_id") @db.Uuid
+  importBatch        ImportBatch?     @relation(fields: [importBatchId], references: [id])
+  stagingRowId       String?          @map("staging_row_id") @db.Uuid
+  stagingRow         ProviderStaging? @relation(fields: [stagingRowId], references: [id])
+  providerId         String?          @map("provider_id") @db.Uuid
+  provider           Provider?        @relation(fields: [providerId], references: [id])
+  fieldName          String?          @map("field_name")
+  fieldValue         String?          @map("field_value")
+  ruleId             String           @map("rule_id") @db.Uuid
+  rule               DqRuleRef        @relation(fields: [ruleId], references: [id])
+  severity           DqSeverity
+  ownerId            String?          @map("owner_id") @db.Uuid
+  owner              User?            @relation("ExceptionOwner", fields: [ownerId], references: [id])
+  status             DqStatus         @default(OPEN)
+  resolutionDecision DqResolution?    @map("resolution_decision")
+  resolutionNotes    String?          @map("resolution_notes")
+  resolvedAt         DateTime?        @map("resolved_at")
+  resolvedById       String?          @map("resolved_by") @db.Uuid
+  resolvedBy         User?            @relation("ExceptionResolvedBy", fields: [resolvedById], references: [id])
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+
+  @@index([importBatchId])
+  @@index([providerId])
+  @@index([status])
+  @@map("data_quality_exception")
+}

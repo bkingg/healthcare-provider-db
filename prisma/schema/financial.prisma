@@ -1,0 +1,58 @@
+model BankingPayment {
+  id                    String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerId            String              @map("provider_id") @db.Uuid
+  provider              Provider            @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  payeeName             String              @map("payee_name")
+  currency              String              @db.Char(3)
+  paymentTypeId         String              @map("payment_type_id") @db.Uuid
+  paymentType           PaymentTypeRef      @relation(fields: [paymentTypeId], references: [id])
+  bankName              String?             @map("bank_name")
+  bankAccountNumber     String?             @map("bank_account_number")
+  bankRoutingOrSwift    String?             @map("bank_routing_or_swift")
+  /// Mobile money payments (Orange Money, Wave, ...): the wallet's phone
+  /// number and, for business accounts, the "Code Marchand" merchant code.
+  mobileMoneyNumber     String?             @map("mobile_money_number")
+  merchantCode          String?             @map("merchant_code")
+  bankAccountTypeId     String?             @map("bank_account_type_id") @db.Uuid
+  bankAccountType       BankAccountTypeRef? @relation(fields: [bankAccountTypeId], references: [id])
+  /// Country-specific validation fields (NINEA/TIN, IBAN, routing number, ...).
+  /// Genuinely open-ended per country — kept as Json so Phase 4's validation rules
+  /// can add support for a new country's fields via config, not a migration.
+  countrySpecificFields Json?               @map("country_specific_fields")
+  approvalStatus        ApprovalStatus      @default(PENDING) @map("approval_status")
+  approvedById          String?             @map("approved_by") @db.Uuid
+  approvedBy            User?               @relation("BankingApprovedBy", fields: [approvedById], references: [id])
+  approvedAt            DateTime?           @map("approved_at")
+  createdAt             DateTime            @default(now()) @map("created_at")
+  updatedAt             DateTime            @updatedAt @map("updated_at")
+  createdBy             String?             @map("created_by") @db.Uuid
+  updatedBy             String?             @map("updated_by") @db.Uuid
+
+  @@index([providerId])
+  @@map("banking_payment")
+}
+
+model Rate {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerId      String         @map("provider_id") @db.Uuid
+  provider        Provider       @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  serviceTypeId   String         @map("service_type_id") @db.Uuid
+  serviceType     ServiceTypeRef @relation(fields: [serviceTypeId], references: [id])
+  description     String?
+  price           Decimal        @db.Decimal(12, 2)
+  currency        String         @db.Char(3)
+  discountPercent Decimal?       @map("discount_percent") @db.Decimal(5, 2)
+  effectiveDate   DateTime       @map("effective_date") @db.Date
+  endDate         DateTime?      @map("end_date") @db.Date
+  source          String?
+  approvalStatus  ApprovalStatus @default(PENDING) @map("approval_status")
+  approvedById    String?        @map("approved_by") @db.Uuid
+  approvedBy      User?          @relation("RateApprovedBy", fields: [approvedById], references: [id])
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  createdBy       String?        @map("created_by") @db.Uuid
+  updatedBy       String?        @map("updated_by") @db.Uuid
+
+  @@index([providerId])
+  @@map("rate")
+}

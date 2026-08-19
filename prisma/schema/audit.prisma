@@ -1,0 +1,27 @@
+/// Single polymorphic audit table covering every entity, rather than one audit
+/// table per entity. Trade-off (see Phase 1 plan): one mechanism can answer
+/// cross-entity questions ("all critical changes by user X") without ~18
+/// near-duplicate tables, at the cost of no DB-enforced FK from
+/// (entityType, entityId) to the actual row — mitigated by soft-closing
+/// records via status enums instead of hard-deleting them.
+/// One row per changed field on UPDATE; one row with fieldName = null on
+/// CREATE/DELETE/APPROVE/REJECT.
+model AuditLog {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entityType    String       @map("entity_type")
+  entityId      String       @map("entity_id") @db.Uuid
+  fieldName     String?      @map("field_name")
+  action        AuditAction
+  previousValue String?      @map("previous_value")
+  newValue      String?      @map("new_value")
+  reason        String?
+  changedById   String       @map("changed_by") @db.Uuid
+  changedBy     User         @relation("AuditChangedBy", fields: [changedById], references: [id])
+  changedAt     DateTime     @default(now()) @map("changed_at")
+  importBatchId String?      @map("import_batch_id") @db.Uuid
+  importBatch   ImportBatch? @relation(fields: [importBatchId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([changedAt])
+  @@map("audit_log")
+}

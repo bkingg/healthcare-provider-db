@@ -1,0 +1,44 @@
+model ProviderVisit {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerId   String   @map("provider_id") @db.Uuid
+  provider     Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  visitDate    DateTime @map("visit_date") @db.Date
+  reviewedById String   @map("reviewed_by") @db.Uuid
+  reviewedBy   User     @relation("VisitReviewedBy", fields: [reviewedById], references: [id])
+  findings     String?
+  actionItems  String?  @map("action_items")
+  documentUrls String[] @map("document_urls")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  createdBy    String?  @map("created_by") @db.Uuid
+  updatedBy    String?  @map("updated_by") @db.Uuid
+
+  @@index([providerId])
+  @@map("provider_visit")
+}
+
+model NoteAttachment {
+  id               String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerId       String              @map("provider_id") @db.Uuid
+  provider         Provider            @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  categoryId       String              @map("category_id") @db.Uuid
+  category         DocumentCategoryRef @relation(fields: [categoryId], references: [id])
+  title            String
+  body             String?
+  fileUrl          String?             @map("file_url")
+  fileName         String?             @map("file_name")
+  mimeType         String?             @map("mime_type")
+  retentionClassId String              @map("retention_class_id") @db.Uuid
+  retentionClass   RetentionClassRef   @relation(fields: [retentionClassId], references: [id])
+  visibility       NoteVisibility      @default(INTERNAL)
+  ownerId          String              @map("owner_id") @db.Uuid
+  owner            User                @relation("NoteOwner", fields: [ownerId], references: [id])
+  effectiveDate    DateTime?           @map("effective_date") @db.Date
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+  createdBy        String?             @map("created_by") @db.Uuid
+  updatedBy        String?             @map("updated_by") @db.Uuid
+
+  @@index([providerId])
+  @@map("note_attachment")
+}

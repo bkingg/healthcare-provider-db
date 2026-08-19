@@ -1,0 +1,79 @@
+/// Phase 5: real authentication. `passwordHash` is null for any account that
+/// can't log in (there is no such account by default anymore, but the field
+/// stays optional rather than required so a future non-interactive/service
+/// actor doesn't need a fake password). Session strategy is JWT (see
+/// src/lib/auth.ts) — no NextAuth Account/Session/VerificationToken adapter
+/// tables are needed for the Credentials-only provider used here.
+/// Mapped to `app_user` because `user` is a reserved word in Postgres.
+model User {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email              String    @unique
+  name               String?
+  passwordHash       String?   @map("password_hash")
+  /// Set whenever an admin issues a one-time password (new account or a
+  /// reset) — forces src/app/[locale]/(account)/change-password before the
+  /// rest of the app is reachable, so the temporary password value is
+  /// short-lived by construction rather than by policy.
+  mustChangePassword Boolean   @default(false) @map("must_change_password")
+  lastLoginAt        DateTime? @map("last_login_at")
+  roleId             String?   @map("role_id") @db.Uuid
+  role               UserRole? @relation(fields: [roleId], references: [id])
+  /// Per-user override of the role's `maxSearchResults` cap — null means
+  /// "use the role's default" (see rbac.ts's `maxSearchResults`, which
+  /// checks this before falling back to the role). Lets an admin tighten or
+  /// loosen the search-results limit for one specific employee without
+  /// having to split them into a whole new role.
+  maxSearchResults   Int?      @map("max_search_results")
+  isActive           Boolean   @default(true) @map("is_active")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  updatedAddresses        Address[]              @relation("AddressUpdatedBy")
+  verifiedProviders       Provider[]             @relation("ProviderVerifiedBy")
+  updatedProviders        Provider[]             @relation("ProviderUpdatedBy")
+  reviewedCredentials     Credential[]           @relation("CredentialReviewedBy")
+  approvedContracts       NetworkContract[]      @relation("ContractApprovedBy")
+  approvedBankingPayments BankingPayment[]       @relation("BankingApprovedBy")
+  approvedRates           Rate[]                 @relation("RateApprovedBy")
+  reviewedVisits          ProviderVisit[]        @relation("VisitReviewedBy")
+  ownedNotes              NoteAttachment[]       @relation("NoteOwner")
+  loadedImportBatches     ImportBatch[]          @relation("ImportBatchLoadedBy")
+  ownedExceptions         DataQualityException[] @relation("ExceptionOwner")
+  resolvedExceptions      DataQualityException[] @relation("ExceptionResolvedBy")
+  auditLogEntries         AuditLog[]             @relation("AuditChangedBy")
+
+  @@map("app_user")
+}
+
+/// Admin-editable access-control role (Site Administrator / Case Manager /
+/// Network Manager out of the box, but an admin can add more — see the
+/// "Roles" list in the admin Value Lists screen, which manages this table
+/// through the same generic reference-list editor as CountryRef etc., since
+/// it's the same shape of problem: a small admin-owned config table). The
+/// four `can*` flags are coarse on purpose (matching what the app can
+/// actually enforce today: value-list edits, the reporting/export surface,
+/// user administration, and provider-record edits) rather than a
+/// fine-grained per-action permission matrix.
+model UserRole {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                String   @unique
+  name                String
+  description         String?
+  canEditValueLists   Boolean  @default(false) @map("can_edit_value_lists")
+  canViewReports      Boolean  @default(false) @map("can_view_reports")
+  canManageUsers      Boolean  @default(false) @map("can_manage_users")
+  canEditProviderData Boolean  @default(false) @map("can_edit_provider_data")
+  /// Caps how many rows a search can return for a user with this role — null
+  /// means unlimited. Exists to let a Site Administrator restrict
+  /// lower-privileged roles (e.g. an outsourced Case Manager) from
+  /// enumerating/exfiltrating the full provider directory through the search
+  /// or map screens, while leaving trusted roles unrestricted.
+  maxSearchResults    Int?     @map("max_search_results")
+  isActive            Boolean  @default(true) @map("is_active")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  users User[]
+
+  @@map("user_role")
+}

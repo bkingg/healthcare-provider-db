@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-provider_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-provider_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-healthcare_provider_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - provider_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-provider_admin} -d ${POSTGRES_DB:-healthcare_provider_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  provider_db_data:

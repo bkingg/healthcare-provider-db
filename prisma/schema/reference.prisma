@@ -1,0 +1,550 @@
+// Enum vs. reference-table rule (applied consistently across this schema):
+// Use a Postgres ENUM when the value set is small, fixed, and application code itself
+// branches on the specific value (activation gating, approval pipelines, import stages)
+// — changing the set requires a code change anyway, so a migration is an acceptable cost.
+// Use a REFERENCE TABLE when the values are business taxonomy/config that a Data Steward
+// or Admin should be able to add to, retire, or reorder without a deploy.
+
+/// How a payment type is settled — decides which fields the banking form asks
+/// for (bank account details vs. a mobile money wallet number and merchant code).
+enum PaymentCategory {
+  BANK
+  MOBILE_MONEY
+}
+
+enum ProviderStatus {
+  ACTIVE
+  INACTIVE
+  PENDING_REVIEW
+  SUSPENDED
+  CLOSED
+  DO_NOT_USE
+}
+
+enum OperatingStatus {
+  OPERATING
+  TEMPORARILY_CLOSED
+  PERMANENTLY_CLOSED
+  UNKNOWN
+}
+
+enum CoordinateStatus {
+  MISSING
+  DEFAULT
+  UNCONFIRMED
+  CONFIRMED
+}
+
+enum ProviderNameType {
+  LEGAL
+  DISPLAY
+  BILLING
+  LOCAL
+  ALIAS
+}
+
+/// Whether a provider is an organization/facility or a named individual —
+/// set once at creation and drives which name fields (facility name vs.
+/// title/first/last) apply to every ProviderName row on that provider.
+enum ProviderNameKind {
+  ENTITY
+  INDIVIDUAL
+}
+
+/// Declared Monday-first so `ORDER BY day_of_week` (Postgres enums sort by
+/// declaration order) lists a week the way staff actually read a posted
+/// schedule, without the query needing a `CASE` expression to reorder it.
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum ProviderTypeLevel {
+  CATEGORY
+  TYPE
+  SUBTYPE
+  SERVICE_GROUP
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ContractStatus {
+  DRAFT
+  PENDING_APPROVAL
+  ACTIVE
+  EXPIRED
+  TERMINATED
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  APPROVE
+  REJECT
+}
+
+enum ImportBatchStatus {
+  UPLOADED
+  VALIDATING
+  STAGED
+  PARTIALLY_APPROVED
+  APPROVED
+  REJECTED
+  RECONCILED
+  FAILED
+}
+
+enum DqSeverity {
+  INFO
+  WARNING
+  ERROR
+  CRITICAL
+}
+
+enum DqStatus {
+  OPEN
+  ASSIGNED
+  IN_REVIEW
+  RESOLVED
+  DISMISSED
+}
+
+enum DqResolution {
+  ACCEPT
+  CORRECT
+  REJECT
+  MERGE
+  IGNORE
+}
+
+enum NoteVisibility {
+  PUBLIC
+  INTERNAL
+  RESTRICTED
+}
+
+/// Staging-row lifecycle for the Phase 4 import pipeline — fixed workflow
+/// states the validate/commit code branches on directly.
+enum StagingValidationStatus {
+  PENDING
+  VALIDATED
+  REJECTED
+  COMMITTED
+}
+
+model RegionRef {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  name      String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  countries CountryRef[]
+
+  @@map("region_ref")
+}
+
+model CountryRef {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String
+  iso2            String          @unique @db.Char(2)
+  regionId        String?         @map("region_id") @db.Uuid
+  region          RegionRef?      @relation(fields: [regionId], references: [id])
+  qualityRatingId String?         @map("quality_rating_id") @db.Uuid
+  qualityRating   RatingScaleRef? @relation(fields: [qualityRatingId], references: [id])
+  isActive        Boolean         @default(true) @map("is_active")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  providers Provider[]
+  addresses Address[]
+
+  @@map("country_ref")
+}
+
+/// Self-referencing hierarchy: category -> type -> subtype -> service group,
+// modeled as one configurable table per the brief ("Provider category, type,
+// subtype, service grouping (configurable reference table)").
+model ProviderTypeRef {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  level       ProviderTypeLevel
+  parentId    String?           @map("parent_id") @db.Uuid
+  parent      ProviderTypeRef?  @relation("ProviderTypeHierarchy", fields: [parentId], references: [id])
+  children    ProviderTypeRef[] @relation("ProviderTypeHierarchy")
+  code        String            @unique
+  nameEn      String            @map("name_en")
+  nameFr      String?           @map("name_fr")
+  description String?
+  sortOrder   Int               @default(0) @map("sort_order")
+  isActive    Boolean           @default(true) @map("is_active")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  providerAssignments ProviderProviderType[]
+
+  @@map("provider_type_ref")
+}
+
+model Specialty {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String   @unique
+  nameEn      String   @map("name_en")
+  nameFr      String?  @map("name_fr")
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  providers ProviderSpecialty[]
+
+  @@map("specialty")
+}
+
+model Language {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  nameEn    String   @map("name_en")
+  nameFr    String?  @map("name_fr")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  providers ProviderLanguage[]
+
+  @@map("language")
+}
+
+model Capability {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String   @unique
+  nameEn      String   @map("name_en")
+  nameFr      String?  @map("name_fr")
+  category    String?
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  providers ProviderCapability[]
+
+  @@map("capability")
+}
+
+model AddressTypeRef {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  name      String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  addresses Address[]
+
+  @@map("address_type_ref")
+}
+
+model PhoneTypeRef {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  name      String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  phones Phone[]
+  administrativeContactPhones AdministrativeContactPhone[]
+
+  @@map("phone_type_ref")
+}
+
+/// Honorific/professional title (Dr., Prof., Registered Nurse (RN), ...) for
+/// an individual provider's name — a configurable reference table, not a
+/// free-text field, per the same "value set is business config" rule as the
+/// other *Ref tables in this file.
+model ProviderTitleRef {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  name      String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  names ProviderName[]
+
+  @@map("provider_title_ref")
+}
+
+/// What each star rating means, shown as hover text on the profile page's
+/// Quality / Access ratings. One row per rating (codes QUALITY and ACCESS —
+/// fixed, only their text is editable from Admin > Value lists): a general
+/// description of the rating plus what each 1-5 star level means.
+model RatingCriterionRef {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code            String   @unique
+  name            String
+  descriptionEn   String?  @map("description_en")
+  descriptionFr   String?  @map("description_fr")
+  level1MeaningEn String?  @map("level_1_meaning_en")
+  level1MeaningFr String?  @map("level_1_meaning_fr")
+  level2MeaningEn String?  @map("level_2_meaning_en")
+  level2MeaningFr String?  @map("level_2_meaning_fr")
+  level3MeaningEn String?  @map("level_3_meaning_en")
+  level3MeaningFr String?  @map("level_3_meaning_fr")
+  level4MeaningEn String?  @map("level_4_meaning_en")
+  level4MeaningFr String?  @map("level_4_meaning_fr")
+  level5MeaningEn String?  @map("level_5_meaning_en")
+  level5MeaningFr String?  @map("level_5_meaning_fr")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("rating_criterion_ref")
+}
+
+/// Value list behind a provider's "Specialized Network" field.
+model SpecializedNetworkRef {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  name      String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  providers ProviderSpecializedNetwork[]
+
+  @@map("specialized_network_ref")
+}
+
+/// Value list behind a provider's "Customized Client Network" field.
+model CustomizedClientNetworkRef {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  name      String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  providers ProviderCustomizedClientNetwork[]
+
+  @@map("customized_client_network_ref")
+}
+
+/// Department an administrative contact works in (Billing, Operations, ...) —
+/// admin-editable like the other *Ref tables in this file.
+model DepartmentRef {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  name      String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  administrativeContacts AdministrativeContact[]
+
+  @@map("department_ref")
+}
+
+model EmailTypeRef {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  name      String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  emails Email[]
+  administrativeContactEmails AdministrativeContactEmail[]
+
+  @@map("email_type_ref")
+}
+
+model CredentialTypeRef {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String   @unique
+  name        String
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  credentials Credential[]
+
+  @@map("credential_type_ref")
+}
+
+/// Explicitly named as configurable in the requirements doc, so this stays a
+// reference table even though credential status feels workflow-like elsewhere.
+model CredentialStatusRef {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String   @unique
+  name        String
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  credentials Credential[]
+
+  @@map("credential_status_ref")
+}
+
+model NetworkRef {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String   @unique
+  name        String
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  networkContracts NetworkContract[]
+
+  @@map("network_ref")
+}
+
+model PaymentTypeRef {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  name      String
+  /// BANK payment types collect bank details; MOBILE_MONEY ones (Orange
+  /// Money, Wave, ...) collect a wallet number and merchant code instead.
+  category  PaymentCategory @default(BANK)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  bankingPayments BankingPayment[]
+
+  @@map("payment_type_ref")
+}
+
+model BankAccountTypeRef {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  name      String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  bankingPayments BankingPayment[]
+
+  @@map("bank_account_type_ref")
+}
+
+/// The healthcare-system rating scale: each country is assigned one value
+/// (CountryRef.qualityRating), which the provider profile shows as the quality
+/// of the healthcare environment in that provider's country. Managed from
+/// Admin > Countries. (Distinct from the provider's own 1-5 Quality/Access
+/// stars, whose hover text lives in RatingCriterionRef.)
+model RatingScaleRef {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code          String   @unique
+  label         String
+  numericValue  Decimal? @map("numeric_value") @db.Decimal(4, 2)
+  descriptionEn String?  @map("description_en")
+  descriptionFr String?  @map("description_fr")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  countries CountryRef[]
+
+  @@map("rating_scale_ref")
+}
+
+model AffiliationTypeRef {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String   @unique
+  name        String
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  affiliations Affiliation[]
+
+  @@map("affiliation_type_ref")
+}
+
+model DocumentCategoryRef {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  name      String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  noteAttachments NoteAttachment[]
+
+  @@map("document_category_ref")
+}
+
+model RetentionClassRef {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                  String   @unique
+  name                  String
+  retentionPeriodMonths Int?     @map("retention_period_months")
+  isActive              Boolean  @default(true) @map("is_active")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  noteAttachments NoteAttachment[]
+
+  @@map("retention_class_ref")
+}
+
+model ServiceTypeRef {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String   @unique
+  name        String
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  rates Rate[]
+
+  @@map("service_type_ref")
+}
+
+/// Curated catalog of Phase 4 validation rule codes, so `DataQualityException.rule`
+// is a real FK instead of a free-text string that could drift across stewards.
+model DqRuleRef {
+  id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code            String     @unique
+  description     String
+  defaultSeverity DqSeverity @map("default_severity")
+  isActive        Boolean    @default(true) @map("is_active")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  exceptions DataQualityException[]
+
+  @@map("dq_rule_ref")
+}
+
+/// Fixed-code hover/help text shown next to UI elements (e.g. the "Validate
+/// record" button), admin-editable from Admin > Value lists. The app looks
+/// rows up by code, so codes stay fixed — same pattern as RatingCriterionRef.
+model UiHintRef {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code          String   @unique
+  descriptionEn String   @map("description_en")
+  descriptionFr String?  @map("description_fr")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("ui_hint_ref")
+}

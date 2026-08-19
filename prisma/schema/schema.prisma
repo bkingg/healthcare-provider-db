@@ -1,0 +1,18 @@
+// Prisma 7: the datasource `url` lives in prisma.config.ts, not here.
+// `schema` in prisma.config.ts points at this whole folder (multi-file schema),
+// split by domain area for readability given the model count (~30 tables).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../../generated/prisma"
+}
+
+// No `extensions = [postgis]` / `postgresqlExtensions` preview feature here:
+// every actual PostGIS/tsvector column is Unsupported(...) and hand-migrated
+// via prisma/sql/enable-search.sql (see Phase 3 plan), so Prisma never needs
+// to manage the extension itself. Declaring it here would only make the base
+// migration hard-depend on postgis being installed before `migrate dev` can
+// even run, for a capability we don't use.
+datasource db {
+  provider = "postgresql"
+}
