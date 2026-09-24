@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
+import { ResizeHandle } from "@/components/resize-handle";
 import {
   BarChart3,
   Building2,
@@ -91,34 +92,38 @@ export function SidebarNav({
   }
 
   return (
-    <nav
-      data-r="nav"
-      className="flex max-[1180px]:w-16 w-[248px] flex-none flex-col overflow-auto border-r-2 border-pn-ink bg-white"
-    >
-      <div data-r="navsection" className="max-[1180px]:hidden px-4 pt-3.5 pb-2 text-[10px] tracking-[0.1em] text-pn-gray-3 uppercase">
-        {t("workspace")}
-      </div>
-      {items.map(renderItem)}
-
-      {adminItems.length > 0 && (
-        <>
-          <div data-r="navsection" className="max-[1180px]:hidden px-4 pt-3.5 pb-2 text-[10px] tracking-[0.1em] text-pn-gray-3 uppercase">
-            {t("administration")}
-          </div>
-          {adminItems.map(renderItem)}
-        </>
-      )}
-
-      <div
-        data-r="navsection"
-        className="max-[1180px]:hidden mt-auto border-t-2 border-pn-ink px-4 py-3.5 text-[11px] leading-relaxed text-pn-gray-3"
+    <>
+      <nav
+        data-r="nav"
+        className="flex max-[1180px]:w-16 w-[var(--pn-nav-w,248px)] flex-none flex-col overflow-auto border-r-2 border-pn-ink bg-white"
       >
-        {t("lastImportBatch")}
-        <br />
-        <span className="font-semibold text-pn-ink">{latestBatchLabel ?? t("noBatchYet")}</span>
-        <br />
-        <span className="font-semibold text-[#0a5c3c]">{t("exceptionsOpen", { count: openExceptionCount })}</span>
-      </div>
-    </nav>
+        <div data-r="navsection" className="max-[1180px]:hidden px-4 pt-3.5 pb-2 text-[10px] tracking-[0.1em] text-pn-gray-3 uppercase">
+          {t("workspace")}
+        </div>
+        {items.map(renderItem)}
+
+        {adminItems.length > 0 && (
+          <>
+            <div data-r="navsection" className="max-[1180px]:hidden px-4 pt-3.5 pb-2 text-[10px] tracking-[0.1em] text-pn-gray-3 uppercase">
+              {t("administration")}
+            </div>
+            {adminItems.map(renderItem)}
+          </>
+        )}
+
+        <div
+          data-r="navsection"
+          className="max-[1180px]:hidden mt-auto border-t-2 border-pn-ink px-4 py-3.5 text-[11px] leading-relaxed text-pn-gray-3"
+        >
+          {t("lastImportBatch")}
+          <br />
+          <span className="font-semibold text-pn-ink">{latestBatchLabel ?? t("noBatchYet")}</span>
+          <br />
+          <span className="font-semibold text-[#0a5c3c]">{t("exceptionsOpen", { count: openExceptionCount })}</span>
+        </div>
+      </nav>
+      {/* Hidden when the nav collapses to its icon strip — that width is fixed. */}
+      <ResizeHandle panelKey="nav" measure="previous" label={t("resizeWorkspace")} className="max-[1180px]:hidden" />
+    </>
   );
 }

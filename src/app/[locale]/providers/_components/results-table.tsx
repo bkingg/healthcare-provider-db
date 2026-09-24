@@ -7,31 +7,40 @@ import { useLocale, useTranslations } from "next-intl";
 import { localizedText } from "@/lib/localizedText";
 import { useRouter, Link } from "@/i18n/navigation";
 import { PnTag } from "@/components/pn-tag";
+import { ResizeHandle } from "@/components/resize-handle";
+import { usePanelWidths } from "@/lib/panel-widths";
 import type { searchProviders } from "@/data/search";
 import type { SortColumn } from "@/lib/validation/search";
-import { PROVIDER_COLUMNS, useVisibleColumns, type ProviderColumnKey } from "./column-visibility";
+import { PROVIDER_COLUMNS, buildGridTemplate, useVisibleColumns, type ProviderColumnKey } from "./column-visibility";
 
 type ProviderRow = Awaited<ReturnType<typeof searchProviders>>["providers"][number];
 type RawParams = Record<string, string | string[] | undefined>;
 
-const CHECKBOX_COL = "28px";
-const NAME_COL = "minmax(160px,1.6fr)";
+// Which columns' headers sort the results, and by which sort key.
+const COLUMN_SORT: Partial<Record<ProviderColumnKey, SortColumn>> = {
+  name: "name",
+  type: "type",
+  countryCity: "country",
+  status: "status",
+  rating: "rating",
+};
 
-// Checkbox and Name are always in the grid; the rest only appear when
-// toggled on via the Columns menu (see column-visibility.ts). ProviderID is
-// the only toggleable column before Name — everything else in
-// PROVIDER_COLUMNS comes after, in declared order, so hiding/showing one
-// never reorders the rest.
-const [PROVIDER_ID_COL, ...TRAILING_COLS] = PROVIDER_COLUMNS;
+const COLUMN_LABEL_KEY = Object.fromEntries(PROVIDER_COLUMNS.map((c) => [c.key, c.labelKey])) as Record<
+  ProviderColumnKey,
+  (typeof PROVIDER_COLUMNS)[number]["labelKey"]
+>;
 
-function buildGridTemplate(visibleColumns: Set<ProviderColumnKey>): string {
-  const cols = [CHECKBOX_COL];
-  if (visibleColumns.has(PROVIDER_ID_COL.key)) cols.push(PROVIDER_ID_COL.width);
-  cols.push(NAME_COL);
-  for (const col of TRAILING_COLS) {
-    if (visibleColumns.has(col.key)) cols.push(col.width);
-  }
-  return cols.join(" ");
+/** A header cell with a drag handle on its right edge (see ResizeHandle).
+ * `min-w-0` lets a column be dragged narrower than its label — the label
+ * just clips, same as the body cells' ellipsis. */
+function ResizableHeader({ colKey, label, children }: { colKey: string; label: string; children: React.ReactNode }) {
+  const t = useTranslations("Search");
+  return (
+    <div className="relative flex h-full min-w-0 items-center overflow-visible pr-2">
+      <div className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{children}</div>
+      <ResizeHandle panelKey={`col:${colKey}`} measure="parent" label={t("resizeColumn", { column: label })} />
+    </div>
+  );
 }
 
 function sortHref(rawParams: RawParams, col: SortColumn, currentSort: SortColumn | undefined, currentDir: "asc" | "desc") {
@@ -87,8 +96,12 @@ export function ResultsTable({
   const locale = useLocale();
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const { visibleColumns } = useVisibleColumns();
-  const cols = buildGridTemplate(visibleColumns);
+  const { orderedVisibleColumns } = useVisibleColumns();
+  const { widths } = usePanelWidths();
+  const { template: cols, minWidth } = buildGridTemplate(orderedVisibleColumns, widths);
+  // Rating's number is right-aligned against the table's edge when it's the
+  // last column; anywhere else that would butt it up against its neighbour.
+  const alignRatingRight = orderedVisibleColumns.at(-1) === "rating";
 
   function toggle(id: string, e: React.MouseEvent) {
     e.stopPropagation();
@@ -103,7 +116,7 @@ export function ResultsTable({
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       <div className="flex-1 overflow-auto">
-        <div className="min-w-[900px]">
+        <div style={{ minWidth }}>
           <div
             className="sticky top-0 z-[2] grid h-[30px] items-center gap-0 border-b-2 border-pn-ink bg-pn-panel px-5 text-[10px] font-bold tracking-[0.07em] text-pn-gray-1 uppercase"
             style={{ gridTemplateColumns: cols }}
@@ -111,21 +124,26 @@ export function ResultsTable({
             <div>
               <div className="h-[11px] w-[11px] border-2 border-pn-ink" />
             </div>
-            {visibleColumns.has("providerId") && <div>{t("columnProviderId")}</div>}
-            <SortableHeader label={t("columnName")} col="name" rawParams={rawParams} currentSort={sort} currentDir={dir} />
-            {visibleColumns.has("type") && <SortableHeader label={t("columnType")} col="type" rawParams={rawParams} currentSort={sort} currentDir={dir} />}
-            {visibleColumns.has("countryCity") && (
-              <SortableHeader label={t("columnCountryCity")} col="country" rawParams={rawParams} currentSort={sort} currentDir={dir} />
-            )}
-            {visibleColumns.has("specialties") && <div>{t("columnSpecialties")}</div>}
-            {visibleColumns.has("facility") && <div>{t("columnFacility")}</div>}
-            {visibleColumns.has("network") && <div>{t("columnNetwork")}</div>}
-            {visibleColumns.has("status") && (
-              <SortableHeader label={t("columnStatus")} col="status" rawParams={rawParams} currentSort={sort} currentDir={dir} />
-            )}
-            {visibleColumns.has("rating") && (
-              <SortableHeader label={t("columnRating")} col="rating" rawParams={rawParams} currentSort={sort} currentDir={dir} className="justify-end" />
-            )}
+            {orderedVisibleColumns.map((key) => {
+              const label = t(COLUMN_LABEL_KEY[key]);
+              const sortCol = COLUMN_SORT[key];
+              return (
+                <ResizableHeader key={key} colKey={key} label={label}>
+                  {sortCol ? (
+                    <SortableHeader
+                      label={label}
+                      col={sortCol}
+                      rawParams={rawParams}
+                      currentSort={sort}
+                      currentDir={dir}
+                      className={key === "rating" && alignRatingRight ? "justify-end" : undefined}
+                    />
+                  ) : (
+                    label
+                  )}
+                </ResizableHeader>
+              );
+            })}
           </div>
 
           {providers.map((p) => {
@@ -158,35 +176,46 @@ export function ResultsTable({
                     className={`h-[11px] w-[11px] border-2 border-pn-ink ${checked ? "bg-pn-accent" : "bg-transparent"}`}
                   />
                 </div>
-                {visibleColumns.has("providerId") && <div className="text-pn-gray-2 tabular-nums">{shortId}</div>}
-                <div className="min-w-0">
-                  <div className="overflow-hidden font-semibold text-ellipsis whitespace-nowrap">{primaryName}</div>
-                  <div className="overflow-hidden text-ellipsis whitespace-nowrap text-[11px] text-pn-gray-3">{p.externalId ?? ""}</div>
-                </div>
-                {visibleColumns.has("type") && (
-                  <div className="overflow-hidden text-ellipsis whitespace-nowrap text-pn-gray-1" title={typeNames}>{typeNames}</div>
-                )}
-                {visibleColumns.has("countryCity") && (
-                  <div className="text-pn-gray-1">
-                    {p.country.name}
-                    {p.addresses?.[0]?.city ? ` · ${p.addresses[0].city}` : ""}
-                  </div>
-                )}
-                {visibleColumns.has("specialties") && <div className="overflow-hidden text-ellipsis whitespace-nowrap text-pn-gray-2">{specs}</div>}
-                {visibleColumns.has("facility") && (
-                  <div className="overflow-hidden text-ellipsis whitespace-nowrap text-pn-gray-1" title={affiliatedWith}>{affiliatedWith}</div>
-                )}
-                {visibleColumns.has("network") && (
-                  <div className="overflow-hidden text-ellipsis whitespace-nowrap text-pn-gray-1" title={networks}>{networks}</div>
-                )}
-                {visibleColumns.has("status") && (
-                  <div>
-                    <PnTag status={p.status} />
-                  </div>
-                )}
-                {visibleColumns.has("rating") && (
-                  <div className="text-right font-semibold tabular-nums">{formatProviderRating(p.qualityRating, p.accessRating) ?? "—"}</div>
-                )}
+                {orderedVisibleColumns.map((key) => {
+                  switch (key) {
+                    case "providerId":
+                      return <div key={key} className="overflow-hidden text-ellipsis whitespace-nowrap text-pn-gray-2 tabular-nums">{shortId}</div>;
+                    case "name":
+                      return (
+                        <div key={key} className="min-w-0">
+                          <div className="overflow-hidden font-semibold text-ellipsis whitespace-nowrap">{primaryName}</div>
+                          <div className="overflow-hidden text-ellipsis whitespace-nowrap text-[11px] text-pn-gray-3">{p.externalId ?? ""}</div>
+                        </div>
+                      );
+                    case "type":
+                      return <div key={key} className="overflow-hidden text-ellipsis whitespace-nowrap text-pn-gray-1" title={typeNames}>{typeNames}</div>;
+                    case "countryCity":
+                      return (
+                        <div key={key} className="overflow-hidden text-ellipsis whitespace-nowrap text-pn-gray-1">
+                          {p.country.name}
+                          {p.addresses?.[0]?.city ? ` · ${p.addresses[0].city}` : ""}
+                        </div>
+                      );
+                    case "specialties":
+                      return <div key={key} className="overflow-hidden text-ellipsis whitespace-nowrap text-pn-gray-2">{specs}</div>;
+                    case "facility":
+                      return <div key={key} className="overflow-hidden text-ellipsis whitespace-nowrap text-pn-gray-1" title={affiliatedWith}>{affiliatedWith}</div>;
+                    case "network":
+                      return <div key={key} className="overflow-hidden text-ellipsis whitespace-nowrap text-pn-gray-1" title={networks}>{networks}</div>;
+                    case "status":
+                      return (
+                        <div key={key} className="min-w-0 overflow-hidden">
+                          <PnTag status={p.status} />
+                        </div>
+                      );
+                    case "rating":
+                      return (
+                        <div key={key} className={`overflow-hidden font-semibold whitespace-nowrap tabular-nums ${alignRatingRight ? "text-right" : ""}`}>
+                          {formatProviderRating(p.qualityRating, p.accessRating) ?? "—"}
+                        </div>
+                      );
+                  }
+                })}
               </div>
             );
           })}

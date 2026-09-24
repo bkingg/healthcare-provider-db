@@ -12,6 +12,7 @@ import { HeaderSearch } from "@/components/header-search";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { OpenTabsBar } from "@/components/open-tabs-bar";
 import { CloseRecordButton } from "@/components/close-record-button";
+import { PanelWidthsRoot } from "@/components/panel-widths-root";
 import { OpenTabsProvider } from "@/lib/open-tabs-context";
 
 async function logoutAction() {
@@ -48,9 +49,9 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <OpenTabsProvider>
-      <div className="flex h-screen flex-col overflow-hidden">
+      <PanelWidthsRoot className="flex h-screen flex-col overflow-hidden">
         <header className="flex h-[52px] flex-none items-stretch bg-pn-ink text-white">
-          <div data-r="brand" className="flex min-w-[248px] items-center gap-2.5 border-r-2 border-pn-gray-2 px-5 max-[1180px]:min-w-0 max-[1180px]:px-4">
+          <div data-r="brand" className="flex w-[var(--pn-nav-w,248px)] flex-none items-center overflow-hidden gap-2.5 border-r-2 border-pn-gray-2 px-5 max-[1180px]:w-auto max-[1180px]:px-4">
             <div className="h-3.5 w-3.5 flex-none bg-pn-accent" />
             <span data-r="navtext" className="max-[1180px]:hidden text-sm font-extrabold tracking-[-0.01em] whitespace-nowrap">
               {t("brand")}
@@ -100,7 +101,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           />
           <main className="flex min-w-0 flex-1 flex-col overflow-hidden">{children}</main>
         </div>
-      </div>
+      </PanelWidthsRoot>
     </OpenTabsProvider>
   );
 }

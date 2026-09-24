@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { haversineDistanceKm } from "../geo-math";
+import { circleBounds, haversineDistanceKm } from "../geo-math";
 
 describe("haversineDistanceKm", () => {
   it("is zero for the same point", () => {
@@ -25,5 +25,16 @@ describe("haversineDistanceKm", () => {
     const km = haversineDistanceKm({ lat: 0, lng: 0 }, { lat: 90, lng: 0 });
     expect(km).toBeGreaterThan(9900);
     expect(km).toBeLessThan(10100);
+  });
+});
+
+describe("circleBounds", () => {
+  it("encloses the circle: each edge is radiusKm from the center", () => {
+    const center = { lat: 14.6928, lng: -17.4467 };
+    const [[south, west], [north, east]] = circleBounds(center, 10);
+    expect(haversineDistanceKm(center, { lat: north, lng: center.lng })).toBeCloseTo(10, 1);
+    expect(haversineDistanceKm(center, { lat: south, lng: center.lng })).toBeCloseTo(10, 1);
+    expect(haversineDistanceKm(center, { lat: center.lat, lng: east })).toBeCloseTo(10, 1);
+    expect(haversineDistanceKm(center, { lat: center.lat, lng: west })).toBeCloseTo(10, 1);
   });
 });

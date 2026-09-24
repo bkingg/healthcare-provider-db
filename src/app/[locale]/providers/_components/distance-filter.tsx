@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { DEFAULT_RADIUS_KM, LABELLED_RADIUS_STOPS_KM, RADIUS_STOPS_KM, nearestRadiusStopIndex } from "./radius-stops";
 import type { SearchFilters } from "@/lib/validation/search";
 
 type RawParams = Record<string, string | string[] | undefined>;
@@ -13,15 +14,11 @@ type GeocodeResult = { label: string; lat: number; lng: number };
 const DEBOUNCE_MS = 500;
 const MIN_QUERY_LENGTH = 3;
 
-// Slider bounds — narrower than the server's validated range (0.1–20000km,
-// see radiusKm in src/lib/validation/search.ts) because that range only
-// exists to accommodate the map's freehand circle tool; a "distance from
-// point" search is inherently local, and a linear slider spanning 20000km
-// would make every practical value (a few km to a couple hundred) an
-// imprecise sliver at the very bottom.
-const MIN_RADIUS_KM = 1;
-const MAX_RADIUS_KM = 300;
-const DEFAULT_RADIUS_KM = 10;
+// The slider steps through RADIUS_STOPS_KM (1–10km, 20km, 100km) — far
+// narrower than the server's validated range (0.1–20000km, see radiusKm in
+// src/lib/validation/search.ts), which only exists to accommodate the map's
+// freehand circle tool.
+const LAST_STOP = RADIUS_STOPS_KM.length - 1;
 
 /** "Distance from point" filter — an address/venue typeahead (backed by
  * OpenStreetMap/Nominatim via /api/geocode/search) that resolves to a
@@ -52,14 +49,10 @@ export function DistanceFilter({
   const [results, setResults] = useState<GeocodeResult[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  // Clamped in case the active radius came from the map's freehand circle
-  // tool, which isn't bound by the slider's narrower range (see
-  // MAX_RADIUS_KM above) — an out-of-range `value` would desync the range
-  // input's real DOM value (which the browser clamps) from this state.
-  const [radiusKm, setRadiusKm] = useState(() => {
-    const initial = filters.radiusKm ?? DEFAULT_RADIUS_KM;
-    return Math.min(Math.max(initial, MIN_RADIUS_KM), MAX_RADIUS_KM);
-  });
+  // Position on the stepped scale, not km. A radius from the map's freehand
+  // circle tool (which can be any value) snaps to the nearest stop.
+  const [stopIndex, setStopIndex] = useState(() => nearestRadiusStopIndex(filters.radiusKm ?? DEFAULT_RADIUS_KM));
+  const radiusKm = RADIUS_STOPS_KM[stopIndex];
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -115,7 +108,7 @@ export function DistanceFilter({
   }
 
   return (
-    <div className="px-3.5 pt-3">
+    <div className="border-b border-pn-rule px-3.5 pt-2.5 pb-3">
       <div className="mb-[7px] text-[10px] tracking-[0.08em] text-pn-gray-3 uppercase">{t("distanceFromPoint")}</div>
       {/* Native GET form, not next-intl's Link — action needs the locale
        * prefix applied by hand since forms aren't intercepted like Link/router. */}
@@ -178,17 +171,39 @@ export function DistanceFilter({
             <span>{t("radiusKm")}</span>
             <span className="font-semibold text-pn-ink">{t("radiusKmValue", { km: radiusKm })}</span>
           </div>
+          {/* The range input moves through stop indexes; the hidden input
+           * is what the form actually submits, in km. */}
+          <input type="hidden" name="radiusKm" value={radiusKm} />
           <input
             type="range"
-            name="radiusKm"
-            min={MIN_RADIUS_KM}
-            max={MAX_RADIUS_KM}
+            min={0}
+            max={LAST_STOP}
             step={1}
-            value={radiusKm}
-            onChange={(e) => setRadiusKm(Number(e.target.value))}
+            value={stopIndex}
+            onChange={(e) => setStopIndex(Number(e.target.value))}
             aria-label={t("radiusKm")}
+            aria-valuetext={t("radiusKmValue", { km: radiusKm })}
             className="h-1.5 w-full cursor-pointer accent-pn-accent"
           />
+          {/* Scale labels under the notches they name. The steps aren't
+           * evenly spaced in km, so these show where 10/20/100 actually sit.
+           * Offsets assume the browser's ~16px range thumb, whose centre
+           * travels from 8px in from each end of the track. */}
+          <div aria-hidden className="relative h-3 text-[10px] text-pn-gray-3 tabular-nums">
+            {LABELLED_RADIUS_STOPS_KM.map((km) => {
+              const i = RADIUS_STOPS_KM.indexOf(km as (typeof RADIUS_STOPS_KM)[number]);
+              const edge = i === 0 ? "translate-x-0" : i === LAST_STOP ? "-translate-x-full" : "-translate-x-1/2";
+              return (
+                <span
+                  key={km}
+                  className={`absolute top-0 ${edge} ${km === radiusKm ? "font-semibold text-pn-ink" : ""}`}
+                  style={{ left: i === 0 ? 0 : i === LAST_STOP ? "100%" : `calc(8px + (100% - 16px) * ${i / LAST_STOP})` }}
+                >
+                  {km}
+                </span>
+              );
+            })}
+          </div>
         </div>
         <button
           type="submit"

@@ -12,7 +12,8 @@
     "administration": "Administration",
     "admin": "Listes de valeurs",
     "users": "Utilisateurs",
-    "reports": "Rapports et KPI"
+    "reports": "Rapports et KPI",
+    "resizeWorkspace": "Faites glisser pour redimensionner le panneau Espace de travail (double-clic pour réinitialiser)"
   },
   "Header": {
     "brand": "Provider Network",
@@ -178,8 +179,13 @@
     "title": "Recherche de prestataires",
     "resultsLabel": "résultats",
     "filters": "Filtres",
+    "chooseFilters": "Choisir les filtres",
+    "resetFilters": "Réinitialiser les filtres",
+    "filterInUse": "actif",
+    "allFiltersHidden": "Tous les filtres sont masqués.",
     "columns": "Colonnes",
-    "resetColumns": "Afficher toutes les colonnes",
+    "resetColumns": "Réinitialiser les colonnes",
+    "resetColumnWidths": "Réinitialiser la largeur des colonnes",
     "exportToMap": "Exporter vers la carte",
     "newProvider": "Nouveau prestataire",
     "clear": "Effacer ({count})",
@@ -221,7 +227,9 @@
     "needsLocationReview": "Nécessite une vérification",
     "availability": "Disponibilité",
     "isOpen24_7": "Établissement ouvert 24h/24 et 7j/7",
-    "erOpen24_7": "Urgences ouvertes 24h/24 et 7j/7"
+    "erOpen24_7": "Urgences ouvertes 24h/24 et 7j/7",
+    "resizeFilters": "Faites glisser pour redimensionner le panneau Filtres (double-clic pour réinitialiser)",
+    "resizeColumn": "Faites glisser pour redimensionner la colonne {column} (double-clic pour réinitialiser)"
   },
   "Profile": {
     "sectionNetworks": "Réseaux",
@@ -400,7 +408,9 @@
   },
   "Common": {
     "required": "requis",
-    "yes": "Oui"
+    "yes": "Oui",
+    "reorderItem": "Réordonner {item} (faites glisser, ou utilisez les flèches haut/bas)",
+    "movedItem": "{item} déplacé en position {position} sur {total}"
   },
   "Import": {
     "title": "Import groupé",
@@ -678,6 +688,8 @@
     "resultsCount": "{total} résultats",
     "resultsTruncated": "Affichage de {limit} sur {total} — affinez votre recherche pour en voir plus",
     "unmappedCount": "{count} sans localisation cartographiable",
-    "noResults": "Aucun prestataire ne correspond à ces filtres."
+    "noResults": "Aucun prestataire ne correspond à ces filtres.",
+    "searchPoint": "Point de recherche",
+    "searchPointNamed": "Point de recherche : {label}"
   }
 }

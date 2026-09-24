@@ -12,7 +12,8 @@
     "administration": "Administration",
     "admin": "Value lists",
     "users": "Users",
-    "reports": "Reports & KPIs"
+    "reports": "Reports & KPIs",
+    "resizeWorkspace": "Drag to resize the Workspace panel (double-click to reset)"
   },
   "Header": {
     "brand": "Provider Network",
@@ -178,8 +179,13 @@
     "title": "Provider search",
     "resultsLabel": "results",
     "filters": "Filters",
+    "chooseFilters": "Choose filters",
+    "resetFilters": "Reset filters",
+    "filterInUse": "in use",
+    "allFiltersHidden": "All filters are hidden.",
     "columns": "Columns",
-    "resetColumns": "Show all columns",
+    "resetColumns": "Reset columns",
+    "resetColumnWidths": "Reset column widths",
     "exportToMap": "Export to map",
     "newProvider": "New provider",
     "clear": "Clear ({count})",
@@ -221,7 +227,9 @@
     "needsLocationReview": "Needs location review",
     "availability": "Availability",
     "isOpen24_7": "Facility open 24/7",
-    "erOpen24_7": "Emergency room open 24/7"
+    "erOpen24_7": "Emergency room open 24/7",
+    "resizeFilters": "Drag to resize the Filters panel (double-click to reset)",
+    "resizeColumn": "Drag to resize the {column} column (double-click to reset)"
   },
   "Profile": {
     "sectionNetworks": "Networks",
@@ -400,7 +408,9 @@
   },
   "Common": {
     "required": "required",
-    "yes": "Yes"
+    "yes": "Yes",
+    "reorderItem": "Reorder {item} (drag, or use the up/down arrow keys)",
+    "movedItem": "{item} moved to position {position} of {total}"
   },
   "Import": {
     "title": "Bulk Import",
@@ -678,6 +688,8 @@
     "resultsCount": "{total} results",
     "resultsTruncated": "Showing {limit} of {total} — narrow your search to see more",
     "unmappedCount": "{count} without a mappable location",
-    "noResults": "No providers match these filters."
+    "noResults": "No providers match these filters.",
+    "searchPoint": "Search point",
+    "searchPointNamed": "Search point: {label}"
   }
 }

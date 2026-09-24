@@ -84,7 +84,7 @@ export function MapSearchView({
 
   const activeCircle =
     filters.lat !== undefined && filters.lng !== undefined && filters.radiusKm !== undefined
-      ? { lat: filters.lat, lng: filters.lng, radiusKm: filters.radiusKm }
+      ? { lat: filters.lat, lng: filters.lng, radiusKm: filters.radiusKm, label: filters.pointLabel }
       : null;
 
   function navigate(overrides: Record<string, string | undefined>) {

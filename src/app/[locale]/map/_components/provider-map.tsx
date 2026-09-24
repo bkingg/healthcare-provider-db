@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Circle, Tooltip, useMap, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import type L from "leaflet";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { PnTag } from "@/components/pn-tag";
-import { getMarkerIcon } from "./marker-icons";
-import { haversineDistanceKm } from "./geo-math";
+import { getMarkerIcon, getSearchPointIcon, searchPointHeight } from "./marker-icons";
+import { circleBounds, haversineDistanceKm } from "./geo-math";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
@@ -25,32 +25,60 @@ export type MapProvider = {
   coordinateStatus: string;
 };
 
+export type SearchCircle = { lat: number; lng: number; radiusKm: number; label?: string };
+
 const DAKAR_FALLBACK_CENTER: [number, number] = [14.7167, -17.4677];
 
 /** Fits the map to the current marker set exactly once per distinct id set
  * (a filter change), rather than fighting the user's own pan/zoom on every
  * render — re-fitting on every render would make "Search this area" and the
  * circle tool unusable (the view would snap back as soon as the data
- * refetches). */
-function FitToMarkers({ providers }: { providers: MapProvider[] }) {
+ * refetches).
+ *
+ * With a distance-from-point search active, the frame also takes in the
+ * whole search circle, so the search point stays in view even when no
+ * provider falls inside the radius. */
+function FitToMarkers({ providers, circle }: { providers: MapProvider[]; circle: SearchCircle | null }) {
   const map = useMap();
   const idsKey = providers
     .map((p) => p.id)
     .sort()
     .join(",");
+  const circleKey = circle ? `${circle.lat},${circle.lng},${circle.radiusKm}` : "";
 
   useEffect(() => {
-    if (providers.length === 0) return;
-    if (providers.length === 1) {
-      map.setView([providers[0].lat, providers[0].lng], 13);
+    const bounds = providers.map((p): [number, number] => [p.lat, p.lng]);
+    if (circle) bounds.push(...circleBounds(circle, circle.radiusKm));
+    if (bounds.length === 0) return;
+    if (bounds.length === 1) {
+      map.setView(bounds[0], 13);
       return;
     }
-    const bounds = providers.map((p): [number, number] => [p.lat, p.lng]);
     map.fitBounds(bounds, { padding: [32, 32], maxZoom: 15 });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- refit only when the *set* of markers changes, not on every render
-  }, [idsKey]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refit only when the *set* of markers (or the search circle) changes, not on every render
+  }, [idsKey, circleKey]);
 
   return null;
+}
+
+/** The distance search's point of interest: a red person standing on the
+ * search point, resized on every zoom change (see searchPointHeight) so it
+ * scales with the map like a real landmark would. Drawn above provider
+ * markers and clusters (zIndexOffset) — the point of the search must stay
+ * visible, and cluster bubbles covered it completely at zoomed-out views.
+ * Anchored at its feet, the figure stands *above* the point, so a provider
+ * marker centred on the same spot stays mostly visible and clickable. */
+function SearchPointMarker({ circle }: { circle: SearchCircle }) {
+  const t = useTranslations("Map");
+  const map = useMap();
+  const [zoom, setZoom] = useState(() => map.getZoom());
+  useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
+
+  return (
+    <Marker position={[circle.lat, circle.lng]} icon={getSearchPointIcon(searchPointHeight(zoom))} zIndexOffset={10000} keyboard={false}>
+      <Tooltip direction="top">{circle.label ? t("searchPointNamed", { label: circle.label }) : t("searchPoint")}</Tooltip>
+    </Marker>
+  );
 }
 
 /** "Search this area": shows a floating button once the user pans/zooms away
@@ -148,7 +176,7 @@ export function ProviderMap({
   providers: MapProvider[];
   selectedProviderId: string | null;
   onSelectProvider: (id: string | null) => void;
-  activeCircle: { lat: number; lng: number; radiusKm: number } | null;
+  activeCircle: SearchCircle | null;
   circleToolActive: boolean;
   onSearchArea: (bounds: L.LatLngBounds) => void;
   onCircleComplete: (center: { lat: number; lng: number }, radiusKm: number) => void;
@@ -175,7 +203,7 @@ export function ProviderMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors'
         />
-        <FitToMarkers providers={providers} />
+        <FitToMarkers providers={providers} circle={activeCircle} />
         <SearchThisAreaControl onSearchArea={onSearchArea} />
         {/* Keyed on active: remounts on toggle so center/edge reset cleanly
          * without a setState-in-effect (React flags that as a footgun —
@@ -189,6 +217,7 @@ export function ProviderMap({
             pathOptions={{ color: "#0e8455", fillOpacity: 0.06 }}
           />
         )}
+        {activeCircle && <SearchPointMarker circle={activeCircle} />}
         <MarkerClusterGroup chunkedLoading>
           {providers.map((p) => (
             <Marker

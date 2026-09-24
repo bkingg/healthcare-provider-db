@@ -15,3 +15,16 @@ export function haversineDistanceKm(a: { lat: number; lng: number }, b: { lat: n
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
   return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(h));
 }
+
+/** South-west and north-east corners of the box enclosing a circle — lets
+ * the map frame a distance-from-point search's whole circle (and so its
+ * center point) even when no provider falls inside it. Flat-earth
+ * approximation, which is plenty for framing a viewport at search radii. */
+export function circleBounds(center: { lat: number; lng: number }, radiusKm: number): [[number, number], [number, number]] {
+  const dLat = (radiusKm / EARTH_RADIUS_KM) * (180 / Math.PI);
+  const dLng = dLat / Math.max(Math.cos((center.lat * Math.PI) / 180), 0.01);
+  return [
+    [center.lat - dLat, center.lng - dLng],
+    [center.lat + dLat, center.lng + dLng],
+  ];
+}
