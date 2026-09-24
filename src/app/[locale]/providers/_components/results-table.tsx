@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { localizedText } from "@/lib/localizedText";
 import { useRouter, Link } from "@/i18n/navigation";
 import { PnTag } from "@/components/pn-tag";
+import { DoNotUseFlag } from "@/components/do-not-use-flag";
 import { ResizeHandle } from "@/components/resize-handle";
 import { usePanelWidths } from "@/lib/panel-widths";
 import type { searchProviders } from "@/data/search";
@@ -183,7 +184,10 @@ export function ResultsTable({
                     case "name":
                       return (
                         <div key={key} className="min-w-0">
-                          <div className="overflow-hidden font-semibold text-ellipsis whitespace-nowrap">{primaryName}</div>
+                          <div className="flex min-w-0 items-center gap-1.5 font-semibold">
+                            <DoNotUseFlag status={p.status} />
+                            <span className="overflow-hidden text-ellipsis whitespace-nowrap">{primaryName}</span>
+                          </div>
                           <div className="overflow-hidden text-ellipsis whitespace-nowrap text-[11px] text-pn-gray-3">{p.externalId ?? ""}</div>
                         </div>
                       );

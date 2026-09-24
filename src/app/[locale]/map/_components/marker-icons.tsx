@@ -9,15 +9,15 @@ const iconCache = new Map<string, L.DivIcon>();
  * the pin from MarkerPin, with its tip on the provider's exact location.
  * Styles come from the provider type's admin-set icon/color (see
  * resolveMarkerStyle), so they're cached per icon+color pair rather than
- * per type code. */
-export function getMarkerIcon(style: MarkerStyle): L.DivIcon {
-  const key = `${style.icon}|${style.color}`;
+ * per type code. A DO_NOT_USE provider's pin carries a red flag badge. */
+export function getMarkerIcon(style: MarkerStyle, doNotUse = false): L.DivIcon {
+  const key = `${style.icon}|${style.color}|${doNotUse ? "dnu" : ""}`;
   const cached = iconCache.get(key);
   if (cached) return cached;
 
   const icon = L.divIcon({
     className: "pn-marker",
-    html: renderToStaticMarkup(<MarkerPin style={style} />),
+    html: renderToStaticMarkup(<MarkerPin style={style} doNotUse={doNotUse} />),
     iconSize: [PIN_WIDTH, PIN_HEIGHT],
     iconAnchor: [PIN_WIDTH / 2, PIN_HEIGHT - 1.5],
     popupAnchor: [0, -PIN_HEIGHT + 4],

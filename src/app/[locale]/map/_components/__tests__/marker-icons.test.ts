@@ -60,3 +60,11 @@ describe("getSearchPointIcon", () => {
     expect(getSearchPointIcon(30)).toBe(getSearchPointIcon(30));
   });
 });
+
+describe("getMarkerIcon for DO_NOT_USE providers", () => {
+  it("caches flagged and unflagged pins separately", () => {
+    const style = { icon: "building", color: "#1d4ed8" } as const;
+    expect(getMarkerIcon(style, true)).not.toBe(getMarkerIcon(style, false));
+    expect(getMarkerIcon(style, true).options.html).toContain("#dc2626");
+  });
+});

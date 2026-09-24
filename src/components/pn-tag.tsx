@@ -1,7 +1,10 @@
-const KIND_CLASS: Record<"active" | "pending" | "exception" | "inactive", string> = {
+const KIND_CLASS: Record<"active" | "pending" | "exception" | "danger" | "inactive", string> = {
   active: "bg-pn-ink text-white",
   pending: "bg-pn-accent-soft text-[#08432c]",
   exception: "bg-pn-accent text-white",
+  // Reserved for DO_NOT_USE — a provider that must not be used gets an
+  // unmistakable red, not the green shared by every other exception.
+  danger: "bg-[#dc2626] text-white",
   inactive: "border-2 border-pn-border-muted text-pn-gray-2",
 };
 
@@ -34,7 +37,7 @@ const STATUS_TO_KIND: Record<string, keyof typeof KIND_CLASS> = {
   TERMINATED: "exception",
   EXPIRED: "exception",
   CLOSED: "exception",
-  DO_NOT_USE: "exception",
+  DO_NOT_USE: "danger",
   MISSING: "exception",
   TEMPORARILY_CLOSED: "exception",
   PERMANENTLY_CLOSED: "exception",
@@ -51,7 +54,7 @@ const STATUS_TO_KIND: Record<string, keyof typeof KIND_CLASS> = {
   LOW: "inactive",
 };
 
-/** Mockup's `tag(kind)` helper — 4 fixed visual kinds every status-shaped
+/** Mockup's `tag(kind)` helper — 5 fixed visual kinds every status-shaped
  * value (ProviderStatus, DqStatus, severity labels, ...) maps onto. */
 export function PnTag({ status, className = "" }: { status: string; className?: string }) {
   const kind = STATUS_TO_KIND[status] ?? "inactive";

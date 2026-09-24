@@ -445,7 +445,9 @@
     "required": "requis",
     "yes": "Oui",
     "reorderItem": "Réordonner {item} (faites glisser, ou utilisez les flèches haut/bas)",
-    "movedItem": "{item} déplacé en position {position} sur {total}"
+    "movedItem": "{item} déplacé en position {position} sur {total}",
+    "doNotUse": "Ne pas utiliser",
+    "doNotUseWarning": "NE PAS UTILISER — ce prestataire ne doit pas être utilisé."
   },
   "Import": {
     "title": "Import groupé",

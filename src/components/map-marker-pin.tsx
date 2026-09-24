@@ -11,6 +11,7 @@ import {
   Dna,
   Ear,
   Eye,
+  Flag,
   HandHeart,
   HeartPulse,
   Hospital,
@@ -64,7 +65,7 @@ export const PIN_HEIGHT = 40;
  * as plain SVG so the same markup serves both the Leaflet icon (via
  * renderToStaticMarkup, see map/_components/marker-icons.tsx) and the live
  * preview in the admin value list editor. */
-export function MarkerPin({ style, height = PIN_HEIGHT }: { style: MarkerStyle; height?: number }) {
+export function MarkerPin({ style, height = PIN_HEIGHT, doNotUse = false }: { style: MarkerStyle; height?: number; doNotUse?: boolean }) {
   const Icon = MAP_ICON_COMPONENTS[style.icon];
   const width = (height * PIN_WIDTH) / PIN_HEIGHT;
   return (
@@ -84,6 +85,15 @@ export function MarkerPin({ style, height = PIN_HEIGHT }: { style: MarkerStyle; 
         strokeLinejoin="round"
       />
       <Icon x={7.5} y={7.5} width={15} height={15} strokeWidth={2.4} color={glyphColorFor(style.color)} />
+      {/* DO_NOT_USE badge: red disc with a white flag on the pin's
+       * top-right shoulder, overlapping the edge so it reads as a warning
+       * attached to the provider rather than part of its type icon. */}
+      {doNotUse && (
+        <g>
+          <circle cx={25.5} cy={4.5} r={6.5} fill="#dc2626" stroke="#ffffff" strokeWidth={1.75} />
+          <Flag x={21.5} y={0.5} width={8} height={8} strokeWidth={2.6} color="#ffffff" fill="#ffffff" />
+        </g>
+      )}
     </svg>
   );
 }

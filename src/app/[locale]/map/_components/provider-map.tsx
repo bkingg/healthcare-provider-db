@@ -7,6 +7,7 @@ import type L from "leaflet";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { PnTag } from "@/components/pn-tag";
+import { DoNotUseFlag } from "@/components/do-not-use-flag";
 import { getClusterIcon, getMarkerIcon, getSearchPointIcon, searchPointHeight } from "./marker-icons";
 import type { MarkerStyle } from "@/lib/mapMarkerStyle";
 import { circleBounds, haversineDistanceKm } from "./geo-math";
@@ -19,6 +20,8 @@ export type MapProvider = {
   name: string;
   /** Resolved from the primary provider type (see resolveMarkerStyle). */
   marker: MarkerStyle;
+  /** Status DO_NOT_USE — the pin gets a red flag badge. */
+  doNotUse: boolean;
   typeName: string;
   status: string;
   ratingLabel?: string;
@@ -234,7 +237,7 @@ export function ProviderMap({
             <Marker
               key={p.id}
               position={[p.lat, p.lng]}
-              icon={getMarkerIcon(p.marker)}
+              icon={getMarkerIcon(p.marker, p.doNotUse)}
               zIndexOffset={PROVIDER_PIN_Z}
               ref={(ref) => {
                 if (ref) markerRefs.current.set(p.id, ref);
@@ -244,7 +247,15 @@ export function ProviderMap({
             >
               <Popup>
                 <div className="flex min-w-[180px] flex-col gap-1">
-                  <div className="text-[13px] font-bold text-pn-ink">{p.name}</div>
+                  <div className="flex items-center gap-1.5 text-[13px] font-bold text-pn-ink">
+                    <DoNotUseFlag status={p.status} />
+                    {p.name}
+                  </div>
+                  {p.doNotUse && (
+                    <div>
+                      <PnTag status={p.status} />
+                    </div>
+                  )}
                   <div className="text-xs text-pn-gray-2">{p.typeName}</div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs text-pn-gray-2">{t("popupRating")}:</span>

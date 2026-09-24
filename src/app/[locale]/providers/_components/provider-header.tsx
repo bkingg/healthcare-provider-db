@@ -6,6 +6,7 @@ import { Link } from "@/i18n/navigation";
 import { CheckCircle2, ClipboardCopy, Copy, History, Pencil } from "lucide-react";
 import { setProviderStatusAction, updateProviderCoreAction, verifyProviderRecordAction } from "@/app/[locale]/providers/actions";
 import { PnTag } from "@/components/pn-tag";
+import { DoNotUseFlag } from "@/components/do-not-use-flag";
 import { HoverTip } from "@/components/ui/tooltip";
 import { RefSelect } from "@/components/ref-select";
 import { FieldError } from "@/components/field-error";
@@ -285,7 +286,10 @@ export function ProviderHeader({
             </Link>
             <CopyIdButton code={formatProviderNumber(provider.providerNumber)} />
           </div>
-          <h1 className="mt-[5px] text-[26px] font-extrabold tracking-[-0.025em]">{displayName}</h1>
+          <h1 className="mt-[5px] flex items-center gap-2 text-[26px] font-extrabold tracking-[-0.025em]">
+            <DoNotUseFlag status={provider.status} size={22} />
+            {displayName}
+          </h1>
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             <span className="border-2 border-pn-ink px-[7px] py-px text-[11px] font-semibold">
               {(primaryProviderType && localizedText(primaryProviderType.providerType.nameEn, primaryProviderType.providerType.nameFr, locale)) ?? t("noType")}

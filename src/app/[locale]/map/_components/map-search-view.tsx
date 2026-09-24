@@ -9,6 +9,7 @@ import { resolveMarkerStyle } from "@/lib/mapMarkerStyle";
 import { CircleDot, List, MapIcon } from "lucide-react";
 import { useRouter } from "@/i18n/navigation";
 import { PnTag } from "@/components/pn-tag";
+import { DoNotUseFlag, isDoNotUse } from "@/components/do-not-use-flag";
 import type { searchProvidersForMap } from "@/data/search";
 import type { SearchFilters } from "@/lib/validation/search";
 import type { MapProvider } from "./provider-map";
@@ -32,6 +33,7 @@ function toMapProvider(p: Provider, locale: string): MapProvider | null {
     id: p.id,
     name: p.names[0]?.fullNameText ?? p.id,
     marker: resolveMarkerStyle(primaryType?.providerType),
+    doNotUse: isDoNotUse(p.status),
     typeName: (primaryType && localizedText(primaryType.providerType.nameEn, primaryType.providerType.nameFr, locale)) ?? "—",
     status: p.status,
     ratingLabel: formatProviderRating(p.qualityRating, p.accessRating) ?? undefined,
@@ -170,7 +172,10 @@ export function MapSearchView({
                 className={`block w-full cursor-pointer border-b border-pn-rule px-3.5 py-2.5 text-left ${selected ? "bg-pn-surface-hover" : "hover:bg-pn-surface-hover"}`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-[12.5px] font-semibold text-pn-ink">{p.names[0]?.fullNameText ?? p.id}</span>
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <DoNotUseFlag status={p.status} />
+                    <span className="truncate text-[12.5px] font-semibold text-pn-ink">{p.names[0]?.fullNameText ?? p.id}</span>
+                  </span>
                   <PnTag status={p.status} />
                 </div>
                 <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-pn-gray-2">

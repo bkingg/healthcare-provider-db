@@ -445,7 +445,9 @@
     "required": "required",
     "yes": "Yes",
     "reorderItem": "Reorder {item} (drag, or use the up/down arrow keys)",
-    "movedItem": "{item} moved to position {position} of {total}"
+    "movedItem": "{item} moved to position {position} of {total}",
+    "doNotUse": "Do not use",
+    "doNotUseWarning": "DO NOT USE — this provider must not be used."
   },
   "Import": {
     "title": "Bulk Import",
