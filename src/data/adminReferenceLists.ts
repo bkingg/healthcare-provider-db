@@ -40,6 +40,8 @@ const DELEGATES: Record<ReferenceListKey, AnyDelegate> = {
   dataQualityRules: prisma.dqRuleRef,
   userRoles: prisma.userRole,
   uiHints: prisma.uiHintRef,
+  organizations: prisma.organizationRef,
+  memberRelationships: prisma.memberRelationshipRef,
 };
 
 /** Every row, active or not — unlike referenceData.ts's listX() helpers

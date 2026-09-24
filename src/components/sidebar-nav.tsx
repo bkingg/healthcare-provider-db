@@ -12,6 +12,7 @@ import {
   Search,
   Upload,
   Users,
+  UsersRound,
 } from "lucide-react";
 
 type WorkspaceItem = {
@@ -28,12 +29,14 @@ export function SidebarNav({
   canEditValueLists,
   canManageUsers,
   canViewReports,
+  canManageMembers,
 }: {
   latestBatchLabel: string | null;
   openExceptionCount: number;
   canEditValueLists: boolean;
   canManageUsers: boolean;
   canViewReports: boolean;
+  canManageMembers: boolean;
 }) {
   const t = useTranslations("Nav");
   const pathname = usePathname();
@@ -50,6 +53,7 @@ export function SidebarNav({
     { href: "/providers/new", label: t("newProvider"), icon: FilePlus, badge: "DRAFT", match: (p) => p === "/providers/new" },
     { href: "/import", label: t("bulkImport"), icon: Upload, badge: openExceptionCount ? String(openExceptionCount) : undefined, match: (p) => p.startsWith("/import") },
     { href: "/map", label: t("geospatialSearch"), icon: MapIcon, match: (p) => p === "/map" },
+    ...(canManageMembers ? [{ href: "/members", label: t("members"), icon: UsersRound, match: (p: string) => p.startsWith("/members") }] : []),
   ];
 
   const adminItems: WorkspaceItem[] = [

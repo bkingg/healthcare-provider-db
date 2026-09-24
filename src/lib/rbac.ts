@@ -28,6 +28,10 @@ export function canEditProviderData(actor: Actor): boolean {
   return role(actor)?.canEditProviderData ?? false;
 }
 
+export function canManageMembers(actor: Actor): boolean {
+  return role(actor)?.canManageMembers ?? false;
+}
+
 /** Null means unlimited. Applied to both `searchProviders` and
  * `searchProvidersForMap` so a capped role can't bypass the limit by
  * switching screens. A per-user override (User.maxSearchResults, editable on
@@ -50,6 +54,10 @@ export function requireEditProviderData(actor: Actor) {
 
 export function requireManageUsers(actor: Actor) {
   if (!canManageUsers(actor)) throw new Error("Not authorized to manage users");
+}
+
+export function requireManageMembers(actor: Actor) {
+  if (!canManageMembers(actor)) throw new Error("Not authorized to manage members");
 }
 
 export function requireEditValueLists(actor: Actor) {

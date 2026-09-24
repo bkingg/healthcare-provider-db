@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { LogOut, KeyRound } from "lucide-react";
 import { auth, signOut } from "@/lib/auth";
 import { getCurrentActor } from "@/lib/actor";
-import { canEditValueLists, canManageUsers, canViewReports } from "@/lib/rbac";
+import { canEditValueLists, canManageMembers, canManageUsers, canViewReports } from "@/lib/rbac";
 import { getLatestImportBatch } from "@/data/importBatches";
 import { countOpenExceptions } from "@/data/dataQualityExceptions";
 import { Link } from "@/i18n/navigation";
@@ -98,6 +98,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             canEditValueLists={canEditValueLists(actor)}
             canManageUsers={canManageUsers(actor)}
             canViewReports={canViewReports(actor)}
+            canManageMembers={canManageMembers(actor)}
           />
           <main className="flex min-w-0 flex-1 flex-col overflow-hidden">{children}</main>
         </div>

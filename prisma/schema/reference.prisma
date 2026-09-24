@@ -169,6 +169,7 @@ model CountryRef {
 
   providers Provider[]
   addresses Address[]
+  members   Member[]
 
   @@map("country_ref")
 }

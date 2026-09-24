@@ -462,9 +462,56 @@ async function main() {
     }
   }
 
+  // Demo members (step 1.1): one group household through a demo employer
+  // and one individual member, so the Members screens have realistic data.
+  // Keyed on email so re-running the demo seed doesn't duplicate them.
+  const demoEmployer = await prisma.organizationRef.upsert({
+    where: { code: "DEMO-EMPLOYER" },
+    update: {},
+    create: { code: "DEMO-EMPLOYER", name: "Demo Employer SA", kind: "EMPLOYER" },
+  });
+  const spouse = await prisma.memberRelationshipRef.findUniqueOrThrow({ where: { code: "SPOUSE" } });
+  const child = await prisma.memberRelationshipRef.findUniqueOrThrow({ where: { code: "CHILD" } });
+  const primary = await prisma.member.upsert({
+    where: { email: "awa.ndiaye.demo@example.com" },
+    update: {},
+    create: {
+      firstName: "Awa", lastName: "Ndiaye", email: "awa.ndiaye.demo@example.com", phone: "+221 77 555 01 01",
+      dateOfBirth: new Date("1986-04-12"), sex: "FEMALE", preferredLanguage: "fr", countryId: senegal.id, city: "Dakar",
+      organizationId: demoEmployer.id, planName: "Standard", policyNumber: "DEMO-0001",
+      coverageStart: new Date("2026-01-01"), coverageEnd: new Date("2026-12-31"),
+      createdBy: systemUser.id, updatedBy: systemUser.id,
+    },
+  });
+  const householdDefs = [
+    { firstName: "Moussa", lastName: "Ndiaye", email: "moussa.ndiaye.demo@example.com", dateOfBirth: "1983-09-02", sex: "MALE" as const, relationshipId: spouse.id },
+    { firstName: "Fatou", lastName: "Ndiaye", email: null, dateOfBirth: "2015-06-21", sex: "FEMALE" as const, relationshipId: child.id },
+  ];
+  for (const d of householdDefs) {
+    const exists = await prisma.member.findFirst({ where: { primaryMemberId: primary.id, firstName: d.firstName } });
+    if (exists) continue;
+    await prisma.member.create({
+      data: {
+        firstName: d.firstName, lastName: d.lastName, email: d.email, dateOfBirth: new Date(d.dateOfBirth), sex: d.sex,
+        preferredLanguage: "fr", countryId: senegal.id, city: "Dakar", primaryMemberId: primary.id, relationshipId: d.relationshipId,
+        organizationId: demoEmployer.id, planName: "Standard", policyNumber: "DEMO-0001",
+        createdBy: systemUser.id, updatedBy: systemUser.id,
+      },
+    });
+  }
+  await prisma.member.upsert({
+    where: { email: "jean.diop.demo@example.com" },
+    update: {},
+    create: {
+      firstName: "Jean", lastName: "Diop", email: "jean.diop.demo@example.com", dateOfBirth: new Date("1979-11-30"), sex: "MALE",
+      preferredLanguage: "en", countryId: senegal.id, city: "Saint-Louis", createdBy: systemUser.id, updatedBy: systemUser.id,
+    },
+  });
+
   console.log("Senegal demo data seeded:", {
     facilities: facilityDefs.length + (hpd ? 1 : 0),
     physicians: doctorDefs.length,
+    members: await prisma.member.count(),
   });
 }
 

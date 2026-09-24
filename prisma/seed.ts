@@ -29,6 +29,7 @@ async function main() {
         canViewReports: true,
         canManageUsers: true,
         canEditProviderData: true,
+        canManageMembers: true,
       },
     }),
     prisma.userRole.upsert({
@@ -329,6 +330,17 @@ async function main() {
       languages: { create: [{ languageId: english.id }] },
     },
   });
+
+  // Nomad members (step 1.1): how a dependent relates to its primary member.
+  // Admin-editable afterwards in Value lists > Member relationships.
+  await Promise.all(
+    [
+      { code: "SPOUSE", nameEn: "Spouse", nameFr: "Conjoint(e)", sortOrder: 1 },
+      { code: "CHILD", nameEn: "Child", nameFr: "Enfant", sortOrder: 2 },
+      { code: "PARENT", nameEn: "Parent", nameFr: "Parent", sortOrder: 3 },
+      { code: "OTHER", nameEn: "Other", nameFr: "Autre", sortOrder: 4 },
+    ].map((r) => prisma.memberRelationshipRef.upsert({ where: { code: r.code }, update: {}, create: r })),
+  );
 
   console.log("Seed complete:", { systemUser: systemUser.email, testProvider: testProvider.id, countries: [senegal, usa, france, nigeria, uk].map((c) => c.iso2) });
   console.log(`Log in as ${systemUser.email} / ${DEV_ADMIN_PASSWORD} — you'll be forced to change this password on first login.`);

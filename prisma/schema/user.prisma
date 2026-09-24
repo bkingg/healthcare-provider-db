@@ -63,6 +63,8 @@ model UserRole {
   canViewReports      Boolean  @default(false) @map("can_view_reports")
   canManageUsers      Boolean  @default(false) @map("can_manage_users")
   canEditProviderData Boolean  @default(false) @map("can_edit_provider_data")
+  /// View, add and edit Nomad members and their dependents (Members screens).
+  canManageMembers    Boolean  @default(false) @map("can_manage_members")
   /// Caps how many rows a search can return for a user with this role — null
   /// means unlimited. Exists to let a Site Administrator restrict
   /// lower-privileged roles (e.g. an outsourced Case Manager) from

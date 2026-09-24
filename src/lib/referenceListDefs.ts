@@ -52,6 +52,8 @@ export const REFERENCE_LIST_KEYS = [
   "dataQualityRules",
   "userRoles",
   "uiHints",
+  "organizations",
+  "memberRelationships",
 ] as const;
 
 export type ReferenceListKey = (typeof REFERENCE_LIST_KEYS)[number];
@@ -410,9 +412,35 @@ export const REFERENCE_LIST_DEFS = {
       { key: "canViewReports", labelKey: "canViewReports", kind: "checkbox" },
       { key: "canManageUsers", labelKey: "canManageUsers", kind: "checkbox" },
       { key: "canEditProviderData", labelKey: "canEditProviderData", kind: "checkbox" },
+      { key: "canManageMembers", labelKey: "canManageMembers", kind: "checkbox" },
       { key: "maxSearchResults", labelKey: "maxSearchResults", kind: "number", integer: true },
     ],
     defaultOrderBy: { name: "asc" },
+  },
+  organizations: {
+    key: "organizations",
+    labelKey: "organizations",
+    model: "OrganizationRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "name",
+    fields: [
+      { key: "name", labelKey: "name", kind: "text", required: true },
+      { key: "kind", labelKey: "organizationKind", kind: "select", required: true, options: ["EMPLOYER", "INSURER", "OTHER"] },
+    ],
+    defaultOrderBy: { name: "asc" },
+  },
+  memberRelationships: {
+    key: "memberRelationships",
+    labelKey: "memberRelationships",
+    model: "MemberRelationshipRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "nameEn",
+    fields: [
+      { key: "nameEn", labelKey: "nameEn", kind: "text", required: true },
+      { key: "nameFr", labelKey: "nameFr", kind: "text" },
+      { key: "sortOrder", labelKey: "sortOrder", kind: "number", integer: true },
+    ],
+    defaultOrderBy: [{ sortOrder: "asc" }, { nameEn: "asc" }] as Record<string, "asc" | "desc">[],
   },
   uiHints: {
     key: "uiHints",

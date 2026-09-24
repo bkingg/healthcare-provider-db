@@ -1,0 +1,100 @@
+/// Nomad members: primary members and their dependents in one table. A
+/// primary member has no primaryMemberId; a dependent points at its primary
+/// and says how it's related. Households are one level deep — a dependent
+/// can't have dependents of its own (enforced in src/data/members.ts).
+/// Members come both through groups (an employer or insurer, with optional
+/// plan/policy/coverage fields) and as individuals (no organization).
+model Member {
+  id                String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Short human-facing ID, shown as MBR-000123 (see lib/memberNumber.ts).
+  memberNumber      Int         @unique @default(autoincrement()) @map("member_number")
+  firstName         String      @map("first_name")
+  lastName          String      @map("last_name")
+  dateOfBirth       DateTime?   @map("date_of_birth") @db.Date
+  sex               MemberSex   @default(UNSPECIFIED)
+  /// Stored lowercased. Unique across members because it's the member's
+  /// sign-in identity (magic link by email, step 1.2); optional because
+  /// children and members without email can't sign in themselves.
+  email             String?     @unique
+  phone             String?
+  /// "fr" or "en" — the member app's language.
+  preferredLanguage String      @default("fr") @map("preferred_language")
+  countryId         String?     @map("country_id") @db.Uuid
+  country           CountryRef? @relation(fields: [countryId], references: [id])
+  city              String?
+
+  primaryMemberId String?                @map("primary_member_id") @db.Uuid
+  primaryMember   Member?                @relation("Household", fields: [primaryMemberId], references: [id], onDelete: Restrict)
+  dependents      Member[]               @relation("Household")
+  relationshipId  String?                @map("relationship_id") @db.Uuid
+  relationship    MemberRelationshipRef? @relation(fields: [relationshipId], references: [id])
+
+  organizationId String?          @map("organization_id") @db.Uuid
+  organization   OrganizationRef? @relation(fields: [organizationId], references: [id])
+  planName       String?          @map("plan_name")
+  policyNumber   String?          @map("policy_number")
+  coverageStart  DateTime?        @map("coverage_start") @db.Date
+  coverageEnd    DateTime?        @map("coverage_end") @db.Date
+
+  status    MemberStatus @default(ACTIVE)
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  createdBy String?      @map("created_by") @db.Uuid
+  updatedBy String?      @map("updated_by") @db.Uuid
+
+  @@index([primaryMemberId])
+  @@index([organizationId])
+  @@index([lastName, firstName])
+  @@map("member")
+}
+
+enum MemberSex {
+  FEMALE
+  MALE
+  UNSPECIFIED
+}
+
+enum MemberStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum OrganizationKind {
+  EMPLOYER
+  INSURER
+  OTHER
+}
+
+/// Employers, insurers and other groups members come through — a managed
+/// list (Admin > Value lists > Organizations) so group names stay
+/// consistent for filtering and reporting.
+model OrganizationRef {
+  id        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String           @unique
+  name      String
+  kind      OrganizationKind @default(EMPLOYER)
+  isActive  Boolean          @default(true) @map("is_active")
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  members Member[]
+
+  @@map("organization_ref")
+}
+
+/// How a dependent relates to its primary member (spouse, child, parent,
+/// other) — editable in Admin > Value lists.
+model MemberRelationshipRef {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  nameEn    String   @map("name_en")
+  nameFr    String?  @map("name_fr")
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  members Member[]
+
+  @@map("member_relationship_ref")
+}
