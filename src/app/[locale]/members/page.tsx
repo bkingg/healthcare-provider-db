@@ -1,6 +1,6 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { localizedText } from "@/lib/localizedText";
-import { Search } from "lucide-react";
+import { FileUp, Search } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { getCurrentActor } from "@/lib/actor";
 import { requireManageMembers } from "@/lib/rbac";
@@ -39,7 +39,15 @@ export default async function MembersPage(props: PageProps<"/[locale]/members">)
             {total > limit && <span className="ml-2 font-semibold text-pn-accent">{t("showingFirst", { limit })}</span>}
           </div>
         </div>
-        <MemberFormDialog mode="create" options={formOptions} />
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/members/import"
+            className="flex h-8 items-center gap-[7px] border-2 border-pn-ink bg-transparent px-3 text-xs font-semibold hover:bg-pn-surface-hover"
+          >
+            <FileUp size={14} /> {t("importMembers")}
+          </Link>
+          <MemberFormDialog mode="create" options={formOptions} />
+        </div>
       </div>
 
       {/* Plain GET form: the search lives in the URL, so it survives a
