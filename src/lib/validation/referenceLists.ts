@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { REFERENCE_LIST_DEFS, type FieldDef, type ReferenceListKey } from "@/lib/referenceListDefs";
+import { MAP_ICON_KEYS } from "@/lib/mapMarkerStyle";
 import { checkboxValue, optionalString, requiredString } from "./common";
 
 /** One schema shape covers every field kind the admin tab's generic form
@@ -40,6 +41,22 @@ function schemaForField(f: FieldDef): z.ZodTypeAny {
     }
     case "checkbox":
       return checkboxValue;
+    // Both optional: empty clears the override (stored as null) so the type
+    // goes back to its built-in default.
+    case "mapIcon":
+      return z
+        .string()
+        .trim()
+        .optional()
+        .transform((v) => (v ? v : null))
+        .pipe(z.enum(MAP_ICON_KEYS).nullable());
+    case "color":
+      return z
+        .string()
+        .trim()
+        .optional()
+        .transform((v) => (v ? v.toLowerCase() : null))
+        .pipe(z.string().regex(/^#[0-9a-f]{6}$/, "Must be a #rrggbb color").nullable());
   }
 }
 

@@ -187,6 +187,12 @@ model ProviderTypeRef {
   nameFr      String?           @map("name_fr")
   description String?
   sortOrder   Int               @default(0) @map("sort_order")
+  /// Map marker style, editable in Admin > Value lists > Provider types.
+  /// Null means "use the built-in default for this type's code" (see
+  /// src/lib/mapMarkerStyle.ts). mapIcon is one of MAP_ICON_KEYS; mapColor
+  /// is a #rrggbb hex.
+  mapIcon     String?           @map("map_icon")
+  mapColor    String?           @map("map_color")
   isActive    Boolean           @default(true) @map("is_active")
   createdAt   DateTime          @default(now()) @map("created_at")
   updatedAt   DateTime          @updatedAt @map("updated_at")

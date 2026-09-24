@@ -7,7 +7,8 @@ import type L from "leaflet";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { PnTag } from "@/components/pn-tag";
-import { getMarkerIcon, getSearchPointIcon, searchPointHeight } from "./marker-icons";
+import { getClusterIcon, getMarkerIcon, getSearchPointIcon, searchPointHeight } from "./marker-icons";
+import type { MarkerStyle } from "@/lib/mapMarkerStyle";
 import { circleBounds, haversineDistanceKm } from "./geo-math";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
@@ -16,7 +17,8 @@ import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 export type MapProvider = {
   id: string;
   name: string;
-  typeCode?: string;
+  /** Resolved from the primary provider type (see resolveMarkerStyle). */
+  marker: MarkerStyle;
   typeName: string;
   status: string;
   ratingLabel?: string;
@@ -24,6 +26,11 @@ export type MapProvider = {
   lng: number;
   coordinateStatus: string;
 };
+
+// Marker layering, bottom to top: cluster bubbles (plugin default, no
+// offset), the search-point figure, individual provider pins.
+const SEARCH_POINT_Z = 10000;
+const PROVIDER_PIN_Z = 20000;
 
 export type SearchCircle = { lat: number; lng: number; radiusKm: number; label?: string };
 
@@ -63,11 +70,11 @@ function FitToMarkers({ providers, circle }: { providers: MapProvider[]; circle:
 
 /** The distance search's point of interest: a red person standing on the
  * search point, resized on every zoom change (see searchPointHeight) so it
- * scales with the map like a real landmark would. Drawn above provider
- * markers and clusters (zIndexOffset) — the point of the search must stay
- * visible, and cluster bubbles covered it completely at zoomed-out views.
- * Anchored at its feet, the figure stands *above* the point, so a provider
- * marker centred on the same spot stays mostly visible and clickable. */
+ * scales with the map like a real landmark would. Layered (zIndexOffset)
+ * above cluster bubbles — which covered it completely at zoomed-out views —
+ * but beneath individual provider pins (PROVIDER_PIN_Z), so a provider at
+ * the exact search point is never hidden; the figure is taller than a pin,
+ * so its head still marks the spot. */
 function SearchPointMarker({ circle }: { circle: SearchCircle }) {
   const t = useTranslations("Map");
   const map = useMap();
@@ -75,7 +82,7 @@ function SearchPointMarker({ circle }: { circle: SearchCircle }) {
   useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
 
   return (
-    <Marker position={[circle.lat, circle.lng]} icon={getSearchPointIcon(searchPointHeight(zoom))} zIndexOffset={10000} keyboard={false}>
+    <Marker position={[circle.lat, circle.lng]} icon={getSearchPointIcon(searchPointHeight(zoom))} zIndexOffset={SEARCH_POINT_Z} keyboard={false}>
       <Tooltip direction="top">{circle.label ? t("searchPointNamed", { label: circle.label }) : t("searchPoint")}</Tooltip>
     </Marker>
   );
@@ -199,7 +206,11 @@ export function ProviderMap({
       <MapContainer center={initialCenter} zoom={11} className="h-full w-full" scrollWheelZoom>
         {/* Required OpenStreetMap attribution — always visible, per OSM's
          * license terms, not just noted in a footer. */}
+        {/* Base map toned down (40% less saturated) so everything drawn from
+         * the database — provider pins, clusters, the search circle and
+         * point — stands out from OpenStreetMap's own colours. */}
         <TileLayer
+          className="saturate-[.6]"
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors'
         />
@@ -218,12 +229,13 @@ export function ProviderMap({
           />
         )}
         {activeCircle && <SearchPointMarker circle={activeCircle} />}
-        <MarkerClusterGroup chunkedLoading>
+        <MarkerClusterGroup chunkedLoading iconCreateFunction={(cluster: { getChildCount(): number }) => getClusterIcon(cluster.getChildCount())}>
           {providers.map((p) => (
             <Marker
               key={p.id}
               position={[p.lat, p.lng]}
-              icon={getMarkerIcon(p.typeCode)}
+              icon={getMarkerIcon(p.marker)}
+              zIndexOffset={PROVIDER_PIN_Z}
               ref={(ref) => {
                 if (ref) markerRefs.current.set(p.id, ref);
                 else markerRefs.current.delete(p.id);

@@ -156,7 +156,42 @@
       "canViewReports": "Can view reports",
       "canManageUsers": "Can manage users",
       "canEditProviderData": "Can edit provider records",
-      "maxSearchResults": "Max search results (blank = unlimited)"
+      "maxSearchResults": "Max search results (blank = unlimited)",
+      "mapIcon": "Map icon",
+      "mapColor": "Map color"
+    },
+    "marker": {
+      "default": "Default",
+      "defaultIcon": "Default icon for this type",
+      "defaultColor": "Default color for this type",
+      "custom": "Custom",
+      "customColor": "Custom color",
+      "preview": "Map preview",
+      "icons": {
+        "hospital": "Hospital",
+        "stethoscope": "Stethoscope",
+        "building": "Building",
+        "pill": "Pill",
+        "heart-pulse": "Heart pulse",
+        "microscope": "Microscope",
+        "ambulance": "Ambulance",
+        "baby": "Baby",
+        "bone": "Bone",
+        "brain": "Brain",
+        "eye": "Eye",
+        "ear": "Ear",
+        "smile": "Smile (dental)",
+        "syringe": "Syringe",
+        "test-tube": "Test tube",
+        "dna": "DNA",
+        "activity": "Activity",
+        "cross": "Cross",
+        "briefcase-medical": "Medical kit",
+        "hand-heart": "Hand with heart",
+        "accessibility": "Accessibility",
+        "house": "House",
+        "map-pin": "Map pin"
+      }
     }
   },
   "Login": {

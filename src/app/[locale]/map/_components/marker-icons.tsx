@@ -1,68 +1,47 @@
 import L from "leaflet";
 import { renderToStaticMarkup } from "react-dom/server";
-import { Building2, HeartPulse, Hospital, MapPin, Microscope, Pill, Stethoscope } from "lucide-react";
-import type { ComponentType } from "react";
-
-/** One icon per current `ProviderTypeRef` leaf code (see the 6 TYPE-level
- * rows seeded in this app — HOSPITAL/PHYSICIAN/CLINIC/PHARMACY/HEALTH_CENTER/
- * DIAGNOSTIC_CENTER). Any future/unknown code falls back to a generic pin
- * rather than throwing, since this is keyed off free-form reference data a
- * steward can add to. */
-const PROVIDER_TYPE_ICON_COMPONENT: Record<string, ComponentType<{ size?: number; strokeWidth?: number; color?: string }>> = {
-  HOSPITAL: Hospital,
-  PHYSICIAN: Stethoscope,
-  CLINIC: Building2,
-  PHARMACY: Pill,
-  HEALTH_CENTER: HeartPulse,
-  DIAGNOSTIC_CENTER: Microscope,
-};
-const DEFAULT_ICON_COMPONENT = MapPin;
-
-/** Distinct border colors per type so clustered/zoomed-out markers are still
- * visually distinguishable at a glance, on top of the icon shape itself. */
-const PROVIDER_TYPE_COLOR: Record<string, string> = {
-  HOSPITAL: "#0e8455",
-  PHYSICIAN: "#8b5cf6",
-  CLINIC: "#2563eb",
-  PHARMACY: "#d97706",
-  HEALTH_CENTER: "#dc2626",
-  DIAGNOSTIC_CENTER: "#0891b2",
-};
-const DEFAULT_COLOR = "#52625a";
+import { MarkerPin, PIN_HEIGHT, PIN_WIDTH } from "@/components/map-marker-pin";
+import type { MarkerStyle } from "@/lib/mapMarkerStyle";
 
 const iconCache = new Map<string, L.DivIcon>();
 
-/** Builds (and caches) the small type-specific marker icon for a
- * `ProviderTypeRef.code`. Cached per code since the same handful of icons
- * are reused across every marker on the map. */
-export function getMarkerIcon(typeCode: string | undefined): L.DivIcon {
-  const key = typeCode ?? "__default__";
+/** Builds (and caches) the Leaflet icon for a provider's marker style —
+ * the pin from MarkerPin, with its tip on the provider's exact location.
+ * Styles come from the provider type's admin-set icon/color (see
+ * resolveMarkerStyle), so they're cached per icon+color pair rather than
+ * per type code. */
+export function getMarkerIcon(style: MarkerStyle): L.DivIcon {
+  const key = `${style.icon}|${style.color}`;
   const cached = iconCache.get(key);
   if (cached) return cached;
 
-  const Icon = (typeCode && PROVIDER_TYPE_ICON_COMPONENT[typeCode]) || DEFAULT_ICON_COMPONENT;
-  const color = (typeCode && PROVIDER_TYPE_COLOR[typeCode]) || DEFAULT_COLOR;
-  const svg = renderToStaticMarkup(<Icon size={14} strokeWidth={2.5} color="#14201a" />);
-
   const icon = L.divIcon({
     className: "pn-marker",
-    html: `<span style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;background:#fff;border:2px solid ${color};border-radius:50%;box-shadow:0 1px 2px rgba(20,32,26,0.3);">${svg}</span>`,
-    iconSize: [26, 26],
-    iconAnchor: [13, 13],
-    popupAnchor: [0, -13],
+    html: renderToStaticMarkup(<MarkerPin style={style} />),
+    iconSize: [PIN_WIDTH, PIN_HEIGHT],
+    iconAnchor: [PIN_WIDTH / 2, PIN_HEIGHT - 1.5],
+    popupAnchor: [0, -PIN_HEIGHT + 4],
   });
   iconCache.set(key, icon);
   return icon;
 }
 
-/** Small colored dot used in the marker-cluster's own icon (see
- * provider-map.tsx) and anywhere else a compact type legend swatch is
- * useful, without pulling in a full marker. */
-export function getProviderTypeColor(typeCode: string | undefined): string {
-  return (typeCode && PROVIDER_TYPE_COLOR[typeCode]) || DEFAULT_COLOR;
+/** Cluster bubble in the app's own style — solid ink with a white count
+ * and ring — replacing the marker-cluster plugin's default translucent
+ * green/yellow/orange, which read as map areas (parks, fields) rather than
+ * grouped database records. Grows a little with the count. */
+export function getClusterIcon(count: number): L.DivIcon {
+  const size = count < 10 ? 34 : count < 100 ? 40 : 46;
+  return L.divIcon({
+    className: "pn-cluster",
+    html:
+      `<span style="display:flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;` +
+      `border-radius:50%;background:#14201a;color:#fff;border:3px solid #fff;` +
+      `box-shadow:0 0 0 2px #14201a,0 2px 4px rgba(20,32,26,0.4);font:700 13px/1 var(--font-archivo),system-ui,sans-serif">${count}</span>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+  });
 }
-
-export { PROVIDER_TYPE_ICON_COMPONENT, DEFAULT_ICON_COMPONENT };
 
 const SEARCH_POINT_MIN_HEIGHT = 20;
 const SEARCH_POINT_MAX_HEIGHT = 56;

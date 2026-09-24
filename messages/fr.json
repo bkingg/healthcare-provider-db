@@ -156,7 +156,42 @@
       "canViewReports": "Peut consulter les rapports",
       "canManageUsers": "Peut gérer les utilisateurs",
       "canEditProviderData": "Peut modifier les fiches prestataires",
-      "maxSearchResults": "Nombre max. de résultats de recherche (vide = illimité)"
+      "maxSearchResults": "Nombre max. de résultats de recherche (vide = illimité)",
+      "mapIcon": "Icône sur la carte",
+      "mapColor": "Couleur sur la carte"
+    },
+    "marker": {
+      "default": "Défaut",
+      "defaultIcon": "Icône par défaut pour ce type",
+      "defaultColor": "Couleur par défaut pour ce type",
+      "custom": "Personnalisée",
+      "customColor": "Couleur personnalisée",
+      "preview": "Aperçu sur la carte",
+      "icons": {
+        "hospital": "Hôpital",
+        "stethoscope": "Stéthoscope",
+        "building": "Bâtiment",
+        "pill": "Comprimé",
+        "heart-pulse": "Pouls cardiaque",
+        "microscope": "Microscope",
+        "ambulance": "Ambulance",
+        "baby": "Bébé",
+        "bone": "Os",
+        "brain": "Cerveau",
+        "eye": "Œil",
+        "ear": "Oreille",
+        "smile": "Sourire (dentaire)",
+        "syringe": "Seringue",
+        "test-tube": "Tube à essai",
+        "dna": "ADN",
+        "activity": "Activité",
+        "cross": "Croix",
+        "briefcase-medical": "Trousse médicale",
+        "hand-heart": "Main avec cœur",
+        "accessibility": "Accessibilité",
+        "house": "Maison",
+        "map-pin": "Repère"
+      }
     }
   },
   "Login": {

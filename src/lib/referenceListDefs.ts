@@ -62,7 +62,13 @@ export type FieldDef =
   | { key: string; labelKey: string; kind: "number"; required?: boolean; integer?: boolean }
   | { key: string; labelKey: string; kind: "select"; required?: boolean; options: string[] }
   | { key: string; labelKey: string; kind: "refSelect"; required?: boolean; refListKey: ReferenceListKey }
-  | { key: string; labelKey: string; kind: "checkbox" };
+  | { key: string; labelKey: string; kind: "checkbox" }
+  /** One of MAP_ICON_KEYS (src/lib/mapMarkerStyle.ts), picked from an icon
+   * grid; empty = the type's built-in default. */
+  | { key: string; labelKey: string; kind: "mapIcon" }
+  /** A #rrggbb color, picked from recommended swatches or a custom color
+   * input; empty = the type's built-in default. */
+  | { key: string; labelKey: string; kind: "color" };
 
 /** Narrows a FieldDef to its refSelect variant — a plain `f.kind ===
  * "refSelect"` inline predicate doesn't type-check against the individual
@@ -109,6 +115,8 @@ export const REFERENCE_LIST_DEFS = {
       { key: "parentId", labelKey: "parent", kind: "refSelect", refListKey: "providerTypes" },
       { key: "description", labelKey: "description", kind: "textarea" },
       { key: "sortOrder", labelKey: "sortOrder", kind: "number", integer: true },
+      { key: "mapIcon", labelKey: "mapIcon", kind: "mapIcon" },
+      { key: "mapColor", labelKey: "mapColor", kind: "color" },
     ],
     defaultOrderBy: [{ level: "asc" }, { sortOrder: "asc" }] as Record<string, "asc" | "desc">[],
   },

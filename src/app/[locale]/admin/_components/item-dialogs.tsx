@@ -14,6 +14,8 @@ import { FieldError } from "@/components/field-error";
 import { SubmitButton } from "@/components/submit-button";
 import type { FieldDef, ReferenceListDef, ReferenceListKey } from "@/lib/referenceListDefs";
 import type { ActionResult } from "@/lib/validation/common";
+import { resolveMarkerStyle } from "@/lib/mapMarkerStyle";
+import { MapIconPicker, MarkerColorPicker } from "./marker-style-fields";
 
 type RefOptions = Partial<Record<ReferenceListKey, { id: string; label: string }[]>>;
 type ReferenceItem = Record<string, unknown> & { id: string; updatedAt: Date };
@@ -42,6 +44,23 @@ function ReferenceItemFields({
   errors: Record<string, string[] | undefined>;
   item?: ReferenceItem;
 }) {
+  // The map-marker pickers are controlled (unlike the rest of this form) so
+  // the color picker's pin preview can follow the icon picker live.
+  const iconField = def.fields.find((f) => f.kind === "mapIcon");
+  const colorField = def.fields.find((f) => f.kind === "color");
+  const [markerDraft, setMarkerDraft] = useState<Record<string, string>>(() => ({
+    ...(iconField && { [iconField.key]: textValue(item, iconField.key) ?? "" }),
+    ...(colorField && { [colorField.key]: textValue(item, colorField.key) ?? "" }),
+  }));
+  const code = textValue(item, def.codeField.key);
+  const defaultMarker = resolveMarkerStyle({ code });
+  const previewMarker = resolveMarkerStyle({
+    code,
+    mapIcon: iconField ? markerDraft[iconField.key] : undefined,
+    mapColor: colorField ? markerDraft[colorField.key] : undefined,
+  });
+  const setMarkerField = (key: string) => (value: string) => setMarkerDraft((d) => ({ ...d, [key]: value }));
+
   function renderField(field: FieldDef) {
     const label = t(`fields.${field.labelKey}`);
     switch (field.kind) {
@@ -108,6 +127,33 @@ function ReferenceItemFields({
           <div key={field.key} className="flex items-center gap-2 self-end pb-2">
             <Checkbox id={field.key} name={field.key} defaultChecked={item ? Boolean(item[field.key]) : false} />
             <Label htmlFor={field.key}>{label}</Label>
+          </div>
+        );
+      case "mapIcon":
+        return (
+          <div key={field.key} className="col-span-2 flex flex-col gap-1">
+            <MapIconPicker
+              name={field.key}
+              label={label}
+              value={markerDraft[field.key] ?? ""}
+              defaultStyle={defaultMarker}
+              onChange={setMarkerField(field.key)}
+            />
+            <FieldError messages={errors[field.key]} />
+          </div>
+        );
+      case "color":
+        return (
+          <div key={field.key} className="col-span-2 flex flex-col gap-1">
+            <MarkerColorPicker
+              name={field.key}
+              label={label}
+              value={markerDraft[field.key] ?? ""}
+              defaultStyle={defaultMarker}
+              previewStyle={previewMarker}
+              onChange={setMarkerField(field.key)}
+            />
+            <FieldError messages={errors[field.key]} />
           </div>
         );
     }

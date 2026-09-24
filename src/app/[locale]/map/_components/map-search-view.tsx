@@ -5,6 +5,7 @@ import { formatProviderRating } from "@/lib/providerRating";
 import dynamic from "next/dynamic";
 import { useLocale, useTranslations } from "next-intl";
 import { localizedText } from "@/lib/localizedText";
+import { resolveMarkerStyle } from "@/lib/mapMarkerStyle";
 import { CircleDot, List, MapIcon } from "lucide-react";
 import { useRouter } from "@/i18n/navigation";
 import { PnTag } from "@/components/pn-tag";
@@ -30,7 +31,7 @@ function toMapProvider(p: Provider, locale: string): MapProvider | null {
   return {
     id: p.id,
     name: p.names[0]?.fullNameText ?? p.id,
-    typeCode: primaryType?.providerType.code,
+    marker: resolveMarkerStyle(primaryType?.providerType),
     typeName: (primaryType && localizedText(primaryType.providerType.nameEn, primaryType.providerType.nameFr, locale)) ?? "—",
     status: p.status,
     ratingLabel: formatProviderRating(p.qualityRating, p.accessRating) ?? undefined,

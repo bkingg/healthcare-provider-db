@@ -12,6 +12,8 @@ import { EditItemDialog } from "./item-dialogs";
 import { ManageRegionCountriesDialog } from "./manage-region-countries-dialog";
 import { useExtraColumns } from "./reference-column-visibility";
 import type { FieldDef, ReferenceListDef, ReferenceListKey } from "@/lib/referenceListDefs";
+import { MAP_ICON_COMPONENTS } from "@/components/map-marker-pin";
+import { isHexColor, isMapIconKey } from "@/lib/mapMarkerStyle";
 
 type RefOptions = Partial<Record<ReferenceListKey, { id: string; label: string }[]>>;
 type ClientItem = Record<string, unknown> & { id: string; isActive: boolean; updatedAt: Date };
@@ -34,6 +36,20 @@ function ExtraColumnCell({ field, item, refOptions }: { field: FieldDef; item: C
       const label = refOptions[field.refListKey]?.find((o) => o.id === raw)?.label;
       return label ? <>{label}</> : <span className="text-pn-gray-3">—</span>;
     }
+    case "mapIcon": {
+      if (!isMapIconKey(raw)) return <>{String(raw)}</>;
+      const Icon = MAP_ICON_COMPONENTS[raw];
+      return <Icon size={16} aria-label={raw} />;
+    }
+    case "color":
+      return isHexColor(raw) ? (
+        <span className="inline-flex items-center gap-1.5 tabular-nums">
+          <span className="inline-block h-3.5 w-3.5 border border-pn-rule" style={{ background: raw }} />
+          {raw}
+        </span>
+      ) : (
+        <>{String(raw)}</>
+      );
     case "textarea":
       return (
         <span className="block max-w-[260px] truncate" title={String(raw)}>

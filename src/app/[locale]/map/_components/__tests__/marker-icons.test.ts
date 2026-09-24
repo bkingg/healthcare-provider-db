@@ -1,36 +1,38 @@
 import { describe, expect, it } from "vitest";
-import { getMarkerIcon, getProviderTypeColor, getSearchPointIcon, searchPointHeight } from "../marker-icons";
-
-const KNOWN_TYPE_CODES = ["HOSPITAL", "PHYSICIAN", "CLINIC", "PHARMACY", "HEALTH_CENTER", "DIAGNOSTIC_CENTER"];
+import { getClusterIcon, getMarkerIcon, getSearchPointIcon, searchPointHeight } from "../marker-icons";
+import { DEFAULT_TYPE_MARKER_STYLES, FALLBACK_MARKER_STYLE, resolveMarkerStyle } from "@/lib/mapMarkerStyle";
 
 describe("getMarkerIcon", () => {
-  it("resolves every known provider type code to an icon without throwing", () => {
-    for (const code of KNOWN_TYPE_CODES) {
-      expect(() => getMarkerIcon(code)).not.toThrow();
-    }
+  it("builds a pin for every built-in type style, each one distinct", () => {
+    const html = Object.values(DEFAULT_TYPE_MARKER_STYLES).map((style) => getMarkerIcon(style).options.html);
+    expect(new Set(html).size).toBe(Object.keys(DEFAULT_TYPE_MARKER_STYLES).length);
   });
 
-  it("gives each known type a distinct icon", () => {
-    const html = KNOWN_TYPE_CODES.map((code) => getMarkerIcon(code).options.html);
-    expect(new Set(html).size).toBe(KNOWN_TYPE_CODES.length);
+  it("fills the pin with the style's color and puts its tip on the location", () => {
+    const icon = getMarkerIcon({ icon: "hospital", color: "#7c3aed" });
+    expect(icon.options.html).toContain('fill="#7c3aed"');
+    expect(icon.options.iconSize).toEqual([30, 40]);
+    // Tip of the teardrop, centred horizontally at the bottom.
+    expect(icon.options.iconAnchor).toEqual([15, 38.5]);
   });
 
-  it("falls back to a default icon for an unknown code, without throwing", () => {
-    expect(() => getMarkerIcon("SOME_FUTURE_TYPE")).not.toThrow();
-    expect(() => getMarkerIcon(undefined)).not.toThrow();
+  it("renders an admin-chosen style for a type the app has no default for", () => {
+    const style = resolveMarkerStyle({ code: "DENTAL", mapIcon: "smile", mapColor: "#be185d" });
+    expect(getMarkerIcon(style).options.html).toContain('fill="#be185d"');
+    expect(() => getMarkerIcon(FALLBACK_MARKER_STYLE)).not.toThrow();
   });
 
-  it("caches the icon instance per code", () => {
-    expect(getMarkerIcon("HOSPITAL")).toBe(getMarkerIcon("HOSPITAL"));
+  it("caches the icon instance per icon+color", () => {
+    expect(getMarkerIcon({ icon: "pill", color: "#ea580c" })).toBe(getMarkerIcon({ icon: "pill", color: "#ea580c" }));
   });
 });
 
-describe("getProviderTypeColor", () => {
-  it("gives every known type a color and unknown codes a fallback", () => {
-    for (const code of KNOWN_TYPE_CODES) {
-      expect(getProviderTypeColor(code)).toMatch(/^#[0-9a-f]{6}$/i);
-    }
-    expect(getProviderTypeColor("SOME_FUTURE_TYPE")).toMatch(/^#[0-9a-f]{6}$/i);
+describe("getClusterIcon", () => {
+  it("shows the count and grows with it", () => {
+    expect(getClusterIcon(7).options.html).toContain(">7<");
+    const small = getClusterIcon(5).options.iconSize as [number, number];
+    const large = getClusterIcon(250).options.iconSize as [number, number];
+    expect(large[0]).toBeGreaterThan(small[0]);
   });
 });
 
