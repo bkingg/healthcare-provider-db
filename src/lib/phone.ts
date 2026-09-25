@@ -1,4 +1,4 @@
-import { AsYouType, getCountries, getCountryCallingCode, getExampleNumber, isSupportedCountry, type CountryCode } from "libphonenumber-js/min";
+import { AsYouType, getCountries, getCountryCallingCode, getExampleNumber, isSupportedCountry, parsePhoneNumberFromString, type CountryCode } from "libphonenumber-js/min";
 import examples from "libphonenumber-js/examples.mobile.json";
 
 /** "+" plus the country's dialing code (e.g. "SN" -> "+221") — used to
@@ -90,4 +90,16 @@ export function reformatForCountry(value: string, fromIso2: string, toIso2: stri
   const digitsOnly = value.replace(/\D/g, "");
   const nationalDigits = isSupportedCountry(fromIso2) ? stripOwnDialCode(digitsOnly, fromIso2 as CountryCode) : digitsOnly;
   return truncateAndFormat(nationalDigits, toIso2 as CountryCode);
+}
+
+/** A callback number as typed by a member ("77 123 45 67", "+221771234567",
+ * "00221 77…") → international format ("+221 77 123 45 67"), or null if it
+ * isn't a valid number. Numbers without a country code are read as
+ * `defaultCountry` — Senegal unless the member's own country says otherwise. */
+export function normalizeCallbackPhone(raw: string, defaultCountry: string = "SN"): string | null {
+  const cleaned = raw.trim().replace(/^00/, "+");
+  if (!cleaned) return null;
+  const country = isSupportedCountry(defaultCountry) ? (defaultCountry as CountryCode) : "SN";
+  const parsed = parsePhoneNumberFromString(cleaned, country);
+  return parsed?.isValid() ? parsed.formatInternational() : null;
 }

@@ -42,6 +42,8 @@ const DELEGATES: Record<ReferenceListKey, AnyDelegate> = {
   uiHints: prisma.uiHintRef,
   organizations: prisma.organizationRef,
   memberRelationships: prisma.memberRelationshipRef,
+  caseCategories: prisma.caseCategoryRef,
+  emergencyContacts: prisma.emergencyContactRef,
 };
 
 /** Every row, active or not — unlike referenceData.ts's listX() helpers

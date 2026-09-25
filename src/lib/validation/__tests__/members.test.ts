@@ -28,3 +28,19 @@ describe("member form validation", () => {
     expect(createMemberSchema.safeParse({ ...base, dateOfBirth: "2999-01-01" }).success).toBe(false);
   });
 });
+
+describe("member request: WhatsApp flag", () => {
+  it("is on only when the switch sent 1", async () => {
+    const { memberRequestSchema } = await import("@/lib/validation/memberRequest");
+    const base = {
+      patientId: "11111111-1111-4111-8111-111111111111",
+      categoryId: "22222222-2222-4222-8222-222222222222",
+      description: "Nous cherchons un pédiatre.",
+      urgency: "ROUTINE",
+      contactPhone: "77 123 45 67",
+    };
+    expect(memberRequestSchema.parse({ ...base, contactHasWhatsapp: "1" }).contactHasWhatsapp).toBe(true);
+    expect(memberRequestSchema.parse({ ...base, contactHasWhatsapp: "" }).contactHasWhatsapp).toBe(false);
+    expect(memberRequestSchema.parse(base).contactHasWhatsapp).toBe(false);
+  });
+});

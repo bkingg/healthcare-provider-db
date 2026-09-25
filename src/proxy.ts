@@ -29,6 +29,12 @@ export async function proxy(request: NextRequest) {
   const routeSegment = segments[1];
   const isPublicRoute = routeSegment !== undefined && PUBLIC_SEGMENTS.has(routeSegment);
 
+  // The member app (/m) has its own sign-in (src/lib/memberAuth.ts) and
+  // checks it in its own layouts; staff auth doesn't apply there. Every
+  // other route below stays behind the staff login, so a member session can
+  // never reach a staff page.
+  if (routeSegment === "m") return intlResponse;
+
   const session = await auth();
 
   if (!session?.user && !isPublicRoute) {

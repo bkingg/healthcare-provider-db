@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countryCallingCode, formatPhoneInput, phoneCountries, reformatForCountry } from "@/lib/phone";
+import { countryCallingCode, formatPhoneInput, normalizeCallbackPhone, phoneCountries, reformatForCountry } from "@/lib/phone";
 
 describe("countryCallingCode", () => {
   it("returns the dial code for a supported country", () => {
@@ -58,5 +58,23 @@ describe("phoneCountries", () => {
     expect(countries).toContainEqual({ iso2: "SN", name: "Senegal", callingCode: "221" });
     const names = countries.map((c) => c.name);
     expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+  });
+});
+
+describe("normalizeCallbackPhone", () => {
+  it("formats Senegalese numbers typed without a country code", () => {
+    expect(normalizeCallbackPhone("77 123 45 67")).toBe("+221 77 123 45 67");
+    expect(normalizeCallbackPhone("771234567")).toBe("+221 77 123 45 67");
+    expect(normalizeCallbackPhone("76 773 2001")).toBe("+221 76 773 20 01");
+  });
+  it("keeps numbers that already have a country code, including 00-prefixed", () => {
+    expect(normalizeCallbackPhone("+221771234567")).toBe("+221 77 123 45 67");
+    expect(normalizeCallbackPhone("0033 6 12 34 56 78")).toBe("+33 6 12 34 56 78");
+  });
+  it("reads numbers without a code in the member's own country", () => {
+    expect(normalizeCallbackPhone("06 12 34 56 78", "FR")).toBe("+33 6 12 34 56 78");
+  });
+  it("rejects things that aren't phone numbers", () => {
+    for (const bad of ["", "   ", "12", "hello", "77 12"]) expect(normalizeCallbackPhone(bad)).toBeNull();
   });
 });

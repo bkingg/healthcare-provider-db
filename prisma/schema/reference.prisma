@@ -170,6 +170,7 @@ model CountryRef {
   providers Provider[]
   addresses Address[]
   members   Member[]
+  emergencyContacts EmergencyContactRef[]
 
   @@map("country_ref")
 }

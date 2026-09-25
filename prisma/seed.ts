@@ -342,6 +342,32 @@ async function main() {
     ].map((r) => prisma.memberRelationshipRef.upsert({ where: { code: r.code }, update: {}, create: r })),
   );
 
+  // Member app (step 1.2): what members can ask for help with. Admin-editable
+  // afterwards in Value lists > Request categories.
+  await Promise.all(
+    [
+      { code: "FIND_DOCTOR", nameEn: "Find a doctor", nameFr: "Trouver un médecin", sortOrder: 1 },
+      { code: "BOOK_APPOINTMENT", nameEn: "Book an appointment", nameFr: "Prendre rendez-vous", sortOrder: 2 },
+      { code: "URGENT_CARE", nameEn: "Urgent care", nameFr: "Soins urgents", sortOrder: 3 },
+      { code: "MEDICATION", nameEn: "Medication", nameFr: "Médicaments", sortOrder: 4 },
+      { code: "SECOND_OPINION", nameEn: "Second opinion", nameFr: "Deuxième avis", sortOrder: 5 },
+      { code: "BILLING", nameEn: "Billing question", nameFr: "Question de facturation", sortOrder: 6 },
+      { code: "OTHER", nameEn: "Other", nameFr: "Autre", sortOrder: 7 },
+    ].map((c) => prisma.caseCategoryRef.upsert({ where: { code: c.code }, update: {}, create: c })),
+  );
+
+  // Numbers the member app always shows: Senegal's public emergency services
+  // (confirmed by Nomad) and Nomad's own line (shown in every country).
+  // Admin-editable in Value lists > Emergency numbers.
+  await Promise.all(
+    [
+      { code: "NOMAD_LINE", labelEn: "Nomad assistance line", labelFr: "Ligne d'assistance Nomad", phone: "+221 76 773 2001", kind: "NOMAD" as const, countryId: null, sortOrder: 0 },
+      { code: "SN_SAMU", labelEn: "SAMU (ambulance)", labelFr: "SAMU (ambulance)", phone: "1515", kind: "PUBLIC" as const, countryId: senegal.id, sortOrder: 1 },
+      { code: "SN_POLICE", labelEn: "Police", labelFr: "Police", phone: "17", kind: "PUBLIC" as const, countryId: senegal.id, sortOrder: 2 },
+      { code: "SN_FIRE", labelEn: "Fire brigade", labelFr: "Sapeurs-pompiers", phone: "18", kind: "PUBLIC" as const, countryId: senegal.id, sortOrder: 3 },
+    ].map((c) => prisma.emergencyContactRef.upsert({ where: { code: c.code }, update: {}, create: c })),
+  );
+
   console.log("Seed complete:", { systemUser: systemUser.email, testProvider: testProvider.id, countries: [senegal, usa, france, nigeria, uk].map((c) => c.iso2) });
   console.log(`Log in as ${systemUser.email} / ${DEV_ADMIN_PASSWORD} — you'll be forced to change this password on first login.`);
 }

@@ -5,7 +5,6 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import "./globals.css";
 import { routing } from "@/i18n/routing";
-import { AppShell } from "@/components/app-shell";
 
 const archivo = Archivo({
   variable: "--font-archivo",
@@ -33,7 +32,9 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[lo
     <html lang={locale} className={`${archivo.variable} h-full antialiased`}>
       <body className="h-full font-pn text-[13px] text-pn-ink">
         <NextIntlClientProvider>
-          <AppShell>{children}</AppShell>
+          {/* Staff chrome lives in (staff)/layout.tsx; the member app in
+           * (member)/ has its own phone-first layout. */}
+          {children}
         </NextIntlClientProvider>
       </body>
     </html>

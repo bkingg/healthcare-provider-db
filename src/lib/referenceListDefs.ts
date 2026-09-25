@@ -54,6 +54,8 @@ export const REFERENCE_LIST_KEYS = [
   "uiHints",
   "organizations",
   "memberRelationships",
+  "caseCategories",
+  "emergencyContacts",
 ] as const;
 
 export type ReferenceListKey = (typeof REFERENCE_LIST_KEYS)[number];
@@ -441,6 +443,35 @@ export const REFERENCE_LIST_DEFS = {
       { key: "sortOrder", labelKey: "sortOrder", kind: "number", integer: true },
     ],
     defaultOrderBy: [{ sortOrder: "asc" }, { nameEn: "asc" }] as Record<string, "asc" | "desc">[],
+  },
+  caseCategories: {
+    key: "caseCategories",
+    labelKey: "caseCategories",
+    model: "CaseCategoryRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "nameEn",
+    fields: [
+      { key: "nameEn", labelKey: "nameEn", kind: "text", required: true },
+      { key: "nameFr", labelKey: "nameFr", kind: "text" },
+      { key: "sortOrder", labelKey: "sortOrder", kind: "number", integer: true },
+    ],
+    defaultOrderBy: [{ sortOrder: "asc" }, { nameEn: "asc" }] as Record<string, "asc" | "desc">[],
+  },
+  emergencyContacts: {
+    key: "emergencyContacts",
+    labelKey: "emergencyContacts",
+    model: "EmergencyContactRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "labelEn",
+    fields: [
+      { key: "labelEn", labelKey: "labelEn", kind: "text", required: true },
+      { key: "labelFr", labelKey: "labelFr", kind: "text" },
+      { key: "phone", labelKey: "phone", kind: "text", required: true },
+      { key: "kind", labelKey: "emergencyContactKind", kind: "select", required: true, options: ["PUBLIC", "NOMAD"] },
+      { key: "countryId", labelKey: "country", kind: "refSelect", refListKey: "countries" },
+      { key: "sortOrder", labelKey: "sortOrder", kind: "number", integer: true },
+    ],
+    defaultOrderBy: [{ sortOrder: "asc" }, { labelEn: "asc" }] as Record<string, "asc" | "desc">[],
   },
   uiHints: {
     key: "uiHints",
