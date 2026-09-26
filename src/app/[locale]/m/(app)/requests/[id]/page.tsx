@@ -6,7 +6,10 @@ import { getCurrentMember } from "@/lib/memberAuth";
 import { formatCaseNumber } from "@/lib/caseNumber";
 import { formatDakarDateTime } from "@/lib/formatDate";
 import { localizedText } from "@/lib/localizedText";
+import { LinkifiedText } from "@/components/linkified-text";
 import { getMemberCase } from "@/data/memberApp";
+import { markSeenByMember, memberConversation } from "@/data/caseOps";
+import { ReplyForm } from "./reply-form";
 import { EmergencyPanel } from "../../../_components/emergency-panel";
 import { StatusChip } from "../../../_components/status-chip";
 
@@ -27,6 +30,9 @@ export default async function MemberRequestPage(props: PageProps<"/[locale]/m/re
   const { sent } = await props.searchParams;
   const request = await getMemberCase(member, id);
   if (!request) notFound();
+  const conversation = await memberConversation(request.id);
+  // Opening the request marks Nomad's messages as read.
+  await markSeenByMember(request.id);
 
   return (
     <main className="flex flex-col">
@@ -51,7 +57,9 @@ export default async function MemberRequestPage(props: PageProps<"/[locale]/m/re
           </Row>
           <Row label={t("sentOn")}>{formatDakarDateTime(request.createdAt, locale)}</Row>
           <Row label={t("howUrgent")}>{t(`urgency.${request.urgency}`)}</Row>
-          <Row label={t("whatYouToldUs")}>{request.description}</Row>
+          <Row label={t("whatYouToldUs")}>
+            <LinkifiedText text={request.description} />
+          </Row>
           <Row label={t("callbackNumber")}>
             {request.contactPhone}
             {request.contactHasWhatsapp && <span className="ml-2 text-[13px] font-semibold text-[#0b5a30]">{t("alsoOnWhatsapp")}</span>}
@@ -60,7 +68,29 @@ export default async function MemberRequestPage(props: PageProps<"/[locale]/m/re
             {[request.locationLabel, request.latitude !== null ? t("locationShared") : null].filter(Boolean).join(" · ") || t("noLocation")}
           </Row>
         </dl>
-        <p className="m-0 text-[14px] text-pn-gray-1">{t("whatHappensNext")}</p>
+        <section id="conversation" className="flex flex-col gap-3">
+          <h2 className="m-0 text-[13px] font-bold tracking-[0.08em] text-pn-gray-1 uppercase">{t("messagesTitle")}</h2>
+          {conversation.length === 0 ? (
+            <p className="m-0 text-[14px] text-pn-gray-1">{t("whatHappensNext")}</p>
+          ) : (
+            <ol className="m-0 flex list-none flex-col gap-2 p-0">
+              {conversation.map((m) => {
+                const fromNomad = m.type === "MESSAGE_TO_MEMBER";
+                return (
+                  <li key={m.id} className={`flex max-w-[88%] flex-col gap-1 px-3 py-2 ${fromNomad ? "self-start border-l-4 border-pn-accent bg-white" : "self-end bg-[#e0ecff]"}`}>
+                    <span className="text-[12px] font-semibold text-pn-gray-2">
+                      {fromNomad ? t("fromNomad") : t("fromYou")} · {formatDakarDateTime(m.createdAt, locale)}
+                    </span>
+                    <p className="m-0 text-[15px] break-words whitespace-pre-line">
+                      <LinkifiedText text={m.body ?? ""} />
+                    </p>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+          {request.status === "CLOSED" ? <p className="m-0 text-[14px] text-pn-gray-2">{t("closedNoReply")}</p> : <ReplyForm caseId={request.id} />}
+        </section>
         {request.urgency === "EMERGENCY" && <EmergencyPanel countryId={member.countryId} />}
         <Link href="/m" className="flex h-12 items-center justify-center border-2 border-pn-ink bg-white text-[16px] font-bold text-pn-ink no-underline">
           {t("backHome")}

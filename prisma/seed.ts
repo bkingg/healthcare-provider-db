@@ -30,6 +30,7 @@ async function main() {
         canManageUsers: true,
         canEditProviderData: true,
         canManageMembers: true,
+        canWorkCases: true,
       },
     }),
     prisma.userRole.upsert({
@@ -39,6 +40,7 @@ async function main() {
         code: "CASE_MANAGER",
         name: "Case Manager",
         description: "View-only access to provider records.",
+        canWorkCases: true,
       },
     }),
     prisma.userRole.upsert({
@@ -366,6 +368,16 @@ async function main() {
       { code: "SN_POLICE", labelEn: "Police", labelFr: "Police", phone: "17", kind: "PUBLIC" as const, countryId: senegal.id, sortOrder: 2 },
       { code: "SN_FIRE", labelEn: "Fire brigade", labelFr: "Sapeurs-pompiers", phone: "18", kind: "PUBLIC" as const, countryId: senegal.id, sortOrder: 3 },
     ].map((c) => prisma.emergencyContactRef.upsert({ where: { code: c.code }, update: {}, create: c })),
+  );
+
+  // Response time per colour (step 1.3). Red runs 24/7 (on-call); yellow and
+  // green count office hours only. Editable in Value lists > Response times.
+  await Promise.all(
+    [
+      { code: "RED", labelEn: "Red · urgent", labelFr: "Rouge · urgent", minutes: 15, businessHoursOnly: false },
+      { code: "YELLOW", labelEn: "Yellow · needs attention", labelFr: "Jaune · à surveiller", minutes: 120, businessHoursOnly: true },
+      { code: "GREEN", labelEn: "Green · on track", labelFr: "Vert · en bonne voie", minutes: 480, businessHoursOnly: true },
+    ].map((r) => prisma.caseResponseTarget.upsert({ where: { code: r.code }, update: {}, create: r })),
   );
 
   console.log("Seed complete:", { systemUser: systemUser.email, testProvider: testProvider.id, countries: [senegal, usa, france, nigeria, uk].map((c) => c.iso2) });

@@ -56,6 +56,7 @@ export const REFERENCE_LIST_KEYS = [
   "memberRelationships",
   "caseCategories",
   "emergencyContacts",
+  "responseTargets",
 ] as const;
 
 export type ReferenceListKey = (typeof REFERENCE_LIST_KEYS)[number];
@@ -415,6 +416,7 @@ export const REFERENCE_LIST_DEFS = {
       { key: "canManageUsers", labelKey: "canManageUsers", kind: "checkbox" },
       { key: "canEditProviderData", labelKey: "canEditProviderData", kind: "checkbox" },
       { key: "canManageMembers", labelKey: "canManageMembers", kind: "checkbox" },
+      { key: "canWorkCases", labelKey: "canWorkCases", kind: "checkbox" },
       { key: "maxSearchResults", labelKey: "maxSearchResults", kind: "number", integer: true },
     ],
     defaultOrderBy: { name: "asc" },
@@ -472,6 +474,23 @@ export const REFERENCE_LIST_DEFS = {
       { key: "sortOrder", labelKey: "sortOrder", kind: "number", integer: true },
     ],
     defaultOrderBy: [{ sortOrder: "asc" }, { labelEn: "asc" }] as Record<string, "asc" | "desc">[],
+  },
+  // One fixed row per colour (RED / YELLOW / GREEN), looked up by code — so
+  // admins edit the times but can't add, rename or remove a colour.
+  responseTargets: {
+    key: "responseTargets",
+    labelKey: "responseTargets",
+    model: "CaseResponseTarget",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "labelEn",
+    editOnly: true,
+    fields: [
+      { key: "labelEn", labelKey: "labelEn", kind: "text", required: true },
+      { key: "labelFr", labelKey: "labelFr", kind: "text" },
+      { key: "minutes", labelKey: "responseMinutes", kind: "number", integer: true, required: true },
+      { key: "businessHoursOnly", labelKey: "businessHoursOnly", kind: "checkbox" },
+    ],
+    defaultOrderBy: { minutes: "asc" },
   },
   uiHints: {
     key: "uiHints",

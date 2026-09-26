@@ -20,8 +20,15 @@ export type RuleInput = {
 
 export type Rag = "GREEN" | "YELLOW" | "RED";
 
-/** Reason codes, translated for display (Cases.ragReason.*). */
-export type RagReason = "MEMBER_SAID_EMERGENCY" | "URGENT_WORDS" | "WANTED_TODAY" | "URGENT_CARE_CATEGORY" | "NO_LOCATION";
+/** Reason codes, translated for display (Cases.reason.*). */
+export type RagReason =
+  | "MEMBER_SAID_EMERGENCY"
+  | "URGENT_WORDS"
+  | "WANTED_TODAY"
+  | "URGENT_CARE_CATEGORY"
+  | "NO_LOCATION"
+  | "OVERDUE"
+  | "STAFF_OVERRIDE";
 
 // Matched on accent-stripped, lower-cased text, as whole words or phrases.
 const URGENT_PHRASES = [
@@ -64,4 +71,17 @@ export function initialRag(input: RuleInput): { rag: Rag; reasons: RagReason[] }
   if (yellow.length) return { rag: "YELLOW", reasons: yellow };
 
   return { rag: "GREEN", reasons: [] };
+}
+
+const ORDER: Rag[] = ["GREEN", "YELLOW", "RED"];
+
+/** Step 1.3: an overdue case moves up one colour (green → yellow → red).
+ * Red is the top — an overdue red case stays red and shows as overdue. */
+export function escalate(rag: Rag): Rag {
+  return ORDER[Math.min(ORDER.indexOf(rag) + 1, ORDER.length - 1)];
+}
+
+/** Queue order: red first, then yellow, then green. */
+export function ragRank(rag: Rag): number {
+  return ORDER.length - 1 - ORDER.indexOf(rag);
 }

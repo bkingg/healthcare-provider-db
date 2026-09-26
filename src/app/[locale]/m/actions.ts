@@ -1,11 +1,13 @@
 "use server";
 
 import { z } from "zod";
+import { revalidatePath } from "next/cache";
 import { getLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { getCurrentMember, redeemLoginLink, requestLoginLink, signOutMember } from "@/lib/memberAuth";
 import { memberRequestSchema } from "@/lib/validation/memberRequest";
-import { createMemberCase, RequestNotAllowedError } from "@/data/memberApp";
+import { createMemberCase, getMemberCase, RequestNotAllowedError } from "@/data/memberApp";
+import { memberReply } from "@/data/caseOps";
 import { normalizeCallbackPhone } from "@/lib/phone";
 import { fail, type ActionResult } from "@/lib/validation/common";
 
@@ -53,4 +55,24 @@ export async function createRequestAction(_prev: ActionResult | null, formData: 
     throw err;
   }
   return redirect({ href: `/m/requests/${caseId}?sent=1`, locale });
+}
+
+/** The member answers Nomad on a request they can see. */
+export async function memberReplyAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const member = await getCurrentMember();
+  const locale = await getLocale();
+  if (!member) return redirect({ href: "/m/login", locale });
+  const parsed = z
+    .object({ caseId: z.uuid(), body: z.string().trim().min(1, "empty").max(2000, "tooLong") })
+    .safeParse({ caseId: formData.get("caseId"), body: formData.get("body") });
+  if (!parsed.success) return fail(parsed.error.flatten().fieldErrors);
+  const request = await getMemberCase(member, parsed.data.caseId);
+  if (!request) return fail({ form: ["notFound"] });
+  if (request.status === "CLOSED") return fail({ form: ["closed"] });
+  await memberReply(request.id, member.id, parsed.data.body);
+  // Refresh the page in place rather than redirecting to the same URL with
+  // "#conversation": a hash-only change is treated as in-page navigation and
+  // doesn't reload the data, so the member's first reply didn't appear.
+  revalidatePath("/[locale]/m/(app)/requests/[id]", "page");
+  return { success: true };
 }

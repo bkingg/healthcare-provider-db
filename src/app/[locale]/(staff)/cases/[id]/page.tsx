@@ -1,0 +1,312 @@
+import { notFound } from "next/navigation";
+import { getLocale, getTranslations } from "next-intl/server";
+import { ArrowLeft, Check, ExternalLink, MapPinned, MessageCircle, Phone } from "lucide-react";
+import { Link } from "@/i18n/navigation";
+import { getCurrentActor } from "@/lib/actor";
+import { canManageMembers, requireWorkCases } from "@/lib/rbac";
+import { formatCaseNumber } from "@/lib/caseNumber";
+import { formatMemberNumber, ageFromDateOfBirth } from "@/lib/memberNumber";
+import { formatProviderNumber } from "@/lib/providerNumber";
+import { formatDakarDateTime } from "@/lib/formatDate";
+import { shortDuration } from "@/lib/caseTime";
+import { localizedText } from "@/lib/localizedText";
+import { LinkifiedText } from "@/components/linkified-text";
+import { getCaseForStaff, listCaseWorkers, refreshOverdueCases } from "@/data/caseOps";
+import { ColourPill } from "../_components/colour";
+import { CaseComposer } from "../_components/case-composer";
+import { ColourOverride } from "../_components/colour-override";
+import { FindProviders } from "../_components/find-providers";
+import { assignCaseAction, setCaseStatusAction, toggleProviderAction } from "../actions";
+
+const STATUSES = ["NEW", "IN_PROGRESS", "WAITING_MEMBER", "RESOLVED", "CLOSED"] as const;
+
+type TimelineEvent = NonNullable<Awaited<ReturnType<typeof getCaseForStaff>>>["events"][number];
+
+function Section({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
+  return (
+    <section className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-end justify-between gap-2 border-b-2 border-pn-ink pb-1">
+        <h2 className="m-0 text-[12px] font-bold tracking-[0.08em] uppercase">{title}</h2>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-[120px_1fr] gap-3 border-b border-pn-rule py-1.5 text-[13px] last:border-b-0">
+      <dt className="text-[10.5px] tracking-[0.06em] text-pn-gray-2 uppercase">{label}</dt>
+      <dd className="m-0 min-w-0 break-words">{children ?? <span className="text-pn-gray-3">—</span>}</dd>
+    </div>
+  );
+}
+
+export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">) {
+  const t = await getTranslations("Cases");
+  const tm = await getTranslations("MemberApp");
+  const locale = await getLocale();
+  const actor = await getCurrentActor();
+  requireWorkCases(actor);
+  await refreshOverdueCases();
+
+  const { id } = await props.params;
+  const [c, workers] = await Promise.all([getCaseForStaff(id), listCaseWorkers()]);
+  if (!c) notFound();
+
+  const now = new Date();
+  const due = c.responseDueAt;
+  const timerRunning = due !== null && (c.status === "NEW" || c.status === "IN_PROGRESS");
+  const overdue = timerRunning && due! < now;
+  const patientAge = ageFromDateOfBirth(c.patient.dateOfBirth);
+  const phoneDigits = c.contactPhone.replace(/[^\d]/g, "");
+  const showMemberLinks = canManageMembers(actor);
+  const who = (e: TimelineEvent) =>
+    e.actorType === "SYSTEM" ? t("actor.SYSTEM") : e.actorType === "MEMBER" ? `${e.member?.firstName ?? ""} ${e.member?.lastName ?? ""}`.trim() || t("actor.MEMBER") : (e.staff?.name ?? e.staff?.email ?? t("actor.STAFF"));
+
+  function describe(e: TimelineEvent): string {
+    const d = (e.data ?? {}) as Record<string, unknown>;
+    switch (e.type) {
+      case "CREATED":
+        return t("event.CREATED");
+      case "COLOUR_SET":
+        return t("event.COLOUR_SET", { to: t(`colour.${d.to}`) });
+      case "ESCALATED":
+        return t("event.ESCALATED", { from: t(`colour.${d.from}`), to: t(`colour.${d.to}`) });
+      case "COLOUR_OVERRIDDEN":
+        return t("event.COLOUR_OVERRIDDEN", { from: t(`colour.${d.from}`), to: t(`colour.${d.to}`) });
+      case "STATUS_CHANGED":
+        return t("event.STATUS_CHANGED", { to: t(`status.${d.to}`) });
+      case "ASSIGNED": {
+        const to = workers.find((w) => w.id === d.to);
+        return d.to ? t("event.ASSIGNED", { to: to?.name ?? to?.email ?? "?" }) : t("event.UNASSIGNED");
+      }
+      case "PROVIDERS_FOUND":
+        return t("event.PROVIDERS_FOUND", { count: Number(d.count ?? 0), km: Number(d.radiusKm ?? 0) });
+      case "PROVIDER_SELECTED":
+        return d.selected ? t("event.PROVIDER_SELECTED") : t("event.PROVIDER_UNSELECTED");
+      default:
+        return t(`event.${e.type}`);
+    }
+  }
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col overflow-auto">
+      <div className="flex flex-none flex-col gap-2 border-b-2 border-pn-ink px-5 pt-3.5 pb-3">
+        <Link href="/cases" className="flex w-fit items-center gap-1 text-[11px] tracking-[0.04em] text-pn-gray-3 hover:text-pn-ink">
+          <ArrowLeft size={12} aria-hidden /> {t("title")}
+        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="m-0 text-[22px] font-extrabold tracking-[-0.02em]">{localizedText(c.category.nameEn, c.category.nameFr, locale)}</h1>
+          <span className="text-[13px] text-pn-gray-3 tabular-nums">{formatCaseNumber(c.caseNumber)}</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
+          <ColourPill rag={c.rag} label={t(`colour.${c.rag}`)} />
+          {c.ragReasons.map((r) => (
+            <span key={r} className="bg-pn-panel px-1.5 text-[11.5px] text-pn-gray-1">
+              {t(`reason.${r}`)}
+            </span>
+          ))}
+          <span className="text-pn-gray-2">· {t(`status.${c.status}`)}</span>
+          {timerRunning && (
+            <span className={overdue ? "font-bold text-[#c62828]" : "text-pn-gray-2"}>
+              · {overdue ? t("overdueBy", { time: shortDuration(now.getTime() - due!.getTime()) }) : t("dueIn", { time: shortDuration(due!.getTime() - now.getTime()) })}
+            </span>
+          )}
+          <span className="text-pn-gray-3">· {t("receivedAt", { when: formatDakarDateTime(c.createdAt, locale) })}</span>
+        </div>
+
+        <div className="flex flex-wrap items-end gap-2 pt-1">
+          {/* Both forms are keyed on updatedAt so they remount with the saved
+           * values after any change — otherwise their selects keep showing
+           * what was true when the page first loaded (e.g. "New" after a
+           * message moved the case to in progress), and pressing Update
+           * would silently undo the change. */}
+          <form key={`assign-${c.updatedAt.getTime()}`} action={assignCaseAction} className="flex items-end gap-1">
+            <input type="hidden" name="caseId" value={c.id} />
+            <label className="flex flex-col gap-1 text-[10.5px] tracking-[0.06em] text-pn-gray-2 uppercase">
+              {t("assignedTo")}
+              <select name="assigneeId" defaultValue={c.assignedToId ?? ""} className="h-8 border-2 border-pn-border-muted bg-white px-2 text-[13px] tracking-normal text-pn-ink normal-case">
+                <option value="">{t("unassigned")}</option>
+                {workers.map((w) => (
+                  <option key={w.id} value={w.id}>
+                    {w.name ?? w.email}
+                    {w.id === actor.id ? ` (${t("me")})` : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button type="submit" className="h-8 cursor-pointer border-2 border-pn-ink bg-white px-3 text-xs font-semibold hover:bg-pn-surface-hover">
+              {t("assign")}
+            </button>
+          </form>
+          <form key={`status-${c.updatedAt.getTime()}`} action={setCaseStatusAction} className="flex items-end gap-1">
+            <input type="hidden" name="caseId" value={c.id} />
+            <label className="flex flex-col gap-1 text-[10.5px] tracking-[0.06em] text-pn-gray-2 uppercase">
+              {t("statusLabel")}
+              <select name="status" defaultValue={c.status} className="h-8 border-2 border-pn-border-muted bg-white px-2 text-[13px] tracking-normal text-pn-ink normal-case">
+                {STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {t(`status.${s}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button type="submit" className="h-8 cursor-pointer border-2 border-pn-ink bg-white px-3 text-xs font-semibold hover:bg-pn-surface-hover">
+              {t("update")}
+            </button>
+          </form>
+          <ColourOverride caseId={c.id} current={c.rag} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 px-5 py-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+        <div className="flex flex-col gap-6">
+          <Section title={t("theRequest")}>
+            <blockquote className="m-0 border-l-4 border-pn-ink bg-white px-3 py-2 text-[14px] whitespace-pre-line">
+              <LinkifiedText text={c.description} />
+            </blockquote>
+            <dl className="m-0">
+              <Row label={t("urgency")}>{tm(`urgency.${c.urgency}`)}</Row>
+              <Row label={t("callback")}>
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="font-semibold tabular-nums">{c.contactPhone}</span>
+                  <a href={`tel:${c.contactPhone.replace(/[^+\d]/g, "")}`} className="flex items-center gap-1 border border-pn-ink px-1.5 text-[12px] font-semibold text-pn-ink no-underline">
+                    <Phone size={11} aria-hidden /> {t("call")}
+                  </a>
+                  {c.contactHasWhatsapp && (
+                    <a href={`https://wa.me/${phoneDigits}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 border border-[#128c4a] px-1.5 text-[12px] font-semibold text-[#0b5a30] no-underline">
+                      <MessageCircle size={11} aria-hidden /> WhatsApp
+                    </a>
+                  )}
+                </span>
+              </Row>
+              <Row label={t("location")}>
+                {c.locationLabel || c.latitude !== null ? (
+                  <span className="flex flex-wrap items-center gap-2">
+                    {c.locationLabel ?? t("sharedPosition")}
+                    {c.latitude !== null && c.longitude !== null && (
+                      <Link
+                        href={`/map?lat=${c.latitude}&lng=${c.longitude}&radiusKm=10&pointLabel=${encodeURIComponent(formatCaseNumber(c.caseNumber))}`}
+                        className="flex items-center gap-1 text-[12px] font-semibold text-[#0a5c3c]"
+                      >
+                        <MapPinned size={12} aria-hidden /> {t("openMap")}
+                      </Link>
+                    )}
+                  </span>
+                ) : null}
+              </Row>
+            </dl>
+          </Section>
+
+          <Section title={t("forWhom")}>
+            <dl className="m-0">
+              <Row label={t("patient")}>
+                <span className="font-semibold">
+                  {c.patient.firstName} {c.patient.lastName}
+                </span>
+                {patientAge !== null && ` · ${t("ageYears", { age: patientAge })}`}
+                {c.patient.primaryMemberId && c.patient.relationship && ` · ${localizedText(c.patient.relationship.nameEn, c.patient.relationship.nameFr, locale)}`}
+                {" · "}
+                <span className="tabular-nums">{formatMemberNumber(c.patient.memberNumber)}</span>
+                {showMemberLinks && (
+                  <Link href={`/members/${c.patient.id}`} className="ml-2 text-[12px] font-semibold text-[#0a5c3c]">
+                    {t("memberRecord")}
+                  </Link>
+                )}
+              </Row>
+              {c.requestedById !== c.patientId && (
+                <Row label={t("requestedByLabel")}>
+                  {c.requestedBy.firstName} {c.requestedBy.lastName}
+                </Row>
+              )}
+              <Row label={t("cover")}>
+                {c.patient.organization
+                  ? [c.patient.organization.name, c.patient.planName, c.patient.policyNumber].filter(Boolean).join(" · ")
+                  : t("individual")}
+              </Row>
+              <Row label={t("language")}>{c.patient.preferredLanguage === "en" ? "English" : "Français"}</Row>
+            </dl>
+          </Section>
+
+          <Section title={t("providers")} action={<FindProviders caseId={c.id} hasResults={c.providerOptions.length > 0} />}>
+            {c.providerOptions.length === 0 ? (
+              <p className="m-0 text-[12.5px] text-pn-gray-2">{t("providersHint")}</p>
+            ) : (
+              <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+                {c.providerOptions.map((o) => {
+                  const p = o.provider;
+                  const type = p.providerTypes[0]?.providerType;
+                  return (
+                    <li key={o.providerId} className={`flex flex-wrap items-center justify-between gap-2 border px-3 py-2 ${o.selected ? "border-pn-accent bg-pn-accent-soft" : "border-pn-rule bg-white"}`}>
+                      <div className="min-w-0">
+                        <Link href={`/providers/${p.id}`} className="flex items-center gap-1 text-[13.5px] font-semibold text-pn-ink hover:underline">
+                          {p.names[0]?.fullNameText ?? formatProviderNumber(p.providerNumber)} <ExternalLink size={11} aria-hidden />
+                        </Link>
+                        <div className="flex flex-wrap items-center gap-x-2 text-[12px] text-pn-gray-2">
+                          {type && <span>{localizedText(type.nameEn, type.nameFr, locale)}</span>}
+                          {o.distanceKm !== null && <span>· {t("km", { km: o.distanceKm })}</span>}
+                          {p.addresses[0]?.city && <span>· {p.addresses[0].city}</span>}
+                          {p.phones[0] && <span className="tabular-nums">· {p.phones[0].number}</span>}
+                          {p.isOpen24_7 && <span className="bg-pn-panel px-1 text-[11px] font-semibold text-pn-gray-1">{t("open247")}</span>}
+                          {p.erOpen24_7 && <span className="bg-[#fbe5e5] px-1 text-[11px] font-semibold text-[#991b1b]">{t("er247")}</span>}
+                        </div>
+                      </div>
+                      <form action={toggleProviderAction}>
+                        <input type="hidden" name="caseId" value={c.id} />
+                        <input type="hidden" name="providerId" value={o.providerId} />
+                        <button type="submit" className={`flex h-7 cursor-pointer items-center gap-1 border-2 px-2 text-[12px] font-semibold ${o.selected ? "border-pn-accent bg-pn-accent text-white" : "border-pn-ink bg-white"}`}>
+                          {o.selected && <Check size={12} aria-hidden />}
+                          {o.selected ? t("chosen") : t("choose")}
+                        </button>
+                      </form>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Section>
+        </div>
+
+        <div className="flex flex-col gap-6">
+          <Section title={t("conversationAndTimeline")}>
+            <CaseComposer caseId={c.id} memberName={c.requestedBy.firstName} memberLanguage={c.requestedBy.preferredLanguage} />
+            <ol className="m-0 flex list-none flex-col gap-2 p-0">
+              {[...c.events].reverse().map((e) => {
+                const isMessage = e.type === "MESSAGE_TO_MEMBER" || e.type === "MESSAGE_FROM_MEMBER";
+                const isNote = e.type === "NOTE";
+                return (
+                  <li
+                    key={e.id}
+                    className={`flex flex-col gap-1 px-3 py-2 text-[13px] ${
+                      e.type === "MESSAGE_FROM_MEMBER"
+                        ? "border-l-4 border-[#1d4ed8] bg-[#eef4ff]"
+                        : e.type === "MESSAGE_TO_MEMBER"
+                          ? "border-l-4 border-pn-accent bg-white"
+                          : isNote
+                            ? "border-l-4 border-[#b45309] bg-[#fffaf0]"
+                            : "border-l-4 border-pn-rule bg-transparent text-pn-gray-1"
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-[11.5px] text-pn-gray-2">
+                      <span className="font-semibold text-pn-gray-1">
+                        {who(e)} · {describe(e)}
+                      </span>
+                      <span className="tabular-nums">{formatDakarDateTime(e.createdAt, locale)}</span>
+                    </div>
+                    {e.body && (
+                      <p className={`m-0 break-words whitespace-pre-line ${isMessage || isNote ? "text-pn-ink" : "text-pn-gray-1 italic"}`}>
+                        <LinkifiedText text={e.body} />
+                      </p>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          </Section>
+        </div>
+      </div>
+    </div>
+  );
+}

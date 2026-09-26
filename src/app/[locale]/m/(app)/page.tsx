@@ -47,7 +47,12 @@ export default async function MemberHomePage() {
                         {c.patient.firstName} · {formatDakarDate(c.createdAt, locale)} · {formatCaseNumber(c.caseNumber)}
                       </span>
                     </span>
-                    <StatusChip status={c.status} />
+                    <span className="flex flex-none flex-col items-end gap-1">
+                      <StatusChip status={c.status} />
+                      {c.events[0] && (!c.memberLastSeenAt || c.events[0].createdAt > c.memberLastSeenAt) && (
+                        <span className="bg-[#1d4ed8] px-1.5 text-[11px] font-bold text-white">{t("newMessage")}</span>
+                      )}
+                    </span>
                   </Link>
                 </li>
               ))}

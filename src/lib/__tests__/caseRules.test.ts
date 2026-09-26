@@ -39,3 +39,13 @@ describe("findUrgentPhrases", () => {
 describe("formatCaseNumber", () => {
   it("formats as CAS-000123", () => expect(formatCaseNumber(123)).toBe("CAS-000123"));
 });
+
+describe("escalate", () => {
+  it("moves an overdue case up one colour and stops at red", async () => {
+    const { escalate, ragRank } = await import("@/lib/caseRules");
+    expect(escalate("GREEN")).toBe("YELLOW");
+    expect(escalate("YELLOW")).toBe("RED");
+    expect(escalate("RED")).toBe("RED");
+    expect([ragRank("RED"), ragRank("YELLOW"), ragRank("GREEN")]).toEqual([0, 1, 2]);
+  });
+});

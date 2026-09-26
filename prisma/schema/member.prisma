@@ -40,6 +40,7 @@ model Member {
   sessions       MemberSession[]
   casesRequested CareCase[]         @relation("CasesRequested")
   casesAbout     CareCase[]         @relation("CasesAbout")
+  caseEvents     CaseEvent[]        @relation("CaseEventsByMember")
 
   status    MemberStatus @default(ACTIVE)
   createdAt DateTime     @default(now()) @map("created_at")

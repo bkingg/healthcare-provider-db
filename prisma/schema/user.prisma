@@ -41,6 +41,8 @@ model User {
   ownedExceptions         DataQualityException[] @relation("ExceptionOwner")
   resolvedExceptions      DataQualityException[] @relation("ExceptionResolvedBy")
   auditLogEntries         AuditLog[]             @relation("AuditChangedBy")
+  assignedCases           CareCase[]             @relation("CasesAssigned")
+  caseEvents              CaseEvent[]            @relation("CaseEventsByStaff")
 
   @@map("app_user")
 }
@@ -65,6 +67,8 @@ model UserRole {
   canEditProviderData Boolean  @default(false) @map("can_edit_provider_data")
   /// View, add and edit Nomad members and their dependents (Members screens).
   canManageMembers    Boolean  @default(false) @map("can_manage_members")
+  /// See the operations dashboard and work cases (Cases screens).
+  canWorkCases        Boolean  @default(false) @map("can_work_cases")
   /// Caps how many rows a search can return for a user with this role — null
   /// means unlimited. Exists to let a Site Administrator restrict
   /// lower-privileged roles (e.g. an outsourced Case Manager) from

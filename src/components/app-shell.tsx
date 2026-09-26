@@ -3,7 +3,8 @@ import { getTranslations } from "next-intl/server";
 import { LogOut, KeyRound } from "lucide-react";
 import { auth, signOut } from "@/lib/auth";
 import { getCurrentActor } from "@/lib/actor";
-import { canEditValueLists, canManageMembers, canManageUsers, canViewReports } from "@/lib/rbac";
+import { canEditValueLists, canManageMembers, canManageUsers, canViewReports, canWorkCases } from "@/lib/rbac";
+import { attentionCount } from "@/data/caseOps";
 import { getLatestImportBatch } from "@/data/importBatches";
 import { countOpenExceptions } from "@/data/dataQualityExceptions";
 import { Link } from "@/i18n/navigation";
@@ -45,6 +46,8 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
     getLatestImportBatch(),
     countOpenExceptions(),
   ]);
+  // Open red + yellow cases, for the Cases link's badge.
+  const casesNeedingAttention = canWorkCases(actor) ? await attentionCount() : 0;
   const latestBatchLabel = latestBatch ? `${latestBatch.fileName} — ${latestBatch.loadedAt.toISOString().slice(0, 10)}` : null;
 
   return (
@@ -99,6 +102,8 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             canManageUsers={canManageUsers(actor)}
             canViewReports={canViewReports(actor)}
             canManageMembers={canManageMembers(actor)}
+            canWorkCases={canWorkCases(actor)}
+            casesNeedingAttention={casesNeedingAttention}
           />
           <main className="flex min-w-0 flex-1 flex-col overflow-hidden">{children}</main>
         </div>

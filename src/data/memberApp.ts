@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { initialRag } from "@/lib/caseRules";
+import { createCaseWithTimeline } from "./caseOps";
 import type { CurrentMember } from "@/lib/memberAuth";
 import type { MemberRequestInput } from "@/lib/validation/memberRequest";
 
@@ -31,7 +32,12 @@ function visibleCasesWhere(member: CurrentMember) {
 export function listMemberCases(member: CurrentMember) {
   return prisma.careCase.findMany({
     where: visibleCasesWhere(member),
-    include: { category: true, patient: { select: { firstName: true, lastName: true } } },
+    include: {
+      category: true,
+      patient: { select: { firstName: true, lastName: true } },
+      // Latest message from Nomad — newer than memberLastSeenAt means unread.
+      events: { where: { type: "MESSAGE_TO_MEMBER" }, orderBy: { createdAt: "desc" }, take: 1, select: { createdAt: true } },
+    },
     orderBy: { createdAt: "desc" },
     take: 50,
   });
@@ -74,8 +80,9 @@ export async function createMemberCase(member: CurrentMember, input: MemberReque
 
   const hasLocation = Boolean(input.locationLabel) || (input.latitude !== undefined && input.longitude !== undefined);
   const { rag, reasons } = initialRag({ urgency: input.urgency, categoryCode: category.code, description: input.description, hasLocation });
-  return prisma.careCase.create({
-    data: {
+  // Created with its timeline ("created", "colour set") and first response
+  // deadline — see data/caseOps.ts.
+  return createCaseWithTimeline({
       requestedById: member.id,
       patientId: input.patientId,
       categoryId: category.id,
@@ -89,6 +96,5 @@ export async function createMemberCase(member: CurrentMember, input: MemberReque
       rag,
       ragReasons: reasons,
       channel: "MEMBER_APP",
-    },
   });
 }

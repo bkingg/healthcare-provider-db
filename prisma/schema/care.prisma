@@ -92,11 +92,27 @@ model CareCase {
   status          CaseStatus      @default(NEW)
   rag             CaseRag
   ragReasons      String[]        @map("rag_reasons")
+  /// Set when staff overrode the colour by hand (with a reason, in the
+  /// timeline). Automatic escalation still moves an overdue case up.
+  ragOverridden   Boolean         @default(false) @map("rag_overridden")
+  /// When staff must next respond: set from the colour's response time
+  /// (case_response_target) when the case arrives or the member replies,
+  /// cleared when staff respond. Past due = overdue → escalates a colour.
+  responseDueAt   DateTime?       @map("response_due_at")
+  assignedToId    String?         @map("assigned_to_id") @db.Uuid
+  assignedTo      User?           @relation("CasesAssigned", fields: [assignedToId], references: [id])
+  /// Last time the member opened this request in the app — messages from
+  /// Nomad after this show as unread.
+  memberLastSeenAt DateTime?      @map("member_last_seen_at")
+  resolvedAt      DateTime?       @map("resolved_at")
+  events          CaseEvent[]
+  providerOptions CaseProviderOption[]
   channel         CaseChannel     @default(MEMBER_APP)
   createdAt       DateTime        @default(now()) @map("created_at")
   updatedAt       DateTime        @updatedAt @map("updated_at")
 
   @@index([rag, status])
+  @@index([assignedToId])
   @@index([requestedById])
   @@index([patientId])
   @@map("care_case")
@@ -143,4 +159,91 @@ model EmergencyContactRef {
   updatedAt DateTime             @updatedAt @map("updated_at")
 
   @@map("emergency_contact_ref")
+}
+
+enum CaseEventType {
+  CREATED
+  COLOUR_SET
+  COLOUR_OVERRIDDEN
+  ESCALATED
+  ASSIGNED
+  STATUS_CHANGED
+  NOTE
+  MESSAGE_TO_MEMBER
+  MESSAGE_FROM_MEMBER
+  PROVIDERS_FOUND
+  PROVIDER_SELECTED
+}
+
+enum CaseActorType {
+  MEMBER
+  STAFF
+  SYSTEM
+}
+
+/// The case timeline (MVP step 1.3): everything that happened, in order,
+/// with who did it — which also makes it the case's audit trail, including
+/// for member actions (the audit_log table only records staff). Messages to
+/// and from the member live here too; visibleToMember marks what the member
+/// app shows (internal notes never are).
+model CaseEvent {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  caseId          String        @map("case_id") @db.Uuid
+  case            CareCase      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  type            CaseEventType
+  actorType       CaseActorType @map("actor_type")
+  staffId         String?       @map("staff_id") @db.Uuid
+  staff           User?         @relation("CaseEventsByStaff", fields: [staffId], references: [id])
+  memberId        String?       @map("member_id") @db.Uuid
+  member          Member?       @relation("CaseEventsByMember", fields: [memberId], references: [id])
+  /// Free text: a note, a message, or the reason for an override.
+  body            String?
+  /// Small structured details, e.g. {"from":"NEW","to":"IN_PROGRESS"}.
+  data            Json?
+  visibleToMember Boolean       @default(false) @map("visible_to_member")
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  @@index([caseId, createdAt])
+  @@map("case_event")
+}
+
+enum CaseProviderSource {
+  SEARCH
+  STAFF
+}
+
+/// Providers suggested for a case: found by the existing provider search
+/// near the member (active providers only, so never DO NOT USE), nearest
+/// first. Staff mark the one they chose. Step 1.4's copilot adds ranking.
+model CaseProviderOption {
+  caseId     String             @map("case_id") @db.Uuid
+  case       CareCase           @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  providerId String             @map("provider_id") @db.Uuid
+  provider   Provider           @relation(fields: [providerId], references: [id])
+  rank       Int
+  distanceKm Float?             @map("distance_km")
+  source     CaseProviderSource @default(SEARCH)
+  selected   Boolean            @default(false)
+  createdAt  DateTime           @default(now()) @map("created_at")
+
+  @@id([caseId, providerId])
+  @@map("case_provider_option")
+}
+
+/// How quickly staff must respond to a case of each colour — one fixed row
+/// per colour (code RED / YELLOW / GREEN), editable in Admin > Value lists.
+/// businessHoursOnly counts only office hours (Mon–Fri 09:00–17:00 Dakar,
+/// see lib/businessHours.ts); otherwise the clock runs 24/7 (on-call).
+model CaseResponseTarget {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code              String   @unique
+  labelEn           String   @map("label_en")
+  labelFr           String?  @map("label_fr")
+  minutes           Int
+  businessHoursOnly Boolean  @default(true) @map("business_hours_only")
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("case_response_target")
 }

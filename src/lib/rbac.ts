@@ -32,6 +32,10 @@ export function canManageMembers(actor: Actor): boolean {
   return role(actor)?.canManageMembers ?? false;
 }
 
+export function canWorkCases(actor: Actor): boolean {
+  return role(actor)?.canWorkCases ?? false;
+}
+
 /** Null means unlimited. Applied to both `searchProviders` and
  * `searchProvidersForMap` so a capped role can't bypass the limit by
  * switching screens. A per-user override (User.maxSearchResults, editable on
@@ -54,6 +58,10 @@ export function requireEditProviderData(actor: Actor) {
 
 export function requireManageUsers(actor: Actor) {
   if (!canManageUsers(actor)) throw new Error("Not authorized to manage users");
+}
+
+export function requireWorkCases(actor: Actor) {
+  if (!canWorkCases(actor)) throw new Error("Not authorized to work cases");
 }
 
 export function requireManageMembers(actor: Actor) {

@@ -10,6 +10,7 @@ import {
   ListTree,
   Map as MapIcon,
   Search,
+  Inbox,
   Upload,
   Users,
   UsersRound,
@@ -30,6 +31,8 @@ export function SidebarNav({
   canManageUsers,
   canViewReports,
   canManageMembers,
+  canWorkCases,
+  casesNeedingAttention,
 }: {
   latestBatchLabel: string | null;
   openExceptionCount: number;
@@ -37,12 +40,19 @@ export function SidebarNav({
   canManageUsers: boolean;
   canViewReports: boolean;
   canManageMembers: boolean;
+  canWorkCases: boolean;
+  casesNeedingAttention: number;
 }) {
   const t = useTranslations("Nav");
   const pathname = usePathname();
   const providerProfileMatch = /^\/providers\/[^/]+$/.test(pathname) && pathname !== "/providers/new";
 
   const items: WorkspaceItem[] = [
+    // First for case workers: the operations dashboard, badged with open
+    // red + yellow cases.
+    ...(canWorkCases
+      ? [{ href: "/cases", label: t("cases"), icon: Inbox, badge: casesNeedingAttention ? String(casesNeedingAttention) : undefined, match: (p: string) => p.startsWith("/cases") }]
+      : []),
     { href: "/providers", label: t("providerSearch"), icon: Search, match: (p) => p === "/providers" },
     {
       href: providerProfileMatch ? pathname : "/providers",

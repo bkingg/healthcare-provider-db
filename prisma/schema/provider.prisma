@@ -65,6 +65,7 @@ model Provider {
   administrativeContacts AdministrativeContact[]
   providerTypes          ProviderProviderType[]
   specialties            ProviderSpecialty[]
+  caseOptions            CaseProviderOption[]
   languages              ProviderLanguage[]
   capabilities           ProviderCapability[]
   credentials            Credential[]

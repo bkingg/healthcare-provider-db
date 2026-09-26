@@ -13,6 +13,7 @@
     "db:generate": "prisma generate",
     "db:seed": "prisma db seed",
     "db:seed-demo": "tsx prisma/seed-senegal-demo.ts",
+    "db:seed-demo-cases": "tsx prisma/seed-demo-cases.ts",
     "db:studio": "prisma studio",
     "db:search-setup": "prisma db execute --file prisma/sql/enable-search.sql"
   },

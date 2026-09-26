@@ -134,6 +134,9 @@ export function RequestForm({
           maxLength={2000}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
+          spellCheck
+          autoCapitalize="sentences"
+          autoCorrect="on"
           placeholder={t("descriptionPlaceholder")}
           className="border-2 border-pn-border-muted bg-white p-3 text-[16px] outline-none focus:border-pn-ink"
         />

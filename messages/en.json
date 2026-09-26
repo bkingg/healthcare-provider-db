@@ -14,7 +14,8 @@
     "users": "Users",
     "reports": "Reports & KPIs",
     "resizeWorkspace": "Drag to resize the Workspace panel (double-click to reset)",
-    "members": "Members"
+    "members": "Members",
+    "cases": "Cases"
   },
   "Header": {
     "brand": "Provider Network",
@@ -123,7 +124,8 @@
       "organizations": "Organizations",
       "memberRelationships": "Member relationships",
       "caseCategories": "Request categories",
-      "emergencyContacts": "Emergency numbers"
+      "emergencyContacts": "Emergency numbers",
+      "responseTargets": "Response times"
     },
     "fields": {
       "paymentCategory": "Payment category",
@@ -170,7 +172,10 @@
       "labelEn": "Label (English)",
       "labelFr": "Label (French)",
       "phone": "Phone",
-      "country": "Country"
+      "country": "Country",
+      "canWorkCases": "Can work cases",
+      "responseMinutes": "Response time (minutes)",
+      "businessHoursOnly": "Count office hours only (Mon–Fri 09:00–17:00)"
     },
     "marker": {
       "default": "Default",
@@ -934,6 +939,143 @@
     "contactPhoneInvalid": "Enter a phone number we can call, e.g. 77 123 45 67.",
     "callbackNumber": "We'll call you on",
     "hasWhatsapp": "This number has WhatsApp",
-    "alsoOnWhatsapp": "· also on WhatsApp"
+    "alsoOnWhatsapp": "· also on WhatsApp",
+    "newMessage": "New message",
+    "messagesTitle": "Messages",
+    "fromNomad": "Nomad",
+    "fromYou": "You",
+    "closedNoReply": "This request is closed. Send a new request if you need more help.",
+    "replyLabel": "Reply to Nomad",
+    "sendReply": "Send reply",
+    "replyError": {
+      "empty": "Write a message first.",
+      "tooLong": "Please keep it under 2,000 characters.",
+      "notFound": "This request can't be found.",
+      "closed": "This request is closed. Send a new request instead."
+    }
+  },
+  "Cases": {
+    "title": "Cases",
+    "officeHours": "Office hours (Mon–Fri 09:00–17:00)",
+    "onCall": "Outside office hours — on-call handles red cases",
+    "tile": {
+      "RED": "Red · urgent",
+      "YELLOW": "Yellow · attention",
+      "GREEN": "Green · on track",
+      "OVERDUE": "Overdue"
+    },
+    "status": {
+      "NEW": "New",
+      "IN_PROGRESS": "In progress",
+      "WAITING_MEMBER": "Waiting for member",
+      "RESOLVED": "Resolved",
+      "CLOSED": "Closed"
+    },
+    "statusFilter": {
+      "OPEN": "Open (new, in progress, waiting)",
+      "NEW": "New",
+      "IN_PROGRESS": "In progress",
+      "WAITING_MEMBER": "Waiting for member",
+      "RESOLVED": "Resolved",
+      "CLOSED": "Closed",
+      "ALL": "All"
+    },
+    "assigned": "Assigned",
+    "assignedFilter": {
+      "ANY": "Anyone",
+      "ME": "Me",
+      "UNASSIGNED": "Unassigned"
+    },
+    "apply": "Apply",
+    "showAllColours": "Show all colours",
+    "colour": {
+      "RED": "Red",
+      "YELLOW": "Yellow",
+      "GREEN": "Green"
+    },
+    "reason": {
+      "MEMBER_SAID_EMERGENCY": "Member said life-threatening",
+      "URGENT_WORDS": "Urgent words in request",
+      "WANTED_TODAY": "Wanted today",
+      "URGENT_CARE_CATEGORY": "Urgent care",
+      "NO_LOCATION": "No location",
+      "OVERDUE": "Overdue",
+      "STAFF_OVERRIDE": "Set by staff"
+    },
+    "memberReplied": "Member replied",
+    "ageYears": "{age} yrs",
+    "requestedBy": "Requested by {name}",
+    "unassigned": "Unassigned",
+    "overdueBy": "Overdue {time}",
+    "dueIn": "Due in {time}",
+    "waitingSince": "Sent {time} ago",
+    "empty": "No cases match these filters.",
+    "receivedAt": "received {when}",
+    "assignedTo": "Assigned to",
+    "me": "me",
+    "assign": "Assign",
+    "update": "Update",
+    "changeColour": "Change colour",
+    "overrideReason": "Why? (saved in the timeline)",
+    "saveColour": "Save colour",
+    "theRequest": "The request",
+    "urgency": "Urgency",
+    "callback": "Call back on",
+    "call": "Call",
+    "location": "Location",
+    "sharedPosition": "Position shared from phone",
+    "openMap": "Open on map",
+    "forWhom": "For whom",
+    "patient": "Patient",
+    "memberRecord": "Member record",
+    "requestedByLabel": "Requested by",
+    "cover": "Cover",
+    "individual": "Individual member",
+    "language": "Language",
+    "providers": "Providers near the member",
+    "findProviders": "Find providers",
+    "searchAgain": "Search again",
+    "searching": "Searching…",
+    "foundWithin": "{count, plural, one {# provider} other {# providers}} within {km} km",
+    "noneFound": "No active providers found within 100 km.",
+    "findError": {
+      "noLocation": "The member gave no location, so there's nowhere to search near. Ask them where they are.",
+      "geocodeUnavailable": "The map lookup is busy — try again in a few seconds."
+    },
+    "providersHint": "Nearest active providers to where the member is (DO NOT USE providers are never listed).",
+    "km": "{km} km",
+    "er247": "ER 24/7",
+    "open247": "Open 24/7",
+    "choose": "Mark chosen",
+    "chosen": "Chosen",
+    "conversationAndTimeline": "Messages and timeline",
+    "tabMessage": "Message member",
+    "tabNote": "Internal note",
+    "messageHint": "{name} sees this in the Nomad app.",
+    "noteHint": "Staff only — never shown to the member.",
+    "sendMessage": "Send to member",
+    "saveNote": "Save note",
+    "saving": "Saving…",
+    "actor": {
+      "SYSTEM": "System",
+      "MEMBER": "Member",
+      "STAFF": "Staff"
+    },
+    "event": {
+      "CREATED": "sent the request",
+      "COLOUR_SET": "colour set to {to}",
+      "ESCALATED": "overdue — moved from {from} to {to}",
+      "COLOUR_OVERRIDDEN": "changed colour from {from} to {to}",
+      "STATUS_CHANGED": "status → {to}",
+      "ASSIGNED": "assigned to {to}",
+      "UNASSIGNED": "unassigned",
+      "NOTE": "internal note",
+      "MESSAGE_TO_MEMBER": "message to member",
+      "MESSAGE_FROM_MEMBER": "message from member",
+      "PROVIDERS_FOUND": "found {count} providers within {km} km",
+      "PROVIDER_SELECTED": "marked a provider as chosen",
+      "PROVIDER_UNSELECTED": "unmarked a chosen provider"
+    },
+    "statusLabel": "Status"
   }
 }

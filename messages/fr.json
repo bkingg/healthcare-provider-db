@@ -14,7 +14,8 @@
     "users": "Utilisateurs",
     "reports": "Rapports et KPI",
     "resizeWorkspace": "Faites glisser pour redimensionner le panneau Espace de travail (double-clic pour réinitialiser)",
-    "members": "Membres"
+    "members": "Membres",
+    "cases": "Dossiers"
   },
   "Header": {
     "brand": "Provider Network",
@@ -123,7 +124,8 @@
       "organizations": "Organisations",
       "memberRelationships": "Liens de parenté des membres",
       "caseCategories": "Catégories de demande",
-      "emergencyContacts": "Numéros d'urgence"
+      "emergencyContacts": "Numéros d'urgence",
+      "responseTargets": "Délais de réponse"
     },
     "fields": {
       "paymentCategory": "Catégorie de paiement",
@@ -170,7 +172,10 @@
       "labelEn": "Libellé (anglais)",
       "labelFr": "Libellé (français)",
       "phone": "Téléphone",
-      "country": "Pays"
+      "country": "Pays",
+      "canWorkCases": "Peut traiter les dossiers",
+      "responseMinutes": "Délai de réponse (minutes)",
+      "businessHoursOnly": "Heures de bureau uniquement (lun–ven 09:00–17:00)"
     },
     "marker": {
       "default": "Défaut",
@@ -934,6 +939,143 @@
     "contactPhoneInvalid": "Saisissez un numéro que nous pouvons appeler, ex. 77 123 45 67.",
     "callbackNumber": "Nous vous appellerons au",
     "hasWhatsapp": "Ce numéro a WhatsApp",
-    "alsoOnWhatsapp": "· aussi sur WhatsApp"
+    "alsoOnWhatsapp": "· aussi sur WhatsApp",
+    "newMessage": "Nouveau message",
+    "messagesTitle": "Messages",
+    "fromNomad": "Nomad",
+    "fromYou": "Vous",
+    "closedNoReply": "Cette demande est clôturée. Envoyez une nouvelle demande si vous avez encore besoin d'aide.",
+    "replyLabel": "Répondre à Nomad",
+    "sendReply": "Envoyer la réponse",
+    "replyError": {
+      "empty": "Écrivez d'abord un message.",
+      "tooLong": "Merci de rester sous 2 000 caractères.",
+      "notFound": "Cette demande est introuvable.",
+      "closed": "Cette demande est clôturée. Envoyez plutôt une nouvelle demande."
+    }
+  },
+  "Cases": {
+    "title": "Dossiers",
+    "officeHours": "Heures de bureau (lun–ven 09:00–17:00)",
+    "onCall": "Hors heures de bureau — l'astreinte traite les dossiers rouges",
+    "tile": {
+      "RED": "Rouge · urgent",
+      "YELLOW": "Jaune · à surveiller",
+      "GREEN": "Vert · en bonne voie",
+      "OVERDUE": "En retard"
+    },
+    "status": {
+      "NEW": "Nouveau",
+      "IN_PROGRESS": "En cours",
+      "WAITING_MEMBER": "En attente du membre",
+      "RESOLVED": "Résolu",
+      "CLOSED": "Clôturé"
+    },
+    "statusFilter": {
+      "OPEN": "Ouverts (nouveau, en cours, en attente)",
+      "NEW": "Nouveau",
+      "IN_PROGRESS": "En cours",
+      "WAITING_MEMBER": "En attente du membre",
+      "RESOLVED": "Résolu",
+      "CLOSED": "Clôturé",
+      "ALL": "Tous"
+    },
+    "assigned": "Attribué",
+    "assignedFilter": {
+      "ANY": "Tout le monde",
+      "ME": "Moi",
+      "UNASSIGNED": "Non attribué"
+    },
+    "apply": "Appliquer",
+    "showAllColours": "Toutes les couleurs",
+    "colour": {
+      "RED": "Rouge",
+      "YELLOW": "Jaune",
+      "GREEN": "Vert"
+    },
+    "reason": {
+      "MEMBER_SAID_EMERGENCY": "Urgence vitale signalée",
+      "URGENT_WORDS": "Mots urgents dans la demande",
+      "WANTED_TODAY": "Souhaité aujourd'hui",
+      "URGENT_CARE_CATEGORY": "Soins urgents",
+      "NO_LOCATION": "Pas de localisation",
+      "OVERDUE": "En retard",
+      "STAFF_OVERRIDE": "Fixé par l'équipe"
+    },
+    "memberReplied": "Le membre a répondu",
+    "ageYears": "{age} ans",
+    "requestedBy": "Demandé par {name}",
+    "unassigned": "Non attribué",
+    "overdueBy": "En retard de {time}",
+    "dueIn": "Échéance dans {time}",
+    "waitingSince": "Envoyé il y a {time}",
+    "empty": "Aucun dossier ne correspond à ces filtres.",
+    "receivedAt": "reçu le {when}",
+    "assignedTo": "Attribué à",
+    "me": "moi",
+    "assign": "Attribuer",
+    "update": "Mettre à jour",
+    "changeColour": "Changer la couleur",
+    "overrideReason": "Pourquoi ? (enregistré dans l'historique)",
+    "saveColour": "Enregistrer la couleur",
+    "theRequest": "La demande",
+    "urgency": "Urgence",
+    "callback": "Rappeler au",
+    "call": "Appeler",
+    "location": "Localisation",
+    "sharedPosition": "Position partagée depuis le téléphone",
+    "openMap": "Voir sur la carte",
+    "forWhom": "Pour qui",
+    "patient": "Patient",
+    "memberRecord": "Fiche membre",
+    "requestedByLabel": "Demandé par",
+    "cover": "Couverture",
+    "individual": "Membre individuel",
+    "language": "Langue",
+    "providers": "Prestataires près du membre",
+    "findProviders": "Trouver des prestataires",
+    "searchAgain": "Relancer la recherche",
+    "searching": "Recherche…",
+    "foundWithin": "{count, plural, one {# prestataire} other {# prestataires}} à moins de {km} km",
+    "noneFound": "Aucun prestataire actif à moins de 100 km.",
+    "findError": {
+      "noLocation": "Le membre n'a pas indiqué de localisation. Demandez-lui où il se trouve.",
+      "geocodeUnavailable": "La recherche sur la carte est occupée — réessayez dans quelques secondes."
+    },
+    "providersHint": "Prestataires actifs les plus proches du membre (les prestataires NE PAS UTILISER ne sont jamais listés).",
+    "km": "{km} km",
+    "er247": "Urgences 24/7",
+    "open247": "Ouvert 24/7",
+    "choose": "Marquer comme choisi",
+    "chosen": "Choisi",
+    "conversationAndTimeline": "Messages et historique",
+    "tabMessage": "Message au membre",
+    "tabNote": "Note interne",
+    "messageHint": "{name} voit ce message dans l'application Nomad.",
+    "noteHint": "Équipe uniquement — jamais montré au membre.",
+    "sendMessage": "Envoyer au membre",
+    "saveNote": "Enregistrer la note",
+    "saving": "Enregistrement…",
+    "actor": {
+      "SYSTEM": "Système",
+      "MEMBER": "Membre",
+      "STAFF": "Équipe"
+    },
+    "event": {
+      "CREATED": "a envoyé la demande",
+      "COLOUR_SET": "couleur fixée : {to}",
+      "ESCALATED": "en retard — passé de {from} à {to}",
+      "COLOUR_OVERRIDDEN": "a changé la couleur de {from} à {to}",
+      "STATUS_CHANGED": "statut → {to}",
+      "ASSIGNED": "attribué à {to}",
+      "UNASSIGNED": "désattribué",
+      "NOTE": "note interne",
+      "MESSAGE_TO_MEMBER": "message au membre",
+      "MESSAGE_FROM_MEMBER": "message du membre",
+      "PROVIDERS_FOUND": "{count} prestataires trouvés à moins de {km} km",
+      "PROVIDER_SELECTED": "a choisi un prestataire",
+      "PROVIDER_UNSELECTED": "a retiré un prestataire choisi"
+    },
+    "statusLabel": "Statut"
   }
 }
