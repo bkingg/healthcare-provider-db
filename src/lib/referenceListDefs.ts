@@ -61,6 +61,33 @@ export const REFERENCE_LIST_KEYS = [
 
 export type ReferenceListKey = (typeof REFERENCE_LIST_KEYS)[number];
 
+/** How the admin Value lists menu groups the lists, in display order, so
+ * each is easy to find by what it's for. Every list belongs to exactly one
+ * group — a unit test fails if a new list is added without one.
+ * (ratingScales sits in Locations: it's shown nested under Countries.) */
+export const REFERENCE_LIST_GROUPS = [
+  { key: "memberApp", lists: ["caseCategories", "emergencyContacts"] },
+  { key: "memberEnrollment", lists: ["organizations", "memberRelationships"] },
+  { key: "caseManagement", lists: ["responseTargets"] },
+  // Everything about provider records, ordered by theme: details, contacts,
+  // networks, payments and bank details, credentials and ratings, documents
+  // and data quality.
+  {
+    key: "providerInfo",
+    lists: [
+      "providerTypes", "specialties", "capabilities", "serviceTypes", "languages", "providerTitles", "affiliationTypes",
+      "addressTypes", "phoneTypes", "emailTypes", "departments",
+      "networks", "specializedNetworks", "customizedClientNetworks",
+      "paymentTypes", "bankAccountTypes",
+      "credentialTypes", "credentialStatuses", "ratingCriteria",
+      "documentCategories", "retentionClasses", "dataQualityRules",
+    ],
+  },
+  // Shared by members and providers.
+  { key: "locations", lists: ["countries", "ratingScales", "regions"] },
+  { key: "accessScreenText", lists: ["userRoles", "uiHints"] },
+] as const satisfies readonly { key: string; lists: readonly ReferenceListKey[] }[];
+
 export type FieldDef =
   | { key: string; labelKey: string; kind: "text"; required?: boolean }
   | { key: string; labelKey: string; kind: "textarea"; required?: boolean }

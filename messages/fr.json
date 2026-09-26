@@ -209,6 +209,16 @@
         "house": "Maison",
         "map-pin": "Repère"
       }
+    },
+    "listGroups": {
+      "memberApp": "Application membre",
+      "memberEnrollment": "Adhésion des membres",
+      "caseManagement": "Gestion des dossiers",
+      "providerInfo": "Informations prestataires",
+      "locations": "Localisations",
+      "accessScreenText": "Accès et textes d'écran",
+      "expandAll": "Tout déplier",
+      "collapseAll": "Tout replier"
     }
   },
   "Login": {
