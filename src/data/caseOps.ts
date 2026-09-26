@@ -224,8 +224,17 @@ export async function setCaseStatus(caseId: string, status: CaseStatus, staffId:
   });
 }
 
-export async function addInternalNote(caseId: string, body: string, staffId: string) {
-  await prisma.$transaction((tx) => addEvent(tx, caseId, { type: "NOTE", actorType: "STAFF", staffId, body }).then(() => undefined));
+/** An internal note, optionally from a note template — its code and names
+ * are kept on the note, so renaming or retiring the template later doesn't
+ * change how past notes are labelled. */
+export async function addInternalNote(caseId: string, body: string, staffId: string, templateId?: string) {
+  const template = templateId ? await prisma.caseNoteTemplateRef.findFirst({ where: { id: templateId, isActive: true } }) : null;
+  const data = template ? { noteType: template.code, nameEn: template.nameEn, nameFr: template.nameFr } : undefined;
+  await prisma.$transaction((tx) => addEvent(tx, caseId, { type: "NOTE", actorType: "STAFF", staffId, body, data }).then(() => undefined));
+}
+
+export function listActiveNoteTemplates() {
+  return prisma.caseNoteTemplateRef.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: "asc" }, { nameEn: "asc" }] });
 }
 
 /** A message the member sees in the app. It's a response: the timer stops,

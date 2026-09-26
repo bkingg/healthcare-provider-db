@@ -4,6 +4,7 @@
  * Run via `npm run db:seed` (or automatically by `prisma migrate dev`).
  */
 import bcrypt from "bcryptjs";
+import { NOTE_TEMPLATES } from "./data/note-templates";
 import { PrismaClient } from "../generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
@@ -379,6 +380,9 @@ async function main() {
       { code: "GREEN", labelEn: "Green · on track", labelFr: "Vert · en bonne voie", minutes: 480, businessHoursOnly: true },
     ].map((r) => prisma.caseResponseTarget.upsert({ where: { code: r.code }, update: {}, create: r })),
   );
+
+  // Internal note templates — same starter text as the migration inserts.
+  await Promise.all(NOTE_TEMPLATES.map((t) => prisma.caseNoteTemplateRef.upsert({ where: { code: t.code }, update: {}, create: { ...t } })));
 
   console.log("Seed complete:", { systemUser: systemUser.email, testProvider: testProvider.id, countries: [senegal, usa, france, nigeria, uk].map((c) => c.iso2) });
   console.log(`Log in as ${systemUser.email} / ${DEV_ADMIN_PASSWORD} — you'll be forced to change this password on first login.`);

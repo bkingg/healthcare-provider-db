@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
-import { ArrowLeft, Check, ExternalLink, MapPinned, MessageCircle, Phone } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, ExternalLink, Eye, Lock, MapPinned, MessageCircle, Phone } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { getCurrentActor } from "@/lib/actor";
 import { canManageMembers, requireWorkCases } from "@/lib/rbac";
@@ -11,9 +11,10 @@ import { formatDakarDateTime } from "@/lib/formatDate";
 import { shortDuration } from "@/lib/caseTime";
 import { localizedText } from "@/lib/localizedText";
 import { LinkifiedText } from "@/components/linkified-text";
-import { getCaseForStaff, listCaseWorkers, refreshOverdueCases } from "@/data/caseOps";
+import { getCaseForStaff, listActiveNoteTemplates, listCaseWorkers, refreshOverdueCases } from "@/data/caseOps";
+import { NotesList } from "../_components/notes-list";
 import { ColourPill } from "../_components/colour";
-import { CaseComposer } from "../_components/case-composer";
+import { WriteBox } from "../_components/write-box";
 import { ColourOverride } from "../_components/colour-override";
 import { FindProviders } from "../_components/find-providers";
 import { assignCaseAction, setCaseStatusAction, toggleProviderAction } from "../actions";
@@ -52,7 +53,13 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
   await refreshOverdueCases();
 
   const { id } = await props.params;
-  const [c, workers] = await Promise.all([getCaseForStaff(id), listCaseWorkers()]);
+  const [c, workers, noteTemplates] = await Promise.all([getCaseForStaff(id), listCaseWorkers(), listActiveNoteTemplates()]);
+  // Templates in the staff screen's language (French falls back to English).
+  const templateOptions = noteTemplates.map((x) => ({
+    id: x.id,
+    name: localizedText(x.nameEn, x.nameFr, locale) ?? x.nameEn,
+    body: (locale === "fr" ? (x.bodyFr ?? x.bodyEn) : (x.bodyEn ?? x.bodyFr)) ?? "",
+  }));
   if (!c) notFound();
 
   const now = new Date();
@@ -61,9 +68,25 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
   const overdue = timerRunning && due! < now;
   const patientAge = ageFromDateOfBirth(c.patient.dateOfBirth);
   const phoneDigits = c.contactPhone.replace(/[^\d]/g, "");
+  const conversation = c.events.filter((e) => e.type === "MESSAGE_TO_MEMBER" || e.type === "MESSAGE_FROM_MEMBER");
+  const notes = c.events.filter((e) => e.type === "NOTE");
+  const activity = c.events.filter((e) => !conversation.includes(e) && !notes.includes(e));
+  const awaitingReply = conversation.at(-1)?.type === "MESSAGE_FROM_MEMBER" && c.status !== "CLOSED";
   const showMemberLinks = canManageMembers(actor);
   const who = (e: TimelineEvent) =>
     e.actorType === "SYSTEM" ? t("actor.SYSTEM") : e.actorType === "MEMBER" ? `${e.member?.firstName ?? ""} ${e.member?.lastName ?? ""}`.trim() || t("actor.MEMBER") : (e.staff?.name ?? e.staff?.email ?? t("actor.STAFF"));
+
+  // After who(): it's called while building the list.
+  const noteItems = notes.map((e) => {
+    const d = (e.data ?? {}) as { noteType?: string; nameEn?: string; nameFr?: string | null };
+    return {
+      id: e.id,
+      typeName: d.noteType ? (localizedText(d.nameEn ?? d.noteType, d.nameFr ?? null, locale) ?? null) : null,
+      author: who(e),
+      when: formatDakarDateTime(e.createdAt, locale),
+      body: e.body ?? "",
+    };
+  });
 
   function describe(e: TimelineEvent): string {
     const d = (e.data ?? {}) as Record<string, unknown>;
@@ -161,7 +184,12 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 px-5 py-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+      {/* Wide screens: case details | conversation with the member | internal
+       * notes and activity. Laptops: details on the left, conversation above
+       * notes on the right (so the work area is never pushed below the
+       * fold). Phones: everything stacked. The panels' wrapper becomes
+       * `display: contents` on wide screens so each panel takes a column. */}
+      <div className="grid grid-cols-1 gap-6 px-5 py-5 md:grid-cols-2 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)_minmax(0,0.95fr)]">
         <div className="flex flex-col gap-6">
           <Section title={t("theRequest")}>
             <blockquote className="m-0 border-l-4 border-pn-ink bg-white px-3 py-2 text-[14px] whitespace-pre-line">
@@ -269,42 +297,71 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
           </Section>
         </div>
 
-        <div className="flex flex-col gap-6">
-          <Section title={t("conversationAndTimeline")}>
-            <CaseComposer caseId={c.id} memberName={c.requestedBy.firstName} memberLanguage={c.requestedBy.preferredLanguage} />
-            <ol className="m-0 flex list-none flex-col gap-2 p-0">
-              {[...c.events].reverse().map((e) => {
-                const isMessage = e.type === "MESSAGE_TO_MEMBER" || e.type === "MESSAGE_FROM_MEMBER";
-                const isNote = e.type === "NOTE";
-                return (
-                  <li
-                    key={e.id}
-                    className={`flex flex-col gap-1 px-3 py-2 text-[13px] ${
-                      e.type === "MESSAGE_FROM_MEMBER"
-                        ? "border-l-4 border-[#1d4ed8] bg-[#eef4ff]"
-                        : e.type === "MESSAGE_TO_MEMBER"
-                          ? "border-l-4 border-pn-accent bg-white"
-                          : isNote
-                            ? "border-l-4 border-[#b45309] bg-[#fffaf0]"
-                            : "border-l-4 border-pn-rule bg-transparent text-pn-gray-1"
-                    }`}
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2 text-[11.5px] text-pn-gray-2">
-                      <span className="font-semibold text-pn-gray-1">
-                        {who(e)} · {describe(e)}
-                      </span>
-                      <span className="tabular-nums">{formatDakarDateTime(e.createdAt, locale)}</span>
-                    </div>
-                    {e.body && (
-                      <p className={`m-0 break-words whitespace-pre-line ${isMessage || isNote ? "text-pn-ink" : "text-pn-gray-1 italic"}`}>
-                        <LinkifiedText text={e.body} />
-                      </p>
-                    )}
-                  </li>
-                );
-              })}
-            </ol>
+        <div className="flex flex-col gap-6 2xl:contents">
+          {/* The member conversation and internal notes are separate panels,
+           * each with its own box and button — no mode switch, so a note can't
+           * be sent to a member by mistake. */}
+          <Section title={t("conversationWith", { name: c.requestedBy.firstName })} action={awaitingReply ? <span className="bg-[#e0ecff] px-1.5 text-[11px] font-semibold text-[#1d4ed8]">{t("replyNeeded", { name: c.requestedBy.firstName })}</span> : undefined}>
+            <div className="flex flex-col gap-3 border-2 border-pn-ink bg-white p-3">
+              <p className="m-0 flex items-center gap-1.5 text-[11.5px] text-pn-gray-2">
+                <Eye size={12} aria-hidden /> {t("conversationVisible", { name: c.requestedBy.firstName })}
+              </p>
+              {/* column-reverse keeps the newest message in view, next to the box. */}
+              <div className="flex max-h-[520px] flex-col-reverse overflow-auto">
+                <ol className="m-0 flex list-none flex-col gap-2 p-0">
+                  {conversation.length === 0 && <li className="py-6 text-center text-[12.5px] text-pn-gray-3">{t("conversationEmpty", { name: c.requestedBy.firstName })}</li>}
+                  {conversation.map((e) => {
+                    const fromMember = e.type === "MESSAGE_FROM_MEMBER";
+                    return (
+                      <li key={e.id} className={`flex max-w-[88%] flex-col gap-0.5 px-3 py-2 text-[13.5px] ${fromMember ? "self-start bg-[#eef4ff]" : "self-end border-r-4 border-pn-accent bg-pn-accent-soft"}`}>
+                        <span className="text-[11px] text-pn-gray-2">
+                          <span className="font-semibold text-pn-gray-1">{who(e)}</span> · {formatDakarDateTime(e.createdAt, locale)}
+                        </span>
+                        <p className="m-0 break-words whitespace-pre-line">
+                          <LinkifiedText text={e.body ?? ""} />
+                        </p>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
+              <WriteBox variant="message" caseId={c.id} memberName={c.requestedBy.firstName} memberLanguage={c.requestedBy.preferredLanguage} />
+            </div>
           </Section>
+
+          <div className="flex flex-col gap-6">
+            <Section title={t("notesTitle")}>
+              <div className="flex flex-col gap-3 border-2 border-[#e8c98a] bg-[#fffaf0] p-3">
+                <p className="m-0 flex items-center gap-1.5 text-[11.5px] font-semibold text-[#92400e]">
+                  <Lock size={12} aria-hidden /> {t("notesNeverShown")}
+                </p>
+                <NotesList notes={noteItems} />
+                <WriteBox variant="note" caseId={c.id} memberName={c.requestedBy.firstName} memberLanguage={c.requestedBy.preferredLanguage} templates={templateOptions} />
+              </div>
+            </Section>
+
+            {/* Status, colour, assignment and provider changes — the audit
+             * trail, collapsed by default so it doesn't crowd the two panels. */}
+            <details className="group border border-pn-rule bg-white">
+              <summary className="flex cursor-pointer list-none items-center gap-1.5 px-3 py-2 text-[12px] font-bold tracking-[0.08em] uppercase select-none hover:bg-pn-surface-hover">
+                <ChevronRight size={13} aria-hidden className="transition-transform group-open:rotate-90" />
+                {t("activityTitle", { count: activity.length })}
+              </summary>
+              <ol className="m-0 flex list-none flex-col gap-1 border-t border-pn-rule p-2">
+                {[...activity].reverse().map((e) => (
+                  <li key={e.id} className="flex flex-col gap-0.5 px-1 py-1 text-[12px] text-pn-gray-1">
+                    <span className="flex flex-wrap justify-between gap-2">
+                      <span>
+                        <span className="font-semibold">{who(e)}</span> · {describe(e)}
+                      </span>
+                      <span className="text-pn-gray-3 tabular-nums">{formatDakarDateTime(e.createdAt, locale)}</span>
+                    </span>
+                    {e.body && <span className="text-pn-gray-2 italic">“{e.body}”</span>}
+                  </li>
+                ))}
+              </ol>
+            </details>
+          </div>
         </div>
       </div>
     </div>

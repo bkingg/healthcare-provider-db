@@ -125,7 +125,8 @@
       "memberRelationships": "Liens de parenté des membres",
       "caseCategories": "Catégories de demande",
       "emergencyContacts": "Numéros d'urgence",
-      "responseTargets": "Délais de réponse"
+      "responseTargets": "Délais de réponse",
+      "noteTemplates": "Modèles de note"
     },
     "fields": {
       "paymentCategory": "Catégorie de paiement",
@@ -175,7 +176,9 @@
       "country": "Pays",
       "canWorkCases": "Peut traiter les dossiers",
       "responseMinutes": "Délai de réponse (minutes)",
-      "businessHoursOnly": "Heures de bureau uniquement (lun–ven 09:00–17:00)"
+      "businessHoursOnly": "Heures de bureau uniquement (lun–ven 09:00–17:00)",
+      "templateBodyEn": "Modèle (anglais) — « ## » pour les titres, « - » pour les puces",
+      "templateBodyFr": "Modèle (français) — « ## » pour les titres, « - » pour les puces"
     },
     "marker": {
       "default": "Défaut",
@@ -1058,13 +1061,7 @@
     "open247": "Ouvert 24/7",
     "choose": "Marquer comme choisi",
     "chosen": "Choisi",
-    "conversationAndTimeline": "Messages et historique",
-    "tabMessage": "Message au membre",
-    "tabNote": "Note interne",
-    "messageHint": "{name} voit ce message dans l'application Nomad.",
-    "noteHint": "Équipe uniquement — jamais montré au membre.",
-    "sendMessage": "Envoyer au membre",
-    "saveNote": "Enregistrer la note",
+    "saveNote": "Enregistrer la note interne",
     "saving": "Enregistrement…",
     "actor": {
       "SYSTEM": "Système",
@@ -1086,6 +1083,24 @@
       "PROVIDER_SELECTED": "a choisi un prestataire",
       "PROVIDER_UNSELECTED": "a retiré un prestataire choisi"
     },
-    "statusLabel": "Statut"
+    "statusLabel": "Statut",
+    "conversationWith": "Conversation avec {name}",
+    "replyNeeded": "{name} a répondu — réponse attendue",
+    "conversationVisible": "Tout ce qui est ici est visible par {name} dans l'application Nomad.",
+    "conversationEmpty": "Aucun message pour l'instant. {name} verra vos messages dans l'application Nomad.",
+    "messagePlaceholder": "Message à {name}…",
+    "sendToMember": "Envoyer à {name} · visible dans l'appli",
+    "notesTitle": "Notes internes · équipe uniquement",
+    "notesNeverShown": "Jamais montrées au membre.",
+    "notesEmpty": "Aucune note interne pour l'instant.",
+    "notePlaceholder": "Note pour l'équipe — jamais montrée au membre",
+    "activityTitle": "Activité ({count})",
+    "noteType": "Type de note",
+    "generalNote": "Note générale (sans modèle)",
+    "replaceTemplateQuestion": "Remplacer ce que vous avez écrit par le modèle « {name} » ?",
+    "replaceText": "Remplacer",
+    "keepText": "Garder mon texte",
+    "expandAllNotes": "Tout déplier ({count})",
+    "collapseAllNotes": "Tout replier"
   }
 }

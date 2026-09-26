@@ -42,9 +42,11 @@ export async function setCaseStatusAction(formData: FormData): Promise<void> {
 
 export async function addNoteAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const actor = await requireCaseWorker();
-  const parsed = z.object({ caseId: id, body: text("The note") }).safeParse(Object.fromEntries(formData));
+  const parsed = z
+    .object({ caseId: id, body: text("The note"), templateId: z.union([id, z.literal("")]).optional() })
+    .safeParse(Object.fromEntries(formData));
   if (!parsed.success) return fail(parsed.error.flatten().fieldErrors);
-  await ops.addInternalNote(parsed.data.caseId, parsed.data.body, actor.id);
+  await ops.addInternalNote(parsed.data.caseId, parsed.data.body, actor.id, parsed.data.templateId || undefined);
   refresh();
   return { success: true };
 }

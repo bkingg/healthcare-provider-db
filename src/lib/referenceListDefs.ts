@@ -57,6 +57,7 @@ export const REFERENCE_LIST_KEYS = [
   "caseCategories",
   "emergencyContacts",
   "responseTargets",
+  "noteTemplates",
 ] as const;
 
 export type ReferenceListKey = (typeof REFERENCE_LIST_KEYS)[number];
@@ -68,7 +69,7 @@ export type ReferenceListKey = (typeof REFERENCE_LIST_KEYS)[number];
 export const REFERENCE_LIST_GROUPS = [
   { key: "memberApp", lists: ["caseCategories", "emergencyContacts"] },
   { key: "memberEnrollment", lists: ["organizations", "memberRelationships"] },
-  { key: "caseManagement", lists: ["responseTargets"] },
+  { key: "caseManagement", lists: ["responseTargets", "noteTemplates"] },
   // Everything about provider records, ordered by theme: details, contacts,
   // networks, payments and bank details, credentials and ratings, documents
   // and data quality.
@@ -90,7 +91,9 @@ export const REFERENCE_LIST_GROUPS = [
 
 export type FieldDef =
   | { key: string; labelKey: string; kind: "text"; required?: boolean }
-  | { key: string; labelKey: string; kind: "textarea"; required?: boolean }
+  /** `rows` for longer text (e.g. note template bodies) — also widens the
+   * add/edit dialog. */
+  | { key: string; labelKey: string; kind: "textarea"; required?: boolean; rows?: number }
   | { key: string; labelKey: string; kind: "number"; required?: boolean; integer?: boolean }
   | { key: string; labelKey: string; kind: "select"; required?: boolean; options: string[] }
   | { key: string; labelKey: string; kind: "refSelect"; required?: boolean; refListKey: ReferenceListKey }
@@ -518,6 +521,21 @@ export const REFERENCE_LIST_DEFS = {
       { key: "businessHoursOnly", labelKey: "businessHoursOnly", kind: "checkbox" },
     ],
     defaultOrderBy: { minutes: "asc" },
+  },
+  noteTemplates: {
+    key: "noteTemplates",
+    labelKey: "noteTemplates",
+    model: "CaseNoteTemplateRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "nameEn",
+    fields: [
+      { key: "nameEn", labelKey: "nameEn", kind: "text", required: true },
+      { key: "nameFr", labelKey: "nameFr", kind: "text" },
+      { key: "bodyEn", labelKey: "templateBodyEn", kind: "textarea", rows: 14 },
+      { key: "bodyFr", labelKey: "templateBodyFr", kind: "textarea", rows: 14 },
+      { key: "sortOrder", labelKey: "sortOrder", kind: "number", integer: true },
+    ],
+    defaultOrderBy: [{ sortOrder: "asc" }, { nameEn: "asc" }] as Record<string, "asc" | "desc">[],
   },
   uiHints: {
     key: "uiHints",

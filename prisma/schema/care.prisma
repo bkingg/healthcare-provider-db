@@ -247,3 +247,23 @@ model CaseResponseTarget {
 
   @@map("case_response_target")
 }
+
+/// Templates for staff's internal notes on a case (Admin > Value lists >
+/// Note templates): e.g. "Phone conversation with member", "Communication
+/// to provider". Picking one fills the note box with its headers ("## …")
+/// and bullet points ("- …") in the staff screen's language; the saved note
+/// records which template it came from (case_event.data.noteType).
+model CaseNoteTemplateRef {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  nameEn    String   @map("name_en")
+  nameFr    String?  @map("name_fr")
+  bodyEn    String?  @map("body_en")
+  bodyFr    String?  @map("body_fr")
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("case_note_template_ref")
+}

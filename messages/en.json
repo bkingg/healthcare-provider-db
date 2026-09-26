@@ -125,7 +125,8 @@
       "memberRelationships": "Member relationships",
       "caseCategories": "Request categories",
       "emergencyContacts": "Emergency numbers",
-      "responseTargets": "Response times"
+      "responseTargets": "Response times",
+      "noteTemplates": "Note templates"
     },
     "fields": {
       "paymentCategory": "Payment category",
@@ -175,7 +176,9 @@
       "country": "Country",
       "canWorkCases": "Can work cases",
       "responseMinutes": "Response time (minutes)",
-      "businessHoursOnly": "Count office hours only (Mon–Fri 09:00–17:00)"
+      "businessHoursOnly": "Count office hours only (Mon–Fri 09:00–17:00)",
+      "templateBodyEn": "Template (English) — “## ” for headings, “- ” for bullet points",
+      "templateBodyFr": "Template (French) — “## ” for headings, “- ” for bullet points"
     },
     "marker": {
       "default": "Default",
@@ -1058,13 +1061,7 @@
     "open247": "Open 24/7",
     "choose": "Mark chosen",
     "chosen": "Chosen",
-    "conversationAndTimeline": "Messages and timeline",
-    "tabMessage": "Message member",
-    "tabNote": "Internal note",
-    "messageHint": "{name} sees this in the Nomad app.",
-    "noteHint": "Staff only — never shown to the member.",
-    "sendMessage": "Send to member",
-    "saveNote": "Save note",
+    "saveNote": "Save internal note",
     "saving": "Saving…",
     "actor": {
       "SYSTEM": "System",
@@ -1086,6 +1083,24 @@
       "PROVIDER_SELECTED": "marked a provider as chosen",
       "PROVIDER_UNSELECTED": "unmarked a chosen provider"
     },
-    "statusLabel": "Status"
+    "statusLabel": "Status",
+    "conversationWith": "Conversation with {name}",
+    "replyNeeded": "{name} replied — reply needed",
+    "conversationVisible": "Everything here is visible to {name} in the Nomad app.",
+    "conversationEmpty": "No messages yet. {name} will see your messages in the Nomad app.",
+    "messagePlaceholder": "Message to {name}…",
+    "sendToMember": "Send to {name} · visible in app",
+    "notesTitle": "Internal notes · staff only",
+    "notesNeverShown": "Never shown to the member.",
+    "notesEmpty": "No internal notes yet.",
+    "notePlaceholder": "Note for the team — never shown to the member",
+    "activityTitle": "Activity ({count})",
+    "noteType": "Note type",
+    "generalNote": "General note (no template)",
+    "replaceTemplateQuestion": "Replace what you've written with the “{name}” template?",
+    "replaceText": "Replace",
+    "keepText": "Keep my text",
+    "expandAllNotes": "Expand all ({count})",
+    "collapseAllNotes": "Collapse all"
   }
 }

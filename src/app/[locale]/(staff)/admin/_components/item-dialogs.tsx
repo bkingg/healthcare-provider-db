@@ -76,7 +76,14 @@ function ReferenceItemFields({
         return (
           <div key={field.key} className="col-span-2 flex flex-col gap-1.5">
             <Label htmlFor={field.key}>{label}</Label>
-            <Textarea id={field.key} name={field.key} rows={3} defaultValue={textValue(item, field.key) ?? ""} required={field.required} />
+            <Textarea
+              id={field.key}
+              name={field.key}
+              rows={field.rows ?? 3}
+              defaultValue={textValue(item, field.key) ?? ""}
+              required={field.required}
+              className={field.rows ? "font-mono text-[12.5px]" : undefined}
+            />
             <FieldError messages={errors[field.key]} />
           </div>
         );
@@ -205,7 +212,7 @@ export function AddItemDialog({
           </button>
         }
       />
-      <DialogContent>
+      <DialogContent className={def.fields.some((f) => f.kind === "textarea" && f.rows) ? "sm:max-w-2xl" : undefined}>
         <DialogHeader>
           <DialogTitle>{t("addItem")}</DialogTitle>
         </DialogHeader>
@@ -252,7 +259,7 @@ export function EditItemDialog({
           </button>
         }
       />
-      <DialogContent>
+      <DialogContent className={def.fields.some((f) => f.kind === "textarea" && f.rows) ? "sm:max-w-2xl" : undefined}>
         <DialogHeader>
           <DialogTitle>{t("editItem")}</DialogTitle>
         </DialogHeader>

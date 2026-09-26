@@ -45,6 +45,7 @@ const DELEGATES: Record<ReferenceListKey, AnyDelegate> = {
   caseCategories: prisma.caseCategoryRef,
   emergencyContacts: prisma.emergencyContactRef,
   responseTargets: prisma.caseResponseTarget,
+  noteTemplates: prisma.caseNoteTemplateRef,
 };
 
 /** Every row, active or not — unlike referenceData.ts's listX() helpers
