@@ -166,3 +166,20 @@
     @apply font-sans;
   }
 }
+
+/* Map: the provider hovered in the results list (or on the map) pops up —
+ * its pin grows from the tip, or the bubble grouping it grows and rings
+ * green. The inner element is scaled because Leaflet positions the outer
+ * one with its own transform. */
+.pn-marker > *,
+.pn-cluster > span {
+  transition: transform 120ms ease-out;
+}
+.pn-marker.pn-hover > * {
+  transform: scale(1.35);
+  transform-origin: 50% 100%;
+}
+.pn-cluster.pn-hover > span {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 3px #0e8455, 0 2px 6px rgba(20, 32, 26, 0.5) !important;
+}

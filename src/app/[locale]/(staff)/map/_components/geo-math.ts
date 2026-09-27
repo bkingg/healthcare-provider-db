@@ -28,3 +28,21 @@ export function circleBounds(center: { lat: number; lng: number }, radiusKm: num
     [center.lat + dLat, center.lng + dLng],
   ];
 }
+
+/** The map's starting area: Dakar (the peninsula's western tip) to
+ * Rufisque, where most providers are. [[south, west], [north, east]]. */
+export const HOME_BOUNDS: [[number, number], [number, number]] = [
+  [14.66, -17.53],
+  [14.8, -17.25],
+];
+
+export function isInBounds(p: { lat: number; lng: number }, [[south, west], [north, east]]: [[number, number], [number, number]]): boolean {
+  return p.lat >= south && p.lat <= north && p.lng >= west && p.lng <= east;
+}
+
+/** Whether to open on the Dakar–Rufisque area: yes unless there are results
+ * and none of them is inside it (e.g. filtered to Saint-Louis) — then the
+ * map frames the results instead of showing an empty area. */
+export function showHomeArea(points: { lat: number; lng: number }[]): boolean {
+  return points.length === 0 || points.some((p) => isInBounds(p, HOME_BOUNDS));
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { formatProviderRating } from "@/lib/providerRating";
 import dynamic from "next/dynamic";
 import { useLocale, useTranslations } from "next-intl";
@@ -8,6 +8,7 @@ import { localizedText } from "@/lib/localizedText";
 import { resolveMarkerStyle } from "@/lib/mapMarkerStyle";
 import { CircleDot, List, MapIcon } from "lucide-react";
 import { useRouter } from "@/i18n/navigation";
+import { useMapGrouping } from "@/lib/map-prefs";
 import { PnTag } from "@/components/pn-tag";
 import { DoNotUseFlag, isDoNotUse } from "@/components/do-not-use-flag";
 import type { searchProvidersForMap } from "@/data/search";
@@ -78,6 +79,15 @@ export function MapSearchView({
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
   const [circleToolActive, setCircleToolActive] = useState(false);
   const [mobileView, setMobileView] = useState<"list" | "map">("map");
+  const [grouped, setGrouped] = useMapGrouping();
+  // Hovering a name pops its pin up on the map, and hovering a pin
+  // highlights (and scrolls to) its name in the list.
+  const [hovered, setHovered] = useState<{ id: string; from: "list" | "map" } | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (hovered?.from !== "map") return;
+    listRef.current?.querySelector(`[data-provider-id="${hovered.id}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [hovered]);
 
   const mapProviders = useMemo(
     () => providers.map((p) => toMapProvider(p, locale)).filter((p): p is MapProvider => p !== null),
@@ -135,6 +145,18 @@ export function MapSearchView({
           >
             <CircleDot size={13} /> {t("circleToFind")}
           </button>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={grouped}
+            onClick={() => setGrouped(!grouped)}
+            className="flex h-7 cursor-pointer items-center gap-1.5 px-1 text-xs font-semibold"
+          >
+            <span className={`relative inline-flex h-4 w-7 flex-none items-center rounded-full transition-colors ${grouped ? "bg-[#0e8455]" : "bg-pn-gray-4"}`}>
+              <span className={`absolute h-3 w-3 rounded-full bg-white transition-transform ${grouped ? "translate-x-3.5" : "translate-x-0.5"}`} />
+            </span>
+            {t("groupNearby")}
+          </button>
           <div className="hidden gap-0 max-[860px]:flex">
             <button
               type="button"
@@ -156,6 +178,7 @@ export function MapSearchView({
 
       <div className="grid min-h-0 flex-1 grid-cols-[360px_minmax(0,1fr)] max-[860px]:grid-cols-1">
         <div
+          ref={listRef}
           className={`min-h-0 overflow-auto border-r-2 border-pn-ink max-[860px]:border-r-0 ${mobileView === "map" ? "max-[860px]:hidden" : ""}`}
         >
           {providers.length === 0 && <div className="p-6 text-center text-sm text-pn-gray-3">{t("noResults")}</div>}
@@ -164,12 +187,20 @@ export function MapSearchView({
             const address = p.addresses[0];
             const hasLocation = Boolean(address && address.latitude !== null && address.longitude !== null);
             const selected = selectedProviderId === p.id;
+            const isHovered = hovered?.id === p.id;
+            const hoverOn = () => hasLocation && setHovered({ id: p.id, from: "list" });
+            const hoverOff = () => setHovered((h) => (h?.id === p.id ? null : h));
             return (
               <button
                 key={p.id}
                 type="button"
+                data-provider-id={p.id}
                 onClick={() => hasLocation && setSelectedProviderId(p.id)}
-                className={`block w-full cursor-pointer border-b border-pn-rule px-3.5 py-2.5 text-left ${selected ? "bg-pn-surface-hover" : "hover:bg-pn-surface-hover"}`}
+                onMouseEnter={hoverOn}
+                onMouseLeave={hoverOff}
+                onFocus={hoverOn}
+                onBlur={hoverOff}
+                className={`block w-full cursor-pointer border-b border-pn-rule px-3.5 py-2.5 text-left ${selected || isHovered ? "bg-pn-surface-hover" : "hover:bg-pn-surface-hover"} ${isHovered ? "shadow-[inset_3px_0_0_#0e8455]" : ""}`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="flex min-w-0 items-center gap-1.5">
@@ -198,7 +229,11 @@ export function MapSearchView({
             providers={mapProviders}
             selectedProviderId={selectedProviderId}
             onSelectProvider={setSelectedProviderId}
+            hoveredProviderId={hovered?.id ?? null}
+            onHoverProvider={(id) => setHovered(id ? { id, from: "map" } : null)}
             activeCircle={activeCircle}
+            area={filters.bbox ?? null}
+            grouped={grouped}
             circleToolActive={circleToolActive}
             onSearchArea={handleSearchArea}
             onCircleComplete={handleCircleComplete}

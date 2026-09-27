@@ -10,7 +10,7 @@ import { PnTag } from "@/components/pn-tag";
 import { DoNotUseFlag } from "@/components/do-not-use-flag";
 import { getClusterIcon, getMarkerIcon, getSearchPointIcon, searchPointHeight } from "./marker-icons";
 import type { MarkerStyle } from "@/lib/mapMarkerStyle";
-import { circleBounds, haversineDistanceKm } from "./geo-math";
+import { circleBounds, haversineDistanceKm, HOME_BOUNDS, showHomeArea } from "./geo-math";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
@@ -35,9 +35,10 @@ export type MapProvider = {
 const SEARCH_POINT_Z = 10000;
 const PROVIDER_PIN_Z = 20000;
 
-export type SearchCircle = { lat: number; lng: number; radiusKm: number; label?: string };
+/** A "Search this area" box: [south, west, north, east]. */
+export type AreaBounds = [number, number, number, number];
 
-const DAKAR_FALLBACK_CENTER: [number, number] = [14.7167, -17.4677];
+export type SearchCircle = { lat: number; lng: number; radiusKm: number; label?: string };
 
 /** Fits the map to the current marker set exactly once per distinct id set
  * (a filter change), rather than fighting the user's own pan/zoom on every
@@ -48,15 +49,30 @@ const DAKAR_FALLBACK_CENTER: [number, number] = [14.7167, -17.4677];
  * With a distance-from-point search active, the frame also takes in the
  * whole search circle, so the search point stays in view even when no
  * provider falls inside the radius. */
-function FitToMarkers({ providers, circle }: { providers: MapProvider[]; circle: SearchCircle | null }) {
+function FitToMarkers({ providers, circle, area }: { providers: MapProvider[]; circle: SearchCircle | null; area: AreaBounds | null }) {
   const map = useMap();
   const idsKey = providers
     .map((p) => p.id)
     .sort()
     .join(",");
   const circleKey = circle ? `${circle.lat},${circle.lng},${circle.radiusKm}` : "";
+  const areaKey = area ? area.join(",") : "";
 
   useEffect(() => {
+    // "Search this area": frame the area the user searched (also on reload).
+    if (area && !circle) {
+      map.fitBounds([
+        [area[0], area[1]],
+        [area[2], area[3]],
+      ]);
+      return;
+    }
+    // No location search: start on Dakar–Rufisque, unless every result is
+    // somewhere else (then frame the results, not an empty area).
+    if (!circle && showHomeArea(providers)) {
+      map.fitBounds(HOME_BOUNDS);
+      return;
+    }
     const bounds = providers.map((p): [number, number] => [p.lat, p.lng]);
     if (circle) bounds.push(...circleBounds(circle, circle.radiusKm));
     if (bounds.length === 0) return;
@@ -66,7 +82,7 @@ function FitToMarkers({ providers, circle }: { providers: MapProvider[]; circle:
     }
     map.fitBounds(bounds, { padding: [32, 32], maxZoom: 15 });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refit only when the *set* of markers (or the search circle) changes, not on every render
-  }, [idsKey, circleKey]);
+  }, [idsKey, circleKey, areaKey]);
 
   return null;
 }
@@ -178,7 +194,11 @@ export function ProviderMap({
   providers,
   selectedProviderId,
   onSelectProvider,
+  hoveredProviderId,
+  onHoverProvider,
   activeCircle,
+  area,
+  grouped,
   circleToolActive,
   onSearchArea,
   onCircleComplete,
@@ -186,27 +206,98 @@ export function ProviderMap({
   providers: MapProvider[];
   selectedProviderId: string | null;
   onSelectProvider: (id: string | null) => void;
+  /** Provider under the pointer, here or in the results list. */
+  hoveredProviderId: string | null;
+  onHoverProvider: (id: string | null) => void;
   activeCircle: SearchCircle | null;
+  /** The "Search this area" box currently applied, if any. */
+  area: AreaBounds | null;
+  /** Group nearby providers into numbered bubbles, or show every pin. */
+  grouped: boolean;
   circleToolActive: boolean;
   onSearchArea: (bounds: L.LatLngBounds) => void;
   onCircleComplete: (center: { lat: number; lng: number }, radiusKm: number) => void;
 }) {
   const t = useTranslations("Map");
   const markerRefs = useRef(new Map<string, L.Marker>());
+  // Only getVisibleParent is needed (the cluster plugin's types aren't installed).
+  const clusterRef = useRef<{ getVisibleParent(marker: L.Marker): L.Marker | null }>(null);
 
   useEffect(() => {
     if (!selectedProviderId) return;
     markerRefs.current.get(selectedProviderId)?.openPopup();
   }, [selectedProviderId]);
 
-  const initialCenter = useMemo<[number, number]>(() => {
-    if (providers[0]) return [providers[0].lat, providers[0].lng];
-    return DAKAR_FALLBACK_CENTER;
-  }, [providers]);
+  // Pops the hovered provider's pin up above the others — or, when it's
+  // grouped into a bubble, the bubble holding it.
+  useEffect(() => {
+    const marker = hoveredProviderId ? markerRefs.current.get(hoveredProviderId) : undefined;
+    if (!marker) return;
+    const shown = (grouped && clusterRef.current?.getVisibleParent(marker)) || marker;
+    const el = shown.getElement();
+    el?.classList.add("pn-hover");
+    shown.setZIndexOffset(PROVIDER_PIN_Z + 1000);
+    return () => {
+      el?.classList.remove("pn-hover");
+      shown.setZIndexOffset(shown === marker ? PROVIDER_PIN_Z : 0);
+    };
+  }, [hoveredProviderId, grouped]);
+
+  // Opens on the Dakar–Rufisque area; FitToMarkers then frames any location
+  // search, or the results if none of them is in that area.
+  const initialCenter = useMemo<[number, number]>(
+    () => [(HOME_BOUNDS[0][0] + HOME_BOUNDS[1][0]) / 2, (HOME_BOUNDS[0][1] + HOME_BOUNDS[1][1]) / 2],
+    [],
+  );
+
+  const markers = providers.map((p) => (
+    <Marker
+      key={p.id}
+      position={[p.lat, p.lng]}
+      icon={getMarkerIcon(p.marker, p.doNotUse)}
+      zIndexOffset={PROVIDER_PIN_Z}
+      ref={(ref) => {
+        if (ref) markerRefs.current.set(p.id, ref);
+        else markerRefs.current.delete(p.id);
+      }}
+      eventHandlers={{
+        click: () => onSelectProvider(p.id),
+        mouseover: () => onHoverProvider(p.id),
+        mouseout: () => onHoverProvider(null),
+      }}
+    >
+      <Popup>
+        <div className="flex min-w-[180px] flex-col gap-1">
+          <div className="flex items-center gap-1.5 text-[13px] font-bold text-pn-ink">
+            <DoNotUseFlag status={p.status} />
+            {p.name}
+          </div>
+          {p.doNotUse && (
+            <div>
+              <PnTag status={p.status} />
+            </div>
+          )}
+          <div className="text-xs text-pn-gray-2">{p.typeName}</div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-pn-gray-2">{t("popupRating")}:</span>
+            <span className="text-xs font-semibold">{p.ratingLabel ?? "—"}</span>
+          </div>
+          {p.coordinateStatus !== "CONFIRMED" && (
+            <div>
+              <PnTag status={p.coordinateStatus} />
+            </div>
+          )}
+          <Link href={`/providers/${p.id}`} className="mt-1 text-xs font-semibold text-[#0a5c3c] hover:underline">
+            {t("popupViewRecord")} →
+          </Link>
+        </div>
+      </Popup>
+    </Marker>
+  ));
 
   return (
     <div className="relative h-full w-full">
-      <MapContainer center={initialCenter} zoom={11} className="h-full w-full" scrollWheelZoom>
+      <MapContainer center={initialCenter} zoom={12} className="h-full w-full" scrollWheelZoom>
         {/* Required OpenStreetMap attribution — always visible, per OSM's
          * license terms, not just noted in a footer. */}
         {/* Base map toned down (40% less saturated) so everything drawn from
@@ -217,7 +308,7 @@ export function ProviderMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors'
         />
-        <FitToMarkers providers={providers} circle={activeCircle} />
+        <FitToMarkers providers={providers} circle={activeCircle} area={area} />
         <SearchThisAreaControl onSearchArea={onSearchArea} />
         {/* Keyed on active: remounts on toggle so center/edge reset cleanly
          * without a setState-in-effect (React flags that as a footgun —
@@ -232,51 +323,15 @@ export function ProviderMap({
           />
         )}
         {activeCircle && <SearchPointMarker circle={activeCircle} />}
-        <MarkerClusterGroup chunkedLoading iconCreateFunction={(cluster: { getChildCount(): number }) => getClusterIcon(cluster.getChildCount())}>
-          {providers.map((p) => (
-            <Marker
-              key={p.id}
-              position={[p.lat, p.lng]}
-              icon={getMarkerIcon(p.marker, p.doNotUse)}
-              zIndexOffset={PROVIDER_PIN_Z}
-              ref={(ref) => {
-                if (ref) markerRefs.current.set(p.id, ref);
-                else markerRefs.current.delete(p.id);
-              }}
-              eventHandlers={{ click: () => onSelectProvider(p.id) }}
-            >
-              <Popup>
-                <div className="flex min-w-[180px] flex-col gap-1">
-                  <div className="flex items-center gap-1.5 text-[13px] font-bold text-pn-ink">
-                    <DoNotUseFlag status={p.status} />
-                    {p.name}
-                  </div>
-                  {p.doNotUse && (
-                    <div>
-                      <PnTag status={p.status} />
-                    </div>
-                  )}
-                  <div className="text-xs text-pn-gray-2">{p.typeName}</div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-pn-gray-2">{t("popupRating")}:</span>
-                    <span className="text-xs font-semibold">{p.ratingLabel ?? "—"}</span>
-                  </div>
-                  {p.coordinateStatus !== "CONFIRMED" && (
-                    <div>
-                      <PnTag status={p.coordinateStatus} />
-                    </div>
-                  )}
-                  <Link href={`/providers/${p.id}`} className="mt-1 text-xs font-semibold text-[#0a5c3c] hover:underline">
-                    {t("popupViewRecord")} →
-                  </Link>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
-        </MarkerClusterGroup>
+        {grouped ? (
+          <MarkerClusterGroup ref={clusterRef} chunkedLoading iconCreateFunction={(cluster: { getChildCount(): number }) => getClusterIcon(cluster.getChildCount())}>
+            {markers}
+          </MarkerClusterGroup>
+        ) : (
+          markers
+        )}
       </MapContainer>
     </div>
   );
 }
-
 export default ProviderMap;

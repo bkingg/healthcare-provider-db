@@ -38,3 +38,19 @@ describe("circleBounds", () => {
     expect(haversineDistanceKm(center, { lat: center.lat, lng: west })).toBeCloseTo(10, 1);
   });
 });
+
+describe("starting area (Dakar–Rufisque)", () => {
+  it("contains Dakar and Rufisque, not Thiès or Saint-Louis", async () => {
+    const { HOME_BOUNDS, isInBounds } = await import("../geo-math");
+    expect(isInBounds({ lat: 14.6928, lng: -17.4467 }, HOME_BOUNDS)).toBe(true); // Dakar
+    expect(isInBounds({ lat: 14.7167, lng: -17.2667 }, HOME_BOUNDS)).toBe(true); // Rufisque
+    expect(isInBounds({ lat: 14.791, lng: -16.9359 }, HOME_BOUNDS)).toBe(false); // Thiès
+    expect(isInBounds({ lat: 16.0326, lng: -16.4818 }, HOME_BOUNDS)).toBe(false); // Saint-Louis
+  });
+  it("opens there unless every result is elsewhere", async () => {
+    const { showHomeArea } = await import("../geo-math");
+    expect(showHomeArea([])).toBe(true);
+    expect(showHomeArea([{ lat: 14.69, lng: -17.44 }, { lat: 16.03, lng: -16.48 }])).toBe(true);
+    expect(showHomeArea([{ lat: 16.03, lng: -16.48 }])).toBe(false);
+  });
+});
