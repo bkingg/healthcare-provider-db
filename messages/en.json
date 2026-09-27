@@ -38,6 +38,23 @@
       "members": "Members"
     }
   },
+  "Bell": {
+    "label": "Notifications",
+    "labelCount": "Notifications: {count}",
+    "dueNow": "Due now",
+    "nothingDue": "Nothing due right now.",
+    "dueNowShort": "due now",
+    "overdueBy": "{time} late",
+    "seeAllActions": "See all {count} in My actions",
+    "forYou": "For you",
+    "markAllRead": "Mark all read",
+    "nothingNew": "No mentions or actions for you yet.",
+    "mentionedYou": "{who} mentioned you",
+    "gaveYouAction": "{who} gave you an action",
+    "someone": "Someone",
+    "unread": "unread",
+    "ago": "{time} ago"
+  },
   "Admin": {
     "colHandle": "Handle",
     "handleHint": "Used to mention and assign this person, e.g. @jerome. Letters, numbers, dots or underscores.",
@@ -1122,7 +1139,11 @@
       "MESSAGE_FROM_MEMBER": "message from member",
       "PROVIDERS_FOUND": "found {count} providers within {km} km",
       "PROVIDER_SELECTED": "marked a provider as chosen",
-      "PROVIDER_UNSELECTED": "unmarked a chosen provider"
+      "PROVIDER_UNSELECTED": "unmarked a chosen provider",
+      "ACTION_ADDED": "added a next action for {who}: “{title}”, due {when}",
+      "ACTION_DONE": "completed “{title}”",
+      "ACTION_REOPENED": "reopened “{title}”",
+      "ACTIONS_CLOSED_WITH_CASE": "{count, plural, one {closed # open action with the case} other {closed # open actions with the case}}"
     },
     "statusLabel": "Status",
     "conversationWith": "Conversation with {name}",
@@ -1144,6 +1165,63 @@
     "expandAllNotes": "Expand all ({count})",
     "collapseAllNotes": "Collapse all",
     "searchResults": "{count, plural, one {result} other {results}} for “{q}”, all statuses unless filtered",
-    "clearSearch": "Clear search"
+    "clearSearch": "Clear search",
+    "cancel": "Cancel",
+    "actionsTitle": "Next actions",
+    "actionsOpenCount": "{count} open",
+    "actionsEmpty": "No open actions. Add what needs to happen next.",
+    "actionsDone": "{count, plural, one {# done} other {# done}}",
+    "actionAddNext": "Add next action",
+    "actionAdd": "Add action",
+    "actionWhat": "What needs doing",
+    "actionWhatPlaceholder": "e.g. Call Clinique Pasteur to confirm the appointment",
+    "actionWho": "Who",
+    "actionWhen": "Due",
+    "actionQuick": "Quick:",
+    "dakarTime": "Dakar time",
+    "actionQuickPick": {
+      "inOneHour": "In 1 hour",
+      "today17": "Today 17:00",
+      "tomorrow9": "Tomorrow 09:00"
+    },
+    "actionError": {
+      "title": "Say what needs doing (up to 200 characters).",
+      "owner": "Choose someone who can work cases.",
+      "due": "Choose a due date and time.",
+      "duePast": "That time has already passed — choose a time ahead."
+    },
+    "actionMarkDone": "Mark done: {title}",
+    "actionMarkDoneShort": "Mark done",
+    "actionReopen": "Reopen: {title}",
+    "actionReopenShort": "Reopen",
+    "actionTiming": {
+      "OVERDUE": "Overdue ·",
+      "TODAY": "Today ·",
+      "UPCOMING": "Due"
+    },
+    "actionDoneBy": "done by {who} · {when}",
+    "actionClosedWithCase": "closed with the case",
+    "closeActionsQuestion": "{count, plural, one {# action is still open — close it too?} other {# actions are still open — close them too?}}",
+    "closeActionsYes": "Close them and set to {status}",
+    "closeActionsNo": "Not now",
+    "mentionSomeone": "Mention someone",
+    "mentionsYou": "Mentions you",
+    "actionAddWithNote": "Add a next action with this note",
+    "actionWithNote": "Next action",
+    "actionRemoveFromNote": "Remove the next action",
+    "saveNoteAndAction": "Save note and action",
+    "tabQueue": "Queue",
+    "tabMyActions": "My actions",
+    "myActionsEmpty": "You have no open actions.",
+    "actionGroup": {
+      "OVERDUE": "Overdue ({count})",
+      "TODAY": "Today ({count})",
+      "UPCOMING": "Upcoming ({count})"
+    },
+    "actionGivenBy": "From {who}",
+    "overdueActionsBy": "Overdue actions:",
+    "mentionedMe": "Mentioned me",
+    "nextActionLine": "Next: {title} · {when} · {who}",
+    "noNextAction": "No next action"
   }
 }

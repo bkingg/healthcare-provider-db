@@ -16,6 +16,9 @@ import { CloseRecordButton } from "@/components/close-record-button";
 import { PanelWidthsRoot } from "@/components/panel-widths-root";
 import { OpenTabsProvider } from "@/lib/open-tabs-context";
 import { staffLabel } from "@/lib/handle";
+import { NotificationBell } from "@/components/notification-bell";
+import { bellFor } from "@/data/caseActions";
+import { toBellData } from "@/lib/bellData";
 
 async function logoutAction() {
   "use server";
@@ -49,6 +52,8 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   ]);
   // Open red + yellow cases, for the Cases link's badge.
   const casesNeedingAttention = canWorkCases(actor) ? await attentionCount() : 0;
+  // Mentions and next actions are for staff who work cases.
+  const bell = canWorkCases(actor) ? toBellData(await bellFor(actor.id)) : null;
   const latestBatchLabel = latestBatch ? `${latestBatch.fileName} — ${latestBatch.loadedAt.toISOString().slice(0, 10)}` : null;
 
   return (
@@ -86,6 +91,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             <div className="flex h-[26px] w-[26px] items-center justify-center bg-pn-accent text-[11px] font-bold text-white" title={staffLabel(actor)}>
               {initials(actor.name, actor.email)}
             </div>
+            {bell && <NotificationBell initial={bell} />}
             <Link href="/settings" aria-label={t("settings")} title={t("settings")} className="text-pn-gray-4 hover:text-white">
               <Settings size={15} strokeWidth={2} />
             </Link>

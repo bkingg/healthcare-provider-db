@@ -18,10 +18,13 @@ import { WriteBox } from "../_components/write-box";
 import { ColourOverride } from "../_components/colour-override";
 import { FindProviders } from "../_components/find-providers";
 import { AssigneePicker } from "../_components/assignee-picker";
-import { assignCaseAction, setCaseStatusAction, toggleProviderAction } from "../actions";
+import { ActionsPanel, type ActionItem } from "../_components/actions-panel";
+import { StatusForm } from "../_components/status-form";
+import { assignCaseAction, toggleProviderAction } from "../actions";
 import { staffLabel } from "@/lib/handle";
-
-const STATUSES = ["NEW", "IN_PROGRESS", "WAITING_MEMBER", "RESOLVED", "CLOSED"] as const;
+import { actionTiming } from "@/lib/caseActions";
+import { markCaseNotificationsRead } from "@/data/caseActions";
+import type { NoteMentions } from "@/components/formatted-note";
 
 type TimelineEvent = NonNullable<Awaited<ReturnType<typeof getCaseForStaff>>>["events"][number];
 
@@ -55,6 +58,10 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
   await refreshOverdueCases();
 
   const { id } = await props.params;
+  // A bell link points at one note or action: open and highlight it.
+  const search = await props.searchParams;
+  const focusNoteId = typeof search.note === "string" ? search.note : null;
+  const focusActionId = typeof search.action === "string" ? search.action : null;
   const [c, workers, noteTemplates] = await Promise.all([getCaseForStaff(id), listCaseWorkers(), listActiveNoteTemplates()]);
   // Templates in the staff screen's language (French falls back to English).
   const templateOptions = noteTemplates.map((x) => ({
@@ -63,6 +70,8 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
     body: (locale === "fr" ? (x.bodyFr ?? x.bodyEn) : (x.bodyEn ?? x.bodyFr)) ?? "",
   }));
   if (!c) notFound();
+  // Opening the case counts as having seen what you were told about it.
+  await markCaseNotificationsRead(c.id, actor.id);
 
   const now = new Date();
   const due = c.responseDueAt;
@@ -81,14 +90,39 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
   // After who(): it's called while building the list.
   const noteItems = notes.map((e) => {
     const d = (e.data ?? {}) as { noteType?: string; nameEn?: string; nameFr?: string | null };
+    const mentions: NoteMentions = Object.fromEntries(
+      e.mentions.map((m) => [m.handle, { handle: m.user.handle, label: staffLabel(m.user), isMe: m.user.id === actor.id }]),
+    );
     return {
       id: e.id,
       typeName: d.noteType ? (localizedText(d.nameEn ?? d.noteType, d.nameFr ?? null, locale) ?? null) : null,
       author: who(e),
       when: formatDakarDateTime(e.createdAt, locale),
       body: e.body ?? "",
+      mentions,
+      mentionsMe: e.mentions.some((m) => m.user.id === actor.id),
     };
   });
+
+  const actionItems: ActionItem[] = c.actions.map((a) => ({
+    id: a.id,
+    title: a.title,
+    owner: staffLabel(a.owner),
+    mine: a.ownerId === actor.id,
+    due: formatDakarDateTime(a.dueAt, locale),
+    timing: actionTiming(a.dueAt, now),
+    done: a.completedAt !== null,
+    doneNote: a.completedAt
+      ? a.closedWithCase
+        ? t("actionClosedWithCase")
+        : t("actionDoneBy", { who: a.completedBy ? staffLabel(a.completedBy) : "?", when: formatDakarDateTime(a.completedAt, locale) })
+      : null,
+  }));
+  const openActionCount = actionItems.filter((a) => !a.done).length;
+  const actionOwner = (ownerId: unknown) => {
+    const o = c.actions.find((a) => a.ownerId === ownerId)?.owner ?? workers.find((w) => w.id === ownerId);
+    return o ? staffLabel(o) : "?";
+  };
 
   function describe(e: TimelineEvent): string {
     const d = (e.data ?? {}) as Record<string, unknown>;
@@ -111,6 +145,13 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
         return t("event.PROVIDERS_FOUND", { count: Number(d.count ?? 0), km: Number(d.radiusKm ?? 0) });
       case "PROVIDER_SELECTED":
         return d.selected ? t("event.PROVIDER_SELECTED") : t("event.PROVIDER_UNSELECTED");
+      case "ACTION_ADDED":
+        return t("event.ACTION_ADDED", { title: String(d.title ?? ""), who: actionOwner(d.ownerId), when: d.dueAt ? formatDakarDateTime(new Date(String(d.dueAt)), locale) : "?" });
+      case "ACTION_DONE":
+      case "ACTION_REOPENED":
+        return t(`event.${e.type}`, { title: String(d.title ?? "") });
+      case "ACTIONS_CLOSED_WITH_CASE":
+        return t("event.ACTIONS_CLOSED_WITH_CASE", { count: Number(d.count ?? 0) });
       default:
         return t(`event.${e.type}`);
     }
@@ -158,22 +199,7 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
               {t("assign")}
             </button>
           </form>
-          <form key={`status-${c.updatedAt.getTime()}`} action={setCaseStatusAction} className="flex items-end gap-1">
-            <input type="hidden" name="caseId" value={c.id} />
-            <label className="flex flex-col gap-1 text-[10.5px] tracking-[0.06em] text-pn-gray-2 uppercase">
-              {t("statusLabel")}
-              <select name="status" defaultValue={c.status} className="h-8 border-2 border-pn-border-muted bg-white px-2 text-[13px] tracking-normal text-pn-ink normal-case">
-                {STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {t(`status.${s}`)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button type="submit" className="h-8 cursor-pointer border-2 border-pn-ink bg-white px-3 text-xs font-semibold hover:bg-pn-surface-hover">
-              {t("update")}
-            </button>
-          </form>
+<StatusForm key={`status-${c.updatedAt.getTime()}`} caseId={c.id} current={c.status} openActions={openActionCount} />
           <ColourOverride caseId={c.id} current={c.rag} />
         </div>
       </div>
@@ -324,13 +350,29 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
           </Section>
 
           <div className="flex flex-col gap-6">
+            <Section
+              title={t("actionsTitle")}
+              action={openActionCount > 0 ? <span className="text-[11.5px] font-semibold text-pn-gray-2">{t("actionsOpenCount", { count: openActionCount })}</span> : undefined}
+            >
+              <ActionsPanel caseId={c.id} actions={actionItems} workers={workers} meId={actor.id} defaultOwnerId={c.assignedToId} focusId={focusActionId} />
+            </Section>
+
             <Section title={t("notesTitle")}>
               <div className="flex flex-col gap-3 border-2 border-[#e8c98a] bg-[#fffaf0] p-3">
                 <p className="m-0 flex items-center gap-1.5 text-[11.5px] font-semibold text-[#92400e]">
                   <Lock size={12} aria-hidden /> {t("notesNeverShown")}
                 </p>
-                <NotesList notes={noteItems} />
-                <WriteBox variant="note" caseId={c.id} memberName={c.requestedBy.firstName} memberLanguage={c.requestedBy.preferredLanguage} templates={templateOptions} />
+                <NotesList notes={noteItems} focusId={focusNoteId} />
+                <WriteBox
+                  variant="note"
+                  caseId={c.id}
+                  memberName={c.requestedBy.firstName}
+                  memberLanguage={c.requestedBy.preferredLanguage}
+                  templates={templateOptions}
+                  workers={workers}
+                  meId={actor.id}
+                  defaultOwnerId={c.assignedToId}
+                />
               </div>
             </Section>
 

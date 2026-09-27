@@ -1,23 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { PreviewCard } from "@base-ui/react/preview-card";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { FormattedNote } from "@/components/formatted-note";
+import { FormattedNote, type NoteMentions } from "@/components/formatted-note";
 import { notePreview } from "@/lib/notePreview";
 
-export type NoteItem = { id: string; typeName: string | null; author: string; when: string; body: string };
+export type NoteItem = { id: string; typeName: string | null; author: string; when: string; body: string; mentions?: NoteMentions; mentionsMe?: boolean };
 
 /** The internal notes on a case, each collapsed to one line (type, author,
  * date, a preview of its content) to save space. Hovering — or tabbing
  * to — a collapsed note shows the whole note in a pop-up; clicking opens or
  * closes it in place (the only way on touch screens, where there's no
  * hover). Expand all / Collapse all opens or closes every note. Newest
- * first — `notes` arrive oldest-first, like the rest of the timeline. */
-export function NotesList({ notes }: { notes: NoteItem[] }) {
+ * first — `notes` arrive oldest-first, like the rest of the timeline.
+ * `focusId` (from a bell link) starts that note open, highlighted and in
+ * view. */
+export function NotesList({ notes, focusId = null }: { notes: NoteItem[]; focusId?: string | null }) {
   const t = useTranslations("Cases");
-  const [open, setOpen] = useState<Set<string>>(new Set());
+  const [open, setOpen] = useState<Set<string>>(() => new Set(focusId ? [focusId] : []));
+  const focusRef = useRef<HTMLLIElement>(null);
+  useEffect(() => {
+    focusRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [focusId]);
   const allOpen = notes.length > 0 && notes.every((n) => open.has(n.id));
   const toggle = (id: string) =>
     setOpen((prev) => {
@@ -57,12 +63,17 @@ export function NotesList({ notes }: { notes: NoteItem[] }) {
                   <span>
                     <span className="font-semibold text-pn-gray-1">{n.author}</span> · {n.when}
                   </span>
+                  {n.mentionsMe && <span className="bg-[#fde68a] px-1.5 font-semibold text-[#78350f]">{t("mentionsYou")}</span>}
                 </span>
                 {!isOpen && <span className="block truncate pl-[20px] text-[12.5px] text-pn-gray-1">{notePreview(n.body) || "—"}</span>}
               </button>
             );
             return (
-              <li key={n.id} className="border-l-4 border-[#b45309] bg-white">
+              <li
+                key={n.id}
+                ref={n.id === focusId ? focusRef : undefined}
+                className={`border-l-4 border-[#b45309] bg-white ${n.id === focusId ? "outline-2 outline-[#d97706]" : ""}`}
+              >
                 {isOpen ? (
                   header
                 ) : (
@@ -80,14 +91,14 @@ export function NotesList({ notes }: { notes: NoteItem[] }) {
                               <span className="font-semibold text-pn-gray-1">{n.author}</span> · {n.when}
                             </span>
                           </div>
-                          <FormattedNote text={n.body} />
+                          <FormattedNote text={n.body} mentions={n.mentions} />
                         </PreviewCard.Popup>
                       </PreviewCard.Positioner>
                     </PreviewCard.Portal>
                   </PreviewCard.Root>
                 )}
                 <div id={`note-${n.id}`} hidden={!isOpen} className="px-3 pt-0.5 pb-2 pl-[32px] text-[13.5px]">
-                  <FormattedNote text={n.body} />
+                  <FormattedNote text={n.body} mentions={n.mentions} />
                 </div>
               </li>
             );

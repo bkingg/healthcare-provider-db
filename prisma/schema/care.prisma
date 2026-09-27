@@ -107,6 +107,8 @@ model CareCase {
   resolvedAt      DateTime?       @map("resolved_at")
   events          CaseEvent[]
   providerOptions CaseProviderOption[]
+  actions         CaseAction[]
+  notifications   StaffNotification[]
   channel         CaseChannel     @default(MEMBER_APP)
   createdAt       DateTime        @default(now()) @map("created_at")
   updatedAt       DateTime        @updatedAt @map("updated_at")
@@ -173,6 +175,10 @@ enum CaseEventType {
   MESSAGE_FROM_MEMBER
   PROVIDERS_FOUND
   PROVIDER_SELECTED
+  ACTION_ADDED
+  ACTION_DONE
+  ACTION_REOPENED
+  ACTIONS_CLOSED_WITH_CASE
 }
 
 enum CaseActorType {
@@ -201,6 +207,8 @@ model CaseEvent {
   /// Small structured details, e.g. {"from":"NEW","to":"IN_PROGRESS"}.
   data            Json?
   visibleToMember Boolean       @default(false) @map("visible_to_member")
+  mentions        CaseMention[]
+  notifications   StaffNotification[]
   createdAt       DateTime      @default(now()) @map("created_at")
 
   @@index([caseId, createdAt])
@@ -266,4 +274,74 @@ model CaseNoteTemplateRef {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("case_note_template_ref")
+}
+
+/// A next action on a case: what needs doing, by whom, by when. Staff only —
+/// never shown to the member. Due/overdue is worked out from dueAt when a
+/// page loads (no reminder job). Closing a case can close its open actions
+/// too (closedWithCase), after asking.
+model CaseAction {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  caseId         String    @map("case_id") @db.Uuid
+  case           CareCase  @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  title          String
+  ownerId        String    @map("owner_id") @db.Uuid
+  owner          User      @relation("CaseActionOwner", fields: [ownerId], references: [id])
+  dueAt          DateTime  @map("due_at")
+  createdById    String    @map("created_by_id") @db.Uuid
+  createdBy      User      @relation("CaseActionCreatedBy", fields: [createdById], references: [id])
+  completedAt    DateTime? @map("completed_at")
+  completedById  String?   @map("completed_by_id") @db.Uuid
+  completedBy    User?     @relation("CaseActionCompletedBy", fields: [completedById], references: [id])
+  closedWithCase Boolean   @default(false) @map("closed_with_case")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  notifications StaffNotification[]
+
+  @@index([ownerId, completedAt, dueAt])
+  @@index([caseId, completedAt])
+  @@map("case_action")
+}
+
+/// A staff member @mentioned in an internal note. Linked to the person, so a
+/// later handle change still points at them; `handle` is what was typed, so
+/// the note's text can be matched up with its mentions.
+model CaseMention {
+  eventId   String    @map("event_id") @db.Uuid
+  event     CaseEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String    @map("user_id") @db.Uuid
+  user      User      @relation(fields: [userId], references: [id])
+  handle    String
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@id([eventId, userId])
+  @@index([userId, createdAt])
+  @@map("case_mention")
+}
+
+/// The header bell's "new" items: someone mentioned you, or gave you an
+/// action. (Actions that are due come straight from case_action.)
+model StaffNotification {
+  id        String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String                @map("user_id") @db.Uuid
+  user      User                  @relation("NotificationFor", fields: [userId], references: [id])
+  kind      StaffNotificationKind
+  caseId    String                @map("case_id") @db.Uuid
+  case      CareCase              @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  eventId   String?               @map("event_id") @db.Uuid
+  event     CaseEvent?            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  actionId  String?               @map("action_id") @db.Uuid
+  action    CaseAction?           @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  actorId   String?               @map("actor_id") @db.Uuid
+  actor     User?                 @relation("NotificationBy", fields: [actorId], references: [id])
+  createdAt DateTime              @default(now()) @map("created_at")
+  readAt    DateTime?             @map("read_at")
+
+  @@index([userId, readAt, createdAt])
+  @@map("staff_notification")
+}
+
+enum StaffNotificationKind {
+  MENTION
+  ACTION_ASSIGNED
 }

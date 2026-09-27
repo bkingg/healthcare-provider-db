@@ -9,6 +9,7 @@ import { parseCaseNumber } from "@/lib/caseNumber";
 import { parseMemberNumber } from "@/lib/memberNumber";
 import type { CaseEventType, CaseStatus, Prisma } from "../../generated/prisma/client";
 import { normalizeHandle } from "@/lib/handle";
+import { addActionTx, closeOpenActionsTx, recordMentionsTx, type NewAction } from "./caseActions";
 
 /** Case operations (MVP step 1.3) — the staff side of a case, plus the
  * member actions that feed it (new request, reply). Every change writes a
@@ -118,7 +119,7 @@ export async function refreshOverdueCases(now = new Date()): Promise<number> {
 
 // --------------------------------------------------------------------- queue
 
-export type QueueFilters = { q?: string; colour?: Rag; status: "OPEN" | CaseStatus | "ALL"; assigned: "ANY" | "ME" | "UNASSIGNED" };
+export type QueueFilters = { q?: string; colour?: Rag; status: "OPEN" | CaseStatus | "ALL"; assigned: "ANY" | "ME" | "UNASSIGNED"; mentioned?: boolean };
 
 /** Cases matching the header search box: case number (CAS-000038, 38),
  * member number (MBR-000001 — also finds cases for that member's
@@ -175,6 +176,7 @@ export async function caseQueue(filters: QueueFilters, staffId: string) {
     ...(filters.colour && { rag: filters.colour }),
     ...(filters.status === "OPEN" ? { status: { in: OPEN_STATUSES } } : filters.status === "ALL" ? {} : { status: filters.status }),
     ...(filters.assigned === "ME" ? { assignedToId: staffId } : filters.assigned === "UNASSIGNED" ? { assignedToId: null } : {}),
+    ...(filters.mentioned && { events: { some: { mentions: { some: { userId: staffId } } } } }),
   };
   const cases = await prisma.careCase.findMany({
     where,
@@ -185,6 +187,8 @@ export async function caseQueue(filters: QueueFilters, staffId: string) {
       assignedTo: { select: { id: true, name: true, email: true, handle: true } },
       // The latest message either way: shows "member replied" when theirs is last.
       events: { where: { type: { in: ["MESSAGE_FROM_MEMBER", "MESSAGE_TO_MEMBER"] } }, orderBy: { createdAt: "desc" }, take: 1, select: { type: true } },
+      // The next open action, shown on the row.
+      actions: { where: { completedAt: null }, orderBy: { dueAt: "asc" }, take: 1, include: { owner: { select: { id: true, name: true, email: true, handle: true } } } },
     },
     take: 300,
   });
@@ -223,7 +227,18 @@ export async function getCaseForStaff(id: string) {
       assignedTo: { select: { id: true, name: true, email: true, handle: true } },
       patient: { include: { relationship: true, organization: true, country: true } },
       requestedBy: { include: { organization: true } },
-      events: { include: { staff: { select: { name: true, email: true, handle: true } }, member: { select: { firstName: true, lastName: true } } }, orderBy: { createdAt: "asc" } },
+      events: {
+        include: {
+          staff: { select: { name: true, email: true, handle: true } },
+          member: { select: { firstName: true, lastName: true } },
+          mentions: { select: { handle: true, user: { select: { id: true, name: true, email: true, handle: true } } } },
+        },
+        orderBy: { createdAt: "asc" },
+      },
+      actions: {
+        orderBy: { dueAt: "asc" },
+        include: { owner: { select: { id: true, name: true, email: true, handle: true } }, completedBy: { select: { id: true, name: true, email: true, handle: true } } },
+      },
       providerOptions: {
         orderBy: { rank: "asc" },
         include: {
@@ -258,8 +273,10 @@ export async function assignCase(caseId: string, assigneeId: string | null, staf
 }
 
 /** Staff changing the status counts as responding — the timer stops —
- * except reopening to NEW. Resolved and closed record when. */
-export async function setCaseStatus(caseId: string, status: CaseStatus, staffId: string) {
+ * except reopening to NEW. Resolved and closed record when, and close the
+ * case's open next actions too when staff confirmed that
+ * (`closeOpenActions`); otherwise those stay open. */
+export async function setCaseStatus(caseId: string, status: CaseStatus, staffId: string, closeOpenActions = false) {
   await prisma.$transaction(async (tx) => {
     const c = await tx.careCase.findUniqueOrThrow({ where: { id: caseId } });
     if (c.status === status) return;
@@ -274,16 +291,22 @@ export async function setCaseStatus(caseId: string, status: CaseStatus, staffId:
       },
     });
     await addEvent(tx, caseId, { type: "STATUS_CHANGED", actorType: "STAFF", staffId, data: { from: c.status, to: status } });
+    if (closeOpenActions && (status === "RESOLVED" || status === "CLOSED")) await closeOpenActionsTx(tx, caseId, staffId);
   });
 }
 
 /** An internal note, optionally from a note template — its code and names
  * are kept on the note, so renaming or retiring the template later doesn't
- * change how past notes are labelled. */
-export async function addInternalNote(caseId: string, body: string, staffId: string, templateId?: string) {
+ * change how past notes are labelled. Anyone @mentioned is recorded and
+ * told; a next action written with the note is saved with it. */
+export async function addInternalNote(caseId: string, body: string, staffId: string, templateId?: string, action?: NewAction) {
   const template = templateId ? await prisma.caseNoteTemplateRef.findFirst({ where: { id: templateId, isActive: true } }) : null;
   const data = template ? { noteType: template.code, nameEn: template.nameEn, nameFr: template.nameFr } : undefined;
-  await prisma.$transaction((tx) => addEvent(tx, caseId, { type: "NOTE", actorType: "STAFF", staffId, body, data }).then(() => undefined));
+  await prisma.$transaction(async (tx) => {
+    const note = await addEvent(tx, caseId, { type: "NOTE", actorType: "STAFF", staffId, body, data });
+    await recordMentionsTx(tx, caseId, note.id, body, staffId);
+    if (action) await addActionTx(tx, caseId, action, staffId);
+  });
 }
 
 export function listActiveNoteTemplates() {

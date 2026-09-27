@@ -4,13 +4,31 @@ import { useId, useState } from "react";
 import { useTranslations } from "next-intl";
 import { staffLabel } from "@/lib/handle";
 
-type Worker = { id: string; name: string | null; email: string; handle: string };
+export type Worker = { id: string; name: string | null; email: string; handle: string };
 
 /** Type-to-search replacement for the "Assigned to" select: matches the
  * typed text against each case worker's @handle and name ("@jer", "jerome"
- * and "diallo" all find Jerome Diallo). Submits the chosen id as
- * `assigneeId` ("" = unassigned), same as the select it replaces. */
-export function AssigneePicker({ workers, defaultId, meId }: { workers: Worker[]; defaultId: string | null; meId: string }) {
+ * and "diallo" all find Jerome Diallo). Submits the chosen id as `name`
+ * ("assigneeId" by default; "" = unassigned), same as the select it
+ * replaces. Also picks a next action's owner (`allowNone` off — an action
+ * always has one). */
+export function AssigneePicker({
+  workers,
+  defaultId,
+  meId,
+  name = "assigneeId",
+  allowNone = true,
+  label,
+  widthClass = "w-[260px]",
+}: {
+  workers: Worker[];
+  defaultId: string | null;
+  meId: string;
+  name?: string;
+  allowNone?: boolean;
+  label?: string;
+  widthClass?: string;
+}) {
   const t = useTranslations("Cases");
   const listId = useId();
   const [selectedId, setSelectedId] = useState(defaultId ?? "");
@@ -27,7 +45,7 @@ export function AssigneePicker({ workers, defaultId, meId }: { workers: Worker[]
   const filtering = open && text !== labelFor(selectedId);
   const matches = filtering && q ? workers.filter((w) => w.handle.includes(q) || (w.name ?? w.email).toLowerCase().includes(q)) : workers;
   const options: { id: string; label: string; handle?: string }[] = [
-    ...(filtering && q ? [] : [{ id: "", label: t("unassigned") }]),
+    ...(!allowNone || (filtering && q) ? [] : [{ id: "", label: t("unassigned") }]),
     ...matches.map((w) => ({ id: w.id, label: (w.name ?? w.email) + (w.id === meId ? ` (${t("me")})` : ""), handle: w.handle })),
   ];
 
@@ -39,10 +57,10 @@ export function AssigneePicker({ workers, defaultId, meId }: { workers: Worker[]
 
   return (
     <div className="relative">
-      <input type="hidden" name="assigneeId" value={selectedId} />
+      <input type="hidden" name={name} value={selectedId} />
       <input
         role="combobox"
-        aria-label={t("assignedTo")}
+        aria-label={label ?? t("assignedTo")}
         aria-expanded={open}
         aria-controls={listId}
         aria-autocomplete="list"
@@ -81,7 +99,7 @@ export function AssigneePicker({ workers, defaultId, meId }: { workers: Worker[]
             setText(labelFor(selectedId));
           }
         }}
-        className="h-8 w-[260px] border-2 border-pn-border-muted bg-white px-2 text-[13px] tracking-normal text-pn-ink normal-case outline-none focus:border-pn-ink"
+        className={`h-8 ${widthClass} border-2 border-pn-border-muted bg-white px-2 text-[13px] tracking-normal text-pn-ink normal-case outline-none focus:border-pn-ink`}
       />
       {open && (
         <ul id={listId} role="listbox" className="absolute top-full left-0 z-20 mt-0.5 max-h-64 w-[320px] overflow-auto border-2 border-pn-ink bg-white py-0.5 tracking-normal normal-case shadow-md">

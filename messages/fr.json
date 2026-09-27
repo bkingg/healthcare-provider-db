@@ -38,6 +38,23 @@
       "members": "Membres"
     }
   },
+  "Bell": {
+    "label": "Notifications",
+    "labelCount": "Notifications : {count}",
+    "dueNow": "À faire maintenant",
+    "nothingDue": "Rien à faire pour le moment.",
+    "dueNowShort": "maintenant",
+    "overdueBy": "{time} de retard",
+    "seeAllActions": "Voir les {count} dans Mes actions",
+    "forYou": "Pour vous",
+    "markAllRead": "Tout marquer comme lu",
+    "nothingNew": "Aucune mention ni action pour vous.",
+    "mentionedYou": "{who} vous a mentionné(e)",
+    "gaveYouAction": "{who} vous a confié une action",
+    "someone": "Quelqu’un",
+    "unread": "non lu",
+    "ago": "il y a {time}"
+  },
   "Admin": {
     "colHandle": "Identifiant",
     "handleHint": "Sert à désigner et assigner cette personne, p. ex. @jerome. Lettres, chiffres, points ou tirets bas.",
@@ -1122,7 +1139,11 @@
       "MESSAGE_FROM_MEMBER": "message du membre",
       "PROVIDERS_FOUND": "{count} prestataires trouvés à moins de {km} km",
       "PROVIDER_SELECTED": "a choisi un prestataire",
-      "PROVIDER_UNSELECTED": "a retiré un prestataire choisi"
+      "PROVIDER_UNSELECTED": "a retiré un prestataire choisi",
+      "ACTION_ADDED": "a ajouté une action pour {who} : « {title} », échéance {when}",
+      "ACTION_DONE": "a terminé « {title} »",
+      "ACTION_REOPENED": "a rouvert « {title} »",
+      "ACTIONS_CLOSED_WITH_CASE": "{count, plural, one {a clôturé # action ouverte avec le dossier} other {a clôturé # actions ouvertes avec le dossier}}"
     },
     "statusLabel": "Statut",
     "conversationWith": "Conversation avec {name}",
@@ -1144,6 +1165,63 @@
     "expandAllNotes": "Tout déplier ({count})",
     "collapseAllNotes": "Tout replier",
     "searchResults": "{count, plural, one {résultat} other {résultats}} pour « {q} », tous statuts sauf filtre",
-    "clearSearch": "Effacer la recherche"
+    "clearSearch": "Effacer la recherche",
+    "cancel": "Annuler",
+    "actionsTitle": "Prochaines actions",
+    "actionsOpenCount": "{count} en cours",
+    "actionsEmpty": "Aucune action en cours. Ajoutez la prochaine étape.",
+    "actionsDone": "{count, plural, one {# terminée} other {# terminées}}",
+    "actionAddNext": "Ajouter une action",
+    "actionAdd": "Ajouter l’action",
+    "actionWhat": "Que faut-il faire",
+    "actionWhatPlaceholder": "p. ex. Appeler la Clinique Pasteur pour confirmer le rendez-vous",
+    "actionWho": "Qui",
+    "actionWhen": "Échéance",
+    "actionQuick": "Rapide :",
+    "dakarTime": "heure de Dakar",
+    "actionQuickPick": {
+      "inOneHour": "Dans 1 heure",
+      "today17": "Aujourd’hui 17:00",
+      "tomorrow9": "Demain 09:00"
+    },
+    "actionError": {
+      "title": "Indiquez ce qu’il faut faire (200 caractères max.).",
+      "owner": "Choisissez une personne qui traite les dossiers.",
+      "due": "Choisissez une date et une heure d’échéance.",
+      "duePast": "Cette heure est déjà passée — choisissez une heure à venir."
+    },
+    "actionMarkDone": "Marquer comme fait : {title}",
+    "actionMarkDoneShort": "Marquer comme fait",
+    "actionReopen": "Rouvrir : {title}",
+    "actionReopenShort": "Rouvrir",
+    "actionTiming": {
+      "OVERDUE": "En retard ·",
+      "TODAY": "Aujourd’hui ·",
+      "UPCOMING": "Échéance"
+    },
+    "actionDoneBy": "fait par {who} · {when}",
+    "actionClosedWithCase": "clôturée avec le dossier",
+    "closeActionsQuestion": "{count, plural, one {# action est encore ouverte — la clôturer aussi ?} other {# actions sont encore ouvertes — les clôturer aussi ?}}",
+    "closeActionsYes": "Les clôturer et passer à « {status} »",
+    "closeActionsNo": "Pas maintenant",
+    "mentionSomeone": "Mentionner quelqu’un",
+    "mentionsYou": "Vous mentionne",
+    "actionAddWithNote": "Ajouter une action avec cette note",
+    "actionWithNote": "Prochaine action",
+    "actionRemoveFromNote": "Retirer l’action",
+    "saveNoteAndAction": "Enregistrer la note et l’action",
+    "tabQueue": "File",
+    "tabMyActions": "Mes actions",
+    "myActionsEmpty": "Vous n’avez aucune action en cours.",
+    "actionGroup": {
+      "OVERDUE": "En retard ({count})",
+      "TODAY": "Aujourd’hui ({count})",
+      "UPCOMING": "À venir ({count})"
+    },
+    "actionGivenBy": "De {who}",
+    "overdueActionsBy": "Actions en retard :",
+    "mentionedMe": "Me mentionne",
+    "nextActionLine": "Ensuite : {title} · {when} · {who}",
+    "noNextAction": "Aucune prochaine action"
   }
 }

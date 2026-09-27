@@ -47,6 +47,12 @@ model User {
   auditLogEntries         AuditLog[]             @relation("AuditChangedBy")
   assignedCases           CareCase[]             @relation("CasesAssigned")
   caseEvents              CaseEvent[]            @relation("CaseEventsByStaff")
+  caseActionsOwned        CaseAction[]           @relation("CaseActionOwner")
+  caseActionsCreated      CaseAction[]           @relation("CaseActionCreatedBy")
+  caseActionsCompleted    CaseAction[]           @relation("CaseActionCompletedBy")
+  caseMentions            CaseMention[]
+  notifications           StaffNotification[]    @relation("NotificationFor")
+  notificationsSent       StaffNotification[]    @relation("NotificationBy")
 
   @@map("app_user")
 }

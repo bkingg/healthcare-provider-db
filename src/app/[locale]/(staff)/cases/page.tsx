@@ -10,7 +10,11 @@ import { ageFromDateOfBirth } from "@/lib/memberNumber";
 import { localizedText } from "@/lib/localizedText";
 import { caseQueue, queueCounts, refreshOverdueCases, type QueueFilters } from "@/data/caseOps";
 import { COLOUR_STYLE, ColourPill, type Colour } from "./_components/colour";
+import { CasesTabs } from "./_components/cases-tabs";
 import { staffLabel } from "@/lib/handle";
+import { formatDakarDateTime } from "@/lib/formatDate";
+import { actionTiming } from "@/lib/caseActions";
+import { listMyOpenActions, overdueActionsByPerson } from "@/data/caseActions";
 
 function parseFilters(raw: Record<string, string | string[] | undefined>): QueueFilters {
   const one = (k: string) => (typeof raw[k] === "string" ? (raw[k] as string) : undefined);
@@ -25,6 +29,7 @@ function parseFilters(raw: Record<string, string | string[] | undefined>): Queue
     // usually after one specific case — unless a status was picked.
     status: status && ["NEW", "IN_PROGRESS", "WAITING_MEMBER", "RESOLVED", "CLOSED", "ALL"].includes(status) ? (status as QueueFilters["status"]) : q ? "ALL" : "OPEN",
     assigned: assigned === "ME" || assigned === "UNASSIGNED" ? assigned : "ANY",
+    mentioned: one("mentioned") === "1",
   };
 }
 
@@ -38,7 +43,7 @@ export default async function CasesPage(props: PageProps<"/[locale]/cases">) {
   await refreshOverdueCases();
   const filters = parseFilters(await props.searchParams);
   const now = new Date();
-  const [cases, counts] = await Promise.all([caseQueue(filters, actor.id), queueCounts(now)]);
+  const [cases, counts, myActions, overdueByPerson] = await Promise.all([caseQueue(filters, actor.id), queueCounts(now), listMyOpenActions(actor.id), overdueActionsByPerson(now)]);
   const inOffice = isOfficeHours(now);
 
   // Links that change the colour keep the current search.
@@ -69,6 +74,9 @@ export default async function CasesPage(props: PageProps<"/[locale]/cases">) {
       <div className="flex flex-none flex-wrap items-end justify-between gap-3 border-b-2 border-pn-ink px-5 pt-3.5 pb-3">
         <div>
           <h1 className="m-0 text-[22px] font-extrabold tracking-[-0.02em]">{t("title")}</h1>
+          <div className="mt-2">
+            <CasesTabs current="queue" myActions={myActions.length} />
+          </div>
           {filters.q && (
             <div className="mt-1 flex flex-wrap items-center gap-2 text-[12.5px]">
               <span>
@@ -92,6 +100,20 @@ export default async function CasesPage(props: PageProps<"/[locale]/cases">) {
         {tile("OVERDUE", counts.overdue)}
       </div>
 
+      {overdueByPerson.length > 0 && (
+        <div className="flex flex-none flex-wrap items-center gap-x-3 gap-y-1 px-5 pt-3 text-[12.5px]">
+          <span className="font-bold text-[#c62828]">{t("overdueActionsBy")}</span>
+          {overdueByPerson.map((r) => (
+            <span key={r.user.id} className="text-pn-gray-1">
+              <Link href={`/cases?q=${encodeURIComponent(`@${r.user.handle}`)}`} className="font-semibold text-pn-ink">
+                @{r.user.handle}
+              </Link>{" "}
+              <span className="font-bold text-[#c62828] tabular-nums">{r.count}</span>
+            </span>
+          ))}
+        </div>
+      )}
+
       <form method="get" className="flex flex-none flex-wrap items-end gap-2 px-5 py-3">
         {filters.colour && <input type="hidden" name="colour" value={filters.colour} />}
         {filters.q && <input type="hidden" name="q" value={filters.q} />}
@@ -114,6 +136,10 @@ export default async function CasesPage(props: PageProps<"/[locale]/cases">) {
             <option value="UNASSIGNED">{t("assignedFilter.UNASSIGNED")}</option>
           </select>
         </label>
+        <label className="flex h-8 cursor-pointer items-center gap-1.5 text-[13px]">
+          <input type="checkbox" name="mentioned" value="1" defaultChecked={filters.mentioned} className="h-4 w-4 accent-pn-ink" />
+          {t("mentionedMe")}
+        </label>
         <button type="submit" className="h-8 cursor-pointer border-2 border-pn-ink bg-pn-ink px-4 text-xs font-semibold text-white">
           {t("apply")}
         </button>
@@ -130,6 +156,8 @@ export default async function CasesPage(props: PageProps<"/[locale]/cases">) {
           const overdue = due !== null && due < now && ["NEW", "IN_PROGRESS"].includes(c.status);
           const replied = c.events[0]?.type === "MESSAGE_FROM_MEMBER";
           const age = ageFromDateOfBirth(c.patient.dateOfBirth);
+          const nextAction = c.actions[0];
+          const nextOverdue = nextAction ? actionTiming(nextAction.dueAt, now) === "OVERDUE" : false;
           return (
             <li key={c.id} className="relative border-b border-pn-rule bg-white hover:bg-pn-surface-hover">
               <span className={`absolute inset-y-0 left-0 w-1.5 ${COLOUR_STYLE[c.rag as Colour].stripe}`} aria-hidden />
@@ -162,9 +190,16 @@ export default async function CasesPage(props: PageProps<"/[locale]/cases">) {
                     <div className="truncate text-[12px] text-pn-gray-2">{t("requestedBy", { name: `${c.requestedBy.firstName} ${c.requestedBy.lastName}` })}</div>
                   )}
                 </div>
-                <div className="text-[13px]">
+                <div className="min-w-0 text-[13px]">
                   <div className="text-pn-gray-1">{t(`status.${c.status}`)}</div>
                   <div className="text-[12px] text-pn-gray-2">{c.assignedTo ? staffLabel(c.assignedTo) : t("unassigned")}</div>
+                  {nextAction ? (
+                    <div className={`truncate text-[12px] ${nextOverdue ? "font-bold text-[#c62828]" : "text-pn-gray-1"}`} title={nextAction.title}>
+                      {t("nextActionLine", { title: nextAction.title, when: formatDakarDateTime(nextAction.dueAt, locale), who: `@${nextAction.owner.handle}` })}
+                    </div>
+                  ) : (
+                    ["NEW", "IN_PROGRESS", "WAITING_MEMBER"].includes(c.status) && <div className="text-[12px] text-pn-gray-3 italic">{t("noNextAction")}</div>
+                  )}
                 </div>
                 <div className="text-[13px] tabular-nums md:text-right">
                   {due && ["NEW", "IN_PROGRESS"].includes(c.status) ? (
