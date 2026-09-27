@@ -49,3 +49,14 @@ describe("escalate", () => {
     expect([ragRank("RED"), ragRank("YELLOW"), ragRank("GREEN")]).toEqual([0, 1, 2]);
   });
 });
+
+describe("parseCaseNumber", () => {
+  it("reads the forms staff are likely to type", async () => {
+    const { parseCaseNumber } = await import("@/lib/caseNumber");
+    for (const input of ["CAS-000038", "cas-38", "CAS38", "000038", "38", " CAS-000038 "]) expect(parseCaseNumber(input)).toBe(38);
+  });
+  it("rejects other IDs and non-numbers", async () => {
+    const { parseCaseNumber } = await import("@/lib/caseNumber");
+    for (const input of ["MBR-000038", "NMD-000038", "abc", "", "CAS-", "0", "CAS-000000"]) expect(parseCaseNumber(input)).toBeNull();
+  });
+});

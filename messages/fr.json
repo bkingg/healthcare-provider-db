@@ -28,7 +28,15 @@
     "signOut": "Se déconnecter",
     "closeTab": "Fermer {name}",
     "closeAllTabs": "Tout fermer",
-    "closeRecord": "Fermer"
+    "closeRecord": "Fermer",
+    "searchCasesPlaceholder": "Rechercher des dossiers : nom, n° de dossier, n° de membre, type de demande, téléphone…",
+    "searchMembersPlaceholder": "Rechercher des membres : nom, n° de membre, e-mail, téléphone, police…",
+    "searchIn": "Rechercher dans",
+    "scope": {
+      "providers": "Prestataires",
+      "cases": "Dossiers",
+      "members": "Membres"
+    }
   },
   "Admin": {
     "title": "Administration",
@@ -803,9 +811,6 @@
     "coverage": "Couverture",
     "save": "Enregistrer",
     "create": "Ajouter le membre",
-    "search": "Rechercher",
-    "searchPlaceholder": "Nom, numéro de membre, e-mail, téléphone ou police",
-    "searchButton": "Rechercher",
     "allOrganizations": "Toutes les organisations",
     "status": "Statut",
     "statusACTIVE": "Actif",
@@ -829,7 +834,10 @@
     "deactivate": "Désactiver",
     "reactivate": "Réactiver",
     "noEmailNoSignIn": "Pas d'e-mail : ce membre ne peut pas se connecter à l'application, mais le membre principal peut demander de l'aide pour lui.",
-    "importMembers": "Importer des membres"
+    "importMembers": "Importer des membres",
+    "applyFilters": "Appliquer",
+    "resultsFor": "pour « {q} »",
+    "clearSearch": "Effacer la recherche"
   },
   "MemberImport": {
     "breadcrumb": "Membres",
@@ -1101,6 +1109,8 @@
     "replaceText": "Remplacer",
     "keepText": "Garder mon texte",
     "expandAllNotes": "Tout déplier ({count})",
-    "collapseAllNotes": "Tout replier"
+    "collapseAllNotes": "Tout replier",
+    "searchResults": "{count, plural, one {résultat} other {résultats}} pour « {q} », tous statuts sauf filtre",
+    "clearSearch": "Effacer la recherche"
   }
 }

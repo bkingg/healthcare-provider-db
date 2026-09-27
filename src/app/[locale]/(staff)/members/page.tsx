@@ -1,6 +1,6 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { localizedText } from "@/lib/localizedText";
-import { FileUp, Search } from "lucide-react";
+import { FileUp } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { getCurrentActor } from "@/lib/actor";
 import { requireManageMembers } from "@/lib/rbac";
@@ -37,6 +37,18 @@ export default async function MembersPage(props: PageProps<"/[locale]/members">)
           <div className="mt-[5px] text-xs text-pn-gray-2">
             <strong className="text-pn-ink tabular-nums">{total.toLocaleString()}</strong> {t("resultsLabel")}
             {total > limit && <span className="ml-2 font-semibold text-pn-accent">{t("showingFirst", { limit })}</span>}
+            {filters.q && (
+              <>
+                {" "}
+                {t("resultsFor", { q: filters.q })}{" "}
+                <Link
+                  href={filters.organizationId || filters.status !== "ACTIVE" ? `/members?${new URLSearchParams({ ...(filters.organizationId && { organizationId: filters.organizationId }), status: filters.status }).toString()}` : "/members"}
+                  className="ml-1 font-semibold text-[#0a5c3c]"
+                >
+                  {t("clearSearch")}
+                </Link>
+              </>
+            )}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -53,18 +65,9 @@ export default async function MembersPage(props: PageProps<"/[locale]/members">)
       {/* Plain GET form: the search lives in the URL, so it survives a
        * reload and can be shared, same as the provider search. */}
       <form method="get" className="flex flex-none flex-wrap items-end gap-2 border-b border-pn-rule px-5 py-3">
-        <label className="flex min-w-[220px] flex-1 flex-col gap-1 text-[10.5px] tracking-[0.06em] text-pn-gray-2 uppercase">
-          {t("search")}
-          <span className="flex h-8 items-center gap-2 border-2 border-pn-border-muted bg-white px-2 focus-within:border-pn-ink">
-            <Search size={14} className="text-pn-gray-3" />
-            <input
-              name="q"
-              defaultValue={filters.q}
-              placeholder={t("searchPlaceholder")}
-              className="h-full flex-1 bg-transparent text-[13px] tracking-normal text-pn-ink normal-case outline-none"
-            />
-          </span>
-        </label>
+        {/* Searching is done from the header search box, which targets
+         * members on these pages; this form keeps the search while filtering. */}
+        {filters.q && <input type="hidden" name="q" value={filters.q} />}
         <label className="flex flex-col gap-1 text-[10.5px] tracking-[0.06em] text-pn-gray-2 uppercase">
           {t("organization")}
           <select name="organizationId" defaultValue={filters.organizationId ?? ""} className="h-8 border-2 border-pn-border-muted bg-white px-2 text-[13px] tracking-normal text-pn-ink normal-case">
@@ -85,7 +88,7 @@ export default async function MembersPage(props: PageProps<"/[locale]/members">)
           </select>
         </label>
         <button type="submit" className="h-8 cursor-pointer border-2 border-pn-ink bg-pn-ink px-4 text-xs font-semibold text-white">
-          {t("searchButton")}
+          {t("applyFilters")}
         </button>
       </form>
 

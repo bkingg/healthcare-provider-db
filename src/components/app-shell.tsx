@@ -62,7 +62,9 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex min-w-0 flex-1 items-center gap-3 px-4">
             <Suspense fallback={<div className="h-8 max-w-[560px] flex-1 border-2 border-pn-gray-1 bg-[#1d2b23]" />}>
-              <HeaderSearch />
+              <HeaderSearch
+                scopes={[...(canWorkCases(actor) ? (["cases"] as const) : []), ...(canManageMembers(actor) ? (["members"] as const) : []), "providers"]}
+              />
             </Suspense>
             <OpenTabsBar />
             <span data-r="hide-md" className="max-[1180px]:hidden text-[11px] tracking-[0.06em] text-pn-gray-4 uppercase whitespace-nowrap">

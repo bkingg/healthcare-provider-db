@@ -5,6 +5,8 @@ import { escalate, ragRank, type Rag } from "@/lib/caseRules";
 import { parseSearchParams } from "@/lib/validation/search";
 import { searchAddress } from "@/lib/geocode";
 import { searchProviders } from "./search";
+import { parseCaseNumber } from "@/lib/caseNumber";
+import { parseMemberNumber } from "@/lib/memberNumber";
 import type { CaseEventType, CaseStatus, Prisma } from "../../generated/prisma/client";
 
 /** Case operations (MVP step 1.3) — the staff side of a case, plus the
@@ -115,10 +117,49 @@ export async function refreshOverdueCases(now = new Date()): Promise<number> {
 
 // --------------------------------------------------------------------- queue
 
-export type QueueFilters = { colour?: Rag; status: "OPEN" | CaseStatus | "ALL"; assigned: "ANY" | "ME" | "UNASSIGNED" };
+export type QueueFilters = { q?: string; colour?: Rag; status: "OPEN" | CaseStatus | "ALL"; assigned: "ANY" | "ME" | "UNASSIGNED" };
+
+/** Cases matching the header search box: case number (CAS-000038, 38),
+ * member number (MBR-000001 — also finds cases for that member's
+ * dependents), callback phone (digits only, so "77 555" matches
+ * "+221 77 555 01 01"), or every typed word matching the patient's or
+ * requester's name or the request type (EN or FR) — "ndiaye awa",
+ * "awa medication". What the member wrote isn't searched, by design. */
+async function caseSearchWhere(q: string): Promise<Prisma.CareCaseWhereInput> {
+  const or: Prisma.CareCaseWhereInput[] = [];
+  const caseNumber = parseCaseNumber(q);
+  if (caseNumber !== null) or.push({ caseNumber });
+  const memberNumber = parseMemberNumber(q);
+  if (memberNumber !== null) {
+    or.push({ patient: { memberNumber } }, { requestedBy: { memberNumber } }, { patient: { primaryMember: { memberNumber } } });
+  }
+  const digits = q.replace(/\D/g, "");
+  if (digits.length >= 4) {
+    const rows = await prisma.$queryRaw<{ id: string }[]>`
+      SELECT id FROM care_case WHERE regexp_replace(contact_phone, '[^0-9]', '', 'g') LIKE ${`%${digits}%`}`;
+    if (rows.length) or.push({ id: { in: rows.map((r) => r.id) } });
+  }
+  const words = q.split(/\s+/).filter(Boolean);
+  if (words.length) {
+    or.push({
+      AND: words.map((w) => ({
+        OR: [
+          { patient: { firstName: { contains: w, mode: "insensitive" } } },
+          { patient: { lastName: { contains: w, mode: "insensitive" } } },
+          { requestedBy: { firstName: { contains: w, mode: "insensitive" } } },
+          { requestedBy: { lastName: { contains: w, mode: "insensitive" } } },
+          { category: { nameEn: { contains: w, mode: "insensitive" } } },
+          { category: { nameFr: { contains: w, mode: "insensitive" } } },
+        ],
+      })),
+    });
+  }
+  return { OR: or };
+}
 
 export async function caseQueue(filters: QueueFilters, staffId: string) {
   const where: Prisma.CareCaseWhereInput = {
+    ...(filters.q && (await caseSearchWhere(filters.q))),
     ...(filters.colour && { rag: filters.colour }),
     ...(filters.status === "OPEN" ? { status: { in: OPEN_STATUSES } } : filters.status === "ALL" ? {} : { status: filters.status }),
     ...(filters.assigned === "ME" ? { assignedToId: staffId } : filters.assigned === "UNASSIGNED" ? { assignedToId: null } : {}),

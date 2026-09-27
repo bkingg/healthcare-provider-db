@@ -13,12 +13,16 @@ import { COLOUR_STYLE, ColourPill, type Colour } from "./_components/colour";
 
 function parseFilters(raw: Record<string, string | string[] | undefined>): QueueFilters {
   const one = (k: string) => (typeof raw[k] === "string" ? (raw[k] as string) : undefined);
+  const q = one("q")?.trim() || undefined;
   const colour = one("colour");
   const status = one("status");
   const assigned = one("assigned");
   return {
+    q,
     colour: colour === "RED" || colour === "YELLOW" || colour === "GREEN" ? colour : undefined,
-    status: status && ["NEW", "IN_PROGRESS", "WAITING_MEMBER", "RESOLVED", "CLOSED", "ALL"].includes(status) ? (status as QueueFilters["status"]) : "OPEN",
+    // Searching (the header search box) looks across every status — you're
+    // usually after one specific case — unless a status was picked.
+    status: status && ["NEW", "IN_PROGRESS", "WAITING_MEMBER", "RESOLVED", "CLOSED", "ALL"].includes(status) ? (status as QueueFilters["status"]) : q ? "ALL" : "OPEN",
     assigned: assigned === "ME" || assigned === "UNASSIGNED" ? assigned : "ANY",
   };
 }
@@ -36,12 +40,21 @@ export default async function CasesPage(props: PageProps<"/[locale]/cases">) {
   const [cases, counts] = await Promise.all([caseQueue(filters, actor.id), queueCounts(now)]);
   const inOffice = isOfficeHours(now);
 
+  // Links that change the colour keep the current search.
+  const queueHref = (extra: { colour?: Colour }) => {
+    const params = new URLSearchParams();
+    if (filters.q) params.set("q", filters.q);
+    if (extra.colour) params.set("colour", extra.colour);
+    const qs = params.toString();
+    return qs ? `/cases?${qs}` : "/cases";
+  };
+
   const tile = (colour: Colour | "OVERDUE", count: number) => {
     const active = colour === "OVERDUE" ? false : filters.colour === colour;
-    const href = colour === "OVERDUE" ? "/cases" : `/cases?colour=${colour}`;
+    const href = colour === "OVERDUE" ? queueHref({}) : queueHref({ colour });
     return (
       <Link
-        href={active ? "/cases" : href}
+        href={active ? queueHref({}) : href}
         className={`flex min-w-[120px] flex-1 flex-col gap-0.5 border-2 px-4 py-3 no-underline ${active ? "border-pn-ink" : "border-pn-rule"} ${colour === "OVERDUE" ? "bg-white" : COLOUR_STYLE[colour].soft}`}
       >
         <span className="text-[11px] font-bold tracking-[0.08em] text-pn-gray-1 uppercase">{t(`tile.${colour}`)}</span>
@@ -55,6 +68,16 @@ export default async function CasesPage(props: PageProps<"/[locale]/cases">) {
       <div className="flex flex-none flex-wrap items-end justify-between gap-3 border-b-2 border-pn-ink px-5 pt-3.5 pb-3">
         <div>
           <h1 className="m-0 text-[22px] font-extrabold tracking-[-0.02em]">{t("title")}</h1>
+          {filters.q && (
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-[12.5px]">
+              <span>
+                <strong className="tabular-nums">{cases.length}</strong> {t("searchResults", { count: cases.length, q: filters.q })}
+              </span>
+              <Link href={filters.colour ? `/cases?colour=${filters.colour}` : "/cases"} className="font-semibold text-[#0a5c3c]">
+                {t("clearSearch")}
+              </Link>
+            </div>
+          )}
           <div className={`mt-1 flex items-center gap-1.5 text-[12px] font-semibold ${inOffice ? "text-pn-gray-2" : "text-[#b45309]"}`}>
             <Clock size={13} aria-hidden /> {inOffice ? t("officeHours") : t("onCall")}
           </div>
@@ -70,6 +93,7 @@ export default async function CasesPage(props: PageProps<"/[locale]/cases">) {
 
       <form method="get" className="flex flex-none flex-wrap items-end gap-2 px-5 py-3">
         {filters.colour && <input type="hidden" name="colour" value={filters.colour} />}
+        {filters.q && <input type="hidden" name="q" value={filters.q} />}
         <label className="flex flex-col gap-1 text-[10.5px] tracking-[0.06em] text-pn-gray-2 uppercase">
           {t("statusLabel")}
           <select name="status" defaultValue={filters.status} className="h-8 border-2 border-pn-border-muted bg-white px-2 text-[13px] tracking-normal text-pn-ink normal-case">
@@ -93,7 +117,7 @@ export default async function CasesPage(props: PageProps<"/[locale]/cases">) {
           {t("apply")}
         </button>
         {filters.colour && (
-          <Link href="/cases" className="h-8 content-center text-[12px] font-semibold text-[#0a5c3c]">
+          <Link href={queueHref({})} className="h-8 content-center text-[12px] font-semibold text-[#0a5c3c]">
             {t("showAllColours")}
           </Link>
         )}

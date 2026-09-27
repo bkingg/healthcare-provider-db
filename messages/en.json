@@ -28,7 +28,15 @@
     "signOut": "Sign out",
     "closeTab": "Close {name}",
     "closeAllTabs": "Close all",
-    "closeRecord": "Close"
+    "closeRecord": "Close",
+    "searchCasesPlaceholder": "Search cases: name, case number, member ID, request type, phone…",
+    "searchMembersPlaceholder": "Search members: name, member ID, email, phone, policy…",
+    "searchIn": "Search in",
+    "scope": {
+      "providers": "Providers",
+      "cases": "Cases",
+      "members": "Members"
+    }
   },
   "Admin": {
     "title": "Administration",
@@ -803,9 +811,6 @@
     "coverage": "Cover",
     "save": "Save",
     "create": "Add member",
-    "search": "Search",
-    "searchPlaceholder": "Name, member number, email, phone or policy",
-    "searchButton": "Search",
     "allOrganizations": "All organizations",
     "status": "Status",
     "statusACTIVE": "Active",
@@ -829,7 +834,10 @@
     "deactivate": "Deactivate",
     "reactivate": "Reactivate",
     "noEmailNoSignIn": "No email: this member can't sign in to the member app, but the primary member can request help for them.",
-    "importMembers": "Import members"
+    "importMembers": "Import members",
+    "applyFilters": "Apply",
+    "resultsFor": "for “{q}”",
+    "clearSearch": "Clear search"
   },
   "MemberImport": {
     "breadcrumb": "Members",
@@ -1101,6 +1109,8 @@
     "replaceText": "Replace",
     "keepText": "Keep my text",
     "expandAllNotes": "Expand all ({count})",
-    "collapseAllNotes": "Collapse all"
+    "collapseAllNotes": "Collapse all",
+    "searchResults": "{count, plural, one {result} other {results}} for “{q}”, all statuses unless filtered",
+    "clearSearch": "Clear search"
   }
 }
