@@ -8,6 +8,7 @@ import { searchProviders } from "./search";
 import { parseCaseNumber } from "@/lib/caseNumber";
 import { parseMemberNumber } from "@/lib/memberNumber";
 import type { CaseEventType, CaseStatus, Prisma } from "../../generated/prisma/client";
+import { normalizeHandle } from "@/lib/handle";
 
 /** Case operations (MVP step 1.3) — the staff side of a case, plus the
  * member actions that feed it (new request, reply). Every change writes a
@@ -124,8 +125,19 @@ export type QueueFilters = { q?: string; colour?: Rag; status: "OPEN" | CaseStat
  * dependents), callback phone (digits only, so "77 555" matches
  * "+221 77 555 01 01"), or every typed word matching the patient's or
  * requester's name or the request type (EN or FR) — "ndiaye awa",
- * "awa medication". What the member wrote isn't searched, by design. */
-async function caseSearchWhere(q: string): Promise<Prisma.CareCaseWhereInput> {
+ * "awa medication". What the member wrote isn't searched, by design.
+ * An @handle ("@jerome", or the start of one while typing) limits the
+ * results to cases assigned to that staff member, and combines with the
+ * rest: "@jerome awa". */
+async function caseSearchWhere(query: string): Promise<Prisma.CareCaseWhereInput> {
+  const handles = query.split(/\s+/).filter((w) => w.startsWith("@") && w.length > 1).map(normalizeHandle);
+  const q = query
+    .split(/\s+/)
+    .filter((w) => !w.startsWith("@"))
+    .join(" ")
+    .trim();
+  const byAssignee: Prisma.CareCaseWhereInput[] = handles.map((h) => ({ assignedTo: { handle: { startsWith: h } } }));
+  if (!q) return { AND: byAssignee };
   const or: Prisma.CareCaseWhereInput[] = [];
   const caseNumber = parseCaseNumber(q);
   if (caseNumber !== null) or.push({ caseNumber });
@@ -154,7 +166,7 @@ async function caseSearchWhere(q: string): Promise<Prisma.CareCaseWhereInput> {
       })),
     });
   }
-  return { OR: or };
+  return { AND: [...byAssignee, { OR: or }] };
 }
 
 export async function caseQueue(filters: QueueFilters, staffId: string) {
@@ -170,7 +182,7 @@ export async function caseQueue(filters: QueueFilters, staffId: string) {
       category: true,
       patient: { select: { id: true, firstName: true, lastName: true, dateOfBirth: true } },
       requestedBy: { select: { id: true, firstName: true, lastName: true } },
-      assignedTo: { select: { id: true, name: true, email: true } },
+      assignedTo: { select: { id: true, name: true, email: true, handle: true } },
       // The latest message either way: shows "member replied" when theirs is last.
       events: { where: { type: { in: ["MESSAGE_FROM_MEMBER", "MESSAGE_TO_MEMBER"] } }, orderBy: { createdAt: "desc" }, take: 1, select: { type: true } },
     },
@@ -208,10 +220,10 @@ export async function getCaseForStaff(id: string) {
     where: { id },
     include: {
       category: true,
-      assignedTo: { select: { id: true, name: true, email: true } },
+      assignedTo: { select: { id: true, name: true, email: true, handle: true } },
       patient: { include: { relationship: true, organization: true, country: true } },
       requestedBy: { include: { organization: true } },
-      events: { include: { staff: { select: { name: true, email: true } }, member: { select: { firstName: true, lastName: true } } }, orderBy: { createdAt: "asc" } },
+      events: { include: { staff: { select: { name: true, email: true, handle: true } }, member: { select: { firstName: true, lastName: true } } }, orderBy: { createdAt: "asc" } },
       providerOptions: {
         orderBy: { rank: "asc" },
         include: {
@@ -231,7 +243,7 @@ export async function getCaseForStaff(id: string) {
 }
 
 export function listCaseWorkers() {
-  return prisma.user.findMany({ where: { isActive: true, role: { canWorkCases: true, isActive: true } }, select: { id: true, name: true, email: true }, orderBy: { name: "asc" } });
+  return prisma.user.findMany({ where: { isActive: true, role: { canWorkCases: true, isActive: true } }, select: { id: true, name: true, email: true, handle: true }, orderBy: { name: "asc" } });
 }
 
 // ------------------------------------------------------------- staff actions

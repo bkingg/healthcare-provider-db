@@ -27,6 +27,7 @@ export async function createUserAction(_prevState: ActionResult<{ tempPassword: 
   const parsed = createUserSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return fail(parsed.error.flatten().fieldErrors);
 
+  if (await users.isHandleTaken(parsed.data.handle)) return fail({ handle: [`@${parsed.data.handle} is already taken.`] });
   try {
     const { tempPassword } = await users.createUser(parsed.data, actor.id);
     revalidateUsers();
@@ -42,7 +43,8 @@ export async function updateUserAction(_prevState: ActionResult | null, formData
   const parsed = updateUserSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return fail(parsed.error.flatten().fieldErrors);
 
-  await users.updateUser(parsed.data.id, { name: parsed.data.name, roleId: parsed.data.roleId ?? null, maxSearchResults: parsed.data.maxSearchResults ?? null }, actor.id);
+  if (await users.isHandleTaken(parsed.data.handle, parsed.data.id)) return fail({ handle: [`@${parsed.data.handle} is already taken.`] });
+  await users.updateUser(parsed.data.id, { handle: parsed.data.handle, name: parsed.data.name, roleId: parsed.data.roleId ?? null, maxSearchResults: parsed.data.maxSearchResults ?? null }, actor.id);
   revalidateUsers();
   return { success: true };
 }

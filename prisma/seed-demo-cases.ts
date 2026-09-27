@@ -96,7 +96,7 @@ async function main() {
     where: { email: "casemanager.demo@local.dev" },
     update: {},
     create: {
-      email: "casemanager.demo@local.dev", name: "Mariama Case Manager (demo)", roleId: caseManagerRole.id,
+      email: "casemanager.demo@local.dev", name: "Mariama Case Manager (demo)", handle: "casemanager.demo", roleId: caseManagerRole.id,
       passwordHash: await bcrypt.hash("CaseManager-demo-1!", 12), mustChangePassword: false,
     },
   });

@@ -68,7 +68,7 @@ async function main() {
   let systemUser = await prisma.user.upsert({
     where: { email: "system@seed.local" },
     update: {},
-    create: { email: "system@seed.local", name: "Seed System User" },
+    create: { email: "system@seed.local", name: "Seed System User", handle: "system" },
   });
   if (!systemUser.passwordHash) {
     systemUser = await prisma.user.update({

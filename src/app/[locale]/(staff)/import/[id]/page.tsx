@@ -5,6 +5,7 @@ import { getImportBatchDetail } from "@/data/importBatches";
 import { StatusBadge } from "@/components/status-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ConfirmImportDialog, type DuplicateCandidate } from "../_components/confirm-import-dialog";
+import { staffLabel } from "@/lib/handle";
 
 export default async function ImportBatchDetailPage(props: PageProps<"/[locale]/import/[id]">) {
   const t = await getTranslations("Import");
@@ -31,7 +32,7 @@ export default async function ImportBatchDetailPage(props: PageProps<"/[locale]/
         <div>
           <h1 className="text-2xl font-semibold">{batch.fileName}</h1>
           <p className="text-sm text-muted-foreground">
-            {t("loadedBy", { name: batch.loadedBy.name ?? batch.loadedBy.email, date: batch.loadedAt.toLocaleString() })}
+            {t("loadedBy", { name: staffLabel(batch.loadedBy), date: batch.loadedAt.toLocaleString() })}
           </p>
         </div>
         <StatusBadge status={batch.status} />

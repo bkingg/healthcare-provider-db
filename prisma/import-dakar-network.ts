@@ -151,7 +151,7 @@ async function main() {
   const systemUser = await prisma.user.upsert({
     where: { email: "system@seed.local" },
     update: {},
-    create: { email: "system@seed.local", name: "Seed System User" },
+    create: { email: "system@seed.local", name: "Seed System User", handle: "system" },
   });
 
   const senegal = await prisma.countryRef.findUniqueOrThrow({ where: { iso2: "SN" } });

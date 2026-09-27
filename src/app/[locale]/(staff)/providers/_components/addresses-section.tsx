@@ -21,6 +21,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import type { ActionResult } from "@/lib/validation/common";
 import type { ProviderProfile } from "@/data/providers";
+import { staffLabel } from "@/lib/handle";
 
 type Options = { id: string; label: string }[];
 /** Countries need `iso2` (not just id/label) so a picked address-lookup
@@ -56,7 +57,7 @@ function ValidationStamp({ t, address }: { t: ReturnType<typeof useTranslations>
   if (!address.updatedBy) return <span className="text-pn-gray-3">{t("notYetValidated")}</span>;
   return (
     <span className="text-pn-gray-2">
-      {t("validatedBy", { name: address.updatedBy.name ?? address.updatedBy.email, date: formatDakarDate(address.updatedAt, locale) })}
+      {t("validatedBy", { name: staffLabel(address.updatedBy), date: formatDakarDate(address.updatedAt, locale) })}
     </span>
   );
 }

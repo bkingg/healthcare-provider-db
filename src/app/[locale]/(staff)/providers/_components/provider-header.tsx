@@ -25,6 +25,7 @@ import { formatDakarDate, formatDakarDateTime } from "@/lib/formatDate";
 import { OperatingStatus, ProviderNameKind, ProviderStatus } from "@/lib/enums";
 import type { ActionResult } from "@/lib/validation/common";
 import type { ProviderProfile } from "@/data/providers";
+import { staffLabel } from "@/lib/handle";
 
 // Internal English identifiers — used for tab-switch state/comparisons in
 // profile-body.tsx, not shown to the user. Display labels come from the
@@ -354,7 +355,7 @@ export function ProviderHeader({
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-pn-gray-3">
             {provider.updatedBy && (
               <span>
-                {t("lastUpdatedBy", { name: provider.updatedBy.name ?? provider.updatedBy.email, date: formatDakarDateTime(provider.updatedAt, locale) })}
+                {t("lastUpdatedBy", { name: staffLabel(provider.updatedBy), date: formatDakarDateTime(provider.updatedAt, locale) })}
               </span>
             )}
           </div>
@@ -418,7 +419,7 @@ export function ProviderHeader({
             {provider.lastVerifiedBy && provider.lastVerifiedAt ? (
               <span className="flex items-center gap-1 text-pn-gray-2">
                 <CheckCircle2 size={12} className="text-pn-accent" />
-                {t("verifiedBy", { name: provider.lastVerifiedBy.name ?? provider.lastVerifiedBy.email, date: formatDakarDate(provider.lastVerifiedAt, locale) })}
+                {t("verifiedBy", { name: staffLabel(provider.lastVerifiedBy), date: formatDakarDate(provider.lastVerifiedAt, locale) })}
               </span>
             ) : (
               <span>{t("notYetVerified")}</span>

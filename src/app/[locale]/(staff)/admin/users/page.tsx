@@ -30,6 +30,7 @@ export default async function UsersAdminPage() {
         <TableHeader>
           <TableRow>
             <TableHead>{t("colEmail")}</TableHead>
+            <TableHead>{t("colHandle")}</TableHead>
             <TableHead>{t("colName")}</TableHead>
             <TableHead>{t("colRole")}</TableHead>
             <TableHead>{t("colStatus")}</TableHead>
@@ -42,6 +43,7 @@ export default async function UsersAdminPage() {
           {rows.map((user) => (
             <TableRow key={user.id}>
               <TableCell>{user.email}</TableCell>
+              <TableCell className="font-semibold">@{user.handle}</TableCell>
               <TableCell>{user.name ?? "—"}</TableCell>
               <TableCell>{user.role?.name ?? t("noRole")}</TableCell>
               <TableCell>
@@ -82,7 +84,7 @@ export default async function UsersAdminPage() {
           ))}
           {rows.length === 0 && (
             <TableRow>
-              <TableCell colSpan={7} className="text-center text-muted-foreground">
+              <TableCell colSpan={8} className="text-center text-muted-foreground">
                 {t("noItems")}
               </TableCell>
             </TableRow>

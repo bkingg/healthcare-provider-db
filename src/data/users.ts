@@ -30,18 +30,25 @@ function generateTempPassword(): string {
   return crypto.randomBytes(9).toString("base64url");
 }
 
-export async function createUser(input: { email: string; name?: string; roleId?: string }, actorId: string) {
+/** True when another account already uses this handle (unique index on
+ * app_user.handle) — checked first so the form can say which field clashed. */
+export async function isHandleTaken(handle: string, exceptUserId?: string) {
+  const other = await prisma.user.findUnique({ where: { handle }, select: { id: true } });
+  return Boolean(other && other.id !== exceptUserId);
+}
+
+export async function createUser(input: { email: string; handle: string; name?: string; roleId?: string }, actorId: string) {
   const tempPassword = generateTempPassword();
   const passwordHash = await bcrypt.hash(tempPassword, BCRYPT_ROUNDS);
   const user = await prisma.user.create({
-    data: { email: input.email, name: input.name, roleId: input.roleId, passwordHash, mustChangePassword: true },
+    data: { email: input.email, handle: input.handle, name: input.name, roleId: input.roleId, passwordHash, mustChangePassword: true },
   });
   await writeAudit({ entityType: "User", entityId: user.id, action: AuditAction.CREATE, actorId });
   return { user, tempPassword };
 }
 
-export async function updateUser(id: string, input: { name?: string; roleId?: string | null; maxSearchResults?: number | null }, actorId: string) {
-  const user = await prisma.user.update({ where: { id }, data: { name: input.name, roleId: input.roleId, maxSearchResults: input.maxSearchResults } });
+export async function updateUser(id: string, input: { handle: string; name?: string; roleId?: string | null; maxSearchResults?: number | null }, actorId: string) {
+  const user = await prisma.user.update({ where: { id }, data: { handle: input.handle, name: input.name, roleId: input.roleId, maxSearchResults: input.maxSearchResults } });
   await writeAudit({ entityType: "User", entityId: user.id, action: AuditAction.UPDATE, actorId });
   return user;
 }

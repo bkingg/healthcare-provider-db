@@ -9,6 +9,10 @@ model User {
   id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email              String    @unique
   name               String?
+  /// Short unique @handle (stored without the "@", lowercase: letters,
+  /// digits, dots, underscores) used to name staff in assignment, search and
+  /// validation stamps. Set by admins only, in Admin → Users.
+  handle             String    @unique
   passwordHash       String?   @map("password_hash")
   /// Set whenever an admin issues a one-time password (new account or a
   /// reset) — forces src/app/[locale]/(account)/change-password before the

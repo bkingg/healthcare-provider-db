@@ -18,18 +18,18 @@
     "cases": "Dossiers"
   },
   "Header": {
+    "settings": "Paramètres",
     "brand": "Provider Network",
     "searchPlaceholder": "Rechercher un prestataire par nom, alias, ProviderID, ID externe…",
     "clearSearch": "Effacer la recherche",
     "directory": "Sénégal · annuaire des prestataires",
     "role": "Rôle",
     "noRole": "Aucun rôle",
-    "changePassword": "Changer le mot de passe",
     "signOut": "Se déconnecter",
     "closeTab": "Fermer {name}",
     "closeAllTabs": "Tout fermer",
     "closeRecord": "Fermer",
-    "searchCasesPlaceholder": "Rechercher des dossiers : nom, n° de dossier, n° de membre, type de demande, téléphone…",
+    "searchCasesPlaceholder": "Rechercher des dossiers : nom, n° de dossier, n° de membre, type de demande, téléphone, @responsable…",
     "searchMembersPlaceholder": "Rechercher des membres : nom, n° de membre, e-mail, téléphone, police…",
     "searchIn": "Rechercher dans",
     "scope": {
@@ -39,6 +39,8 @@
     }
   },
   "Admin": {
+    "colHandle": "Identifiant",
+    "handleHint": "Sert à désigner et assigner cette personne, p. ex. @jerome. Lettres, chiffres, points ou tirets bas.",
     "title": "Administration",
     "subtitle": "Gérer les listes de valeurs utilisées dans les fiches prestataires.",
     "searchListsPlaceholder": "Rechercher une liste de valeurs…",
@@ -240,10 +242,38 @@
     "password": "Mot de passe",
     "signIn": "Se connecter"
   },
+  "Settings": {
+    "title": "Paramètres",
+    "myDetails": "Mes informations",
+    "name": "Nom",
+    "handle": "Identifiant",
+    "email": "E-mail (connexion)",
+    "role": "Rôle",
+    "noRole": "Aucun rôle",
+    "permissions": "Peut",
+    "noPermissions": "Consultation seule",
+    "perm": {
+      "workCases": "traiter les dossiers",
+      "manageMembers": "gérer les membres",
+      "editProviders": "modifier les prestataires",
+      "viewReports": "consulter les rapports",
+      "editValueLists": "modifier les listes de valeurs",
+      "manageUsers": "gérer les utilisateurs"
+    },
+    "searchLimit": "Limite de résultats de recherche",
+    "unlimited": "Aucune limite",
+    "resultsCount": "{count} résultats",
+    "lastSignIn": "Dernière connexion",
+    "memberSince": "Compte créé le",
+    "askAdmin": "Pour modifier ces informations, contactez un administrateur.",
+    "password": "Mot de passe",
+    "changePassword": "Changer le mot de passe",
+    "passwordChanged": "Votre mot de passe a été modifié.",
+    "cancel": "Annuler"
+  },
   "ChangePassword": {
     "title": "Changer le mot de passe",
     "forcedSubtitle": "Votre mot de passe a été défini par un administrateur — choisissez-en un nouveau pour continuer.",
-    "voluntarySubtitle": "Choisissez un nouveau mot de passe pour votre compte.",
     "newPassword": "Nouveau mot de passe",
     "confirmPassword": "Confirmer le mot de passe",
     "save": "Enregistrer"
@@ -977,6 +1007,8 @@
     }
   },
   "Cases": {
+    "assigneeSearch": "Nom ou @identifiant",
+    "assigneeNoMatch": "Aucune correspondance",
     "title": "Dossiers",
     "officeHours": "Heures de bureau (lun–ven 09:00–17:00)",
     "onCall": "Hors heures de bureau — l'astreinte traite les dossiers rouges",

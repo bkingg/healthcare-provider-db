@@ -14,6 +14,9 @@ export async function changePasswordAction(_prevState: ActionResult | null, form
   const actor = await getCurrentActor();
   await changeOwnPassword(actor.id, parsed.data.newPassword);
 
+  // A voluntary change (from Settings) stays put; the forced change after a
+  // temporary password carries on into the app.
+  if (!actor.mustChangePassword) return { success: true };
   const locale = await getLocale();
   return redirect({ href: "/providers", locale });
 }

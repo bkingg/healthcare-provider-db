@@ -17,7 +17,9 @@ import { ColourPill } from "../_components/colour";
 import { WriteBox } from "../_components/write-box";
 import { ColourOverride } from "../_components/colour-override";
 import { FindProviders } from "../_components/find-providers";
+import { AssigneePicker } from "../_components/assignee-picker";
 import { assignCaseAction, setCaseStatusAction, toggleProviderAction } from "../actions";
+import { staffLabel } from "@/lib/handle";
 
 const STATUSES = ["NEW", "IN_PROGRESS", "WAITING_MEMBER", "RESOLVED", "CLOSED"] as const;
 
@@ -74,7 +76,7 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
   const awaitingReply = conversation.at(-1)?.type === "MESSAGE_FROM_MEMBER" && c.status !== "CLOSED";
   const showMemberLinks = canManageMembers(actor);
   const who = (e: TimelineEvent) =>
-    e.actorType === "SYSTEM" ? t("actor.SYSTEM") : e.actorType === "MEMBER" ? `${e.member?.firstName ?? ""} ${e.member?.lastName ?? ""}`.trim() || t("actor.MEMBER") : (e.staff?.name ?? e.staff?.email ?? t("actor.STAFF"));
+    e.actorType === "SYSTEM" ? t("actor.SYSTEM") : e.actorType === "MEMBER" ? `${e.member?.firstName ?? ""} ${e.member?.lastName ?? ""}`.trim() || t("actor.MEMBER") : (e.staff ? staffLabel(e.staff) : t("actor.STAFF"));
 
   // After who(): it's called while building the list.
   const noteItems = notes.map((e) => {
@@ -103,7 +105,7 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
         return t("event.STATUS_CHANGED", { to: t(`status.${d.to}`) });
       case "ASSIGNED": {
         const to = workers.find((w) => w.id === d.to);
-        return d.to ? t("event.ASSIGNED", { to: to?.name ?? to?.email ?? "?" }) : t("event.UNASSIGNED");
+        return d.to ? t("event.ASSIGNED", { to: to ? staffLabel(to) : "?" }) : t("event.UNASSIGNED");
       }
       case "PROVIDERS_FOUND":
         return t("event.PROVIDERS_FOUND", { count: Number(d.count ?? 0), km: Number(d.radiusKm ?? 0) });
@@ -148,18 +150,10 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
            * would silently undo the change. */}
           <form key={`assign-${c.updatedAt.getTime()}`} action={assignCaseAction} className="flex items-end gap-1">
             <input type="hidden" name="caseId" value={c.id} />
-            <label className="flex flex-col gap-1 text-[10.5px] tracking-[0.06em] text-pn-gray-2 uppercase">
-              {t("assignedTo")}
-              <select name="assigneeId" defaultValue={c.assignedToId ?? ""} className="h-8 border-2 border-pn-border-muted bg-white px-2 text-[13px] tracking-normal text-pn-ink normal-case">
-                <option value="">{t("unassigned")}</option>
-                {workers.map((w) => (
-                  <option key={w.id} value={w.id}>
-                    {w.name ?? w.email}
-                    {w.id === actor.id ? ` (${t("me")})` : ""}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="flex flex-col gap-1 text-[10.5px] tracking-[0.06em] text-pn-gray-2 uppercase">
+              <span aria-hidden>{t("assignedTo")}</span>
+              <AssigneePicker workers={workers} defaultId={c.assignedToId} meId={actor.id} />
+            </div>
             <button type="submit" className="h-8 cursor-pointer border-2 border-pn-ink bg-white px-3 text-xs font-semibold hover:bg-pn-surface-hover">
               {t("assign")}
             </button>

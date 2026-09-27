@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { assignExceptionAction } from "./actions";
 import { ResolveDialog } from "./_components/resolve-dialog";
+import { staffLabel } from "@/lib/handle";
 
 export default async function ExceptionsPage(props: PageProps<"/[locale]/exceptions">) {
   const t = await getTranslations("Exceptions");
@@ -80,7 +81,7 @@ export default async function ExceptionsPage(props: PageProps<"/[locale]/excepti
               <TableCell>
                 <StatusBadge status={exception.status} />
               </TableCell>
-              <TableCell className="text-muted-foreground">{exception.owner?.name ?? exception.owner?.email ?? t("unassigned")}</TableCell>
+              <TableCell className="text-muted-foreground">{exception.owner ? staffLabel(exception.owner) : t("unassigned")}</TableCell>
               <TableCell className="flex items-center gap-1">
                 {exception.status === DqStatus.OPEN && (
                   <form action={assignExceptionAction}>

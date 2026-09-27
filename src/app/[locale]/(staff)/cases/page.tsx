@@ -10,6 +10,7 @@ import { ageFromDateOfBirth } from "@/lib/memberNumber";
 import { localizedText } from "@/lib/localizedText";
 import { caseQueue, queueCounts, refreshOverdueCases, type QueueFilters } from "@/data/caseOps";
 import { COLOUR_STYLE, ColourPill, type Colour } from "./_components/colour";
+import { staffLabel } from "@/lib/handle";
 
 function parseFilters(raw: Record<string, string | string[] | undefined>): QueueFilters {
   const one = (k: string) => (typeof raw[k] === "string" ? (raw[k] as string) : undefined);
@@ -163,7 +164,7 @@ export default async function CasesPage(props: PageProps<"/[locale]/cases">) {
                 </div>
                 <div className="text-[13px]">
                   <div className="text-pn-gray-1">{t(`status.${c.status}`)}</div>
-                  <div className="text-[12px] text-pn-gray-2">{c.assignedTo ? (c.assignedTo.name ?? c.assignedTo.email) : t("unassigned")}</div>
+                  <div className="text-[12px] text-pn-gray-2">{c.assignedTo ? staffLabel(c.assignedTo) : t("unassigned")}</div>
                 </div>
                 <div className="text-[13px] tabular-nums md:text-right">
                   {due && ["NEW", "IN_PROGRESS"].includes(c.status) ? (

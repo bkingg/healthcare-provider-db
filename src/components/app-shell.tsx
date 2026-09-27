@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
-import { LogOut, KeyRound } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import { auth, signOut } from "@/lib/auth";
 import { getCurrentActor } from "@/lib/actor";
 import { canEditValueLists, canManageMembers, canManageUsers, canViewReports, canWorkCases } from "@/lib/rbac";
@@ -15,6 +15,7 @@ import { OpenTabsBar } from "@/components/open-tabs-bar";
 import { CloseRecordButton } from "@/components/close-record-button";
 import { PanelWidthsRoot } from "@/components/panel-widths-root";
 import { OpenTabsProvider } from "@/lib/open-tabs-context";
+import { staffLabel } from "@/lib/handle";
 
 async function logoutAction() {
   "use server";
@@ -82,11 +83,11 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             <span data-r="hide-sm" className="max-[1040px]:hidden text-xs font-semibold whitespace-nowrap">
               {actor.role?.name ?? t("noRole")}
             </span>
-            <div className="flex h-[26px] w-[26px] items-center justify-center bg-pn-accent text-[11px] font-bold text-white" title={actor.name ?? actor.email}>
+            <div className="flex h-[26px] w-[26px] items-center justify-center bg-pn-accent text-[11px] font-bold text-white" title={staffLabel(actor)}>
               {initials(actor.name, actor.email)}
             </div>
-            <Link href="/change-password" aria-label={t("changePassword")} className="text-pn-gray-4 hover:text-white">
-              <KeyRound size={15} strokeWidth={2} />
+            <Link href="/settings" aria-label={t("settings")} title={t("settings")} className="text-pn-gray-4 hover:text-white">
+              <Settings size={15} strokeWidth={2} />
             </Link>
             <form action={logoutAction}>
               <button type="submit" aria-label={t("signOut")} className="cursor-pointer text-pn-gray-4 hover:text-white">

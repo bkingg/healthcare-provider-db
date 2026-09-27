@@ -18,18 +18,18 @@
     "cases": "Cases"
   },
   "Header": {
+    "settings": "Settings",
     "brand": "Provider Network",
     "searchPlaceholder": "Search provider name, alias, ProviderID, external ID…",
     "clearSearch": "Clear search",
     "directory": "Senegal · providers directory",
     "role": "Role",
     "noRole": "No role",
-    "changePassword": "Change password",
     "signOut": "Sign out",
     "closeTab": "Close {name}",
     "closeAllTabs": "Close all",
     "closeRecord": "Close",
-    "searchCasesPlaceholder": "Search cases: name, case number, member ID, request type, phone…",
+    "searchCasesPlaceholder": "Search cases: name, case number, member ID, request type, phone, @assignee…",
     "searchMembersPlaceholder": "Search members: name, member ID, email, phone, policy…",
     "searchIn": "Search in",
     "scope": {
@@ -39,6 +39,8 @@
     }
   },
   "Admin": {
+    "colHandle": "Handle",
+    "handleHint": "Used to mention and assign this person, e.g. @jerome. Letters, numbers, dots or underscores.",
     "title": "Administration",
     "subtitle": "Manage the value lists used throughout provider records.",
     "searchListsPlaceholder": "Search value lists…",
@@ -240,10 +242,38 @@
     "password": "Password",
     "signIn": "Sign in"
   },
+  "Settings": {
+    "title": "Settings",
+    "myDetails": "My details",
+    "name": "Name",
+    "handle": "Handle",
+    "email": "Email (sign-in)",
+    "role": "Role",
+    "noRole": "No role",
+    "permissions": "Can",
+    "noPermissions": "View only",
+    "perm": {
+      "workCases": "work cases",
+      "manageMembers": "manage members",
+      "editProviders": "edit provider records",
+      "viewReports": "view reports",
+      "editValueLists": "edit value lists",
+      "manageUsers": "manage users"
+    },
+    "searchLimit": "Search results limit",
+    "unlimited": "No limit",
+    "resultsCount": "{count} results",
+    "lastSignIn": "Last sign-in",
+    "memberSince": "Account created",
+    "askAdmin": "To change any of these details, ask an administrator.",
+    "password": "Password",
+    "changePassword": "Change password",
+    "passwordChanged": "Your password has been changed.",
+    "cancel": "Cancel"
+  },
   "ChangePassword": {
     "title": "Change password",
     "forcedSubtitle": "Your password was set by an administrator — choose a new one to continue.",
-    "voluntarySubtitle": "Choose a new password for your account.",
     "newPassword": "New password",
     "confirmPassword": "Confirm password",
     "save": "Save"
@@ -977,6 +1007,8 @@
     }
   },
   "Cases": {
+    "assigneeSearch": "Type a name or @handle",
+    "assigneeNoMatch": "No one matches",
     "title": "Cases",
     "officeHours": "Office hours (Mon–Fri 09:00–17:00)",
     "onCall": "Outside office hours — on-call handles red cases",

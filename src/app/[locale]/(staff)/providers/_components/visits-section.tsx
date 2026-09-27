@@ -14,6 +14,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { InlineDeleteForm } from "@/components/inline-delete-form";
 import type { ActionResult } from "@/lib/validation/common";
 import type { ProviderProfile } from "@/data/providers";
+import { staffLabel } from "@/lib/handle";
 
 export function VisitsSection({ provider, users }: { provider: ProviderProfile; users: { id: string; label: string }[] }) {
   const t = useTranslations("Sections.Visits");
@@ -35,7 +36,7 @@ export function VisitsSection({ provider, users }: { provider: ProviderProfile; 
             {provider.visits.map((visit) => (
               <TableRow key={visit.id}>
                 <TableCell>{new Date(visit.visitDate).toLocaleDateString()}</TableCell>
-                <TableCell>{visit.reviewedBy.name ?? visit.reviewedBy.email}</TableCell>
+                <TableCell>{staffLabel(visit.reviewedBy)}</TableCell>
                 <TableCell className="max-w-xs truncate">{visit.findings}</TableCell>
                 <TableCell>
                   <InlineDeleteForm action={deleteProviderVisitAction} hiddenFields={{ id: visit.id, providerId: provider.id }} />

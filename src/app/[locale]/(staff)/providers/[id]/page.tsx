@@ -33,6 +33,7 @@ import {
   listUsers,
 } from "@/data/referenceData";
 import { ProfileBody } from "../_components/profile-body";
+import { staffLabel } from "@/lib/handle";
 
 export default async function ProviderProfilePage(props: PageProps<"/[locale]/providers/[id]">) {
   const { id } = await props.params;
@@ -123,7 +124,7 @@ export default async function ProviderProfilePage(props: PageProps<"/[locale]/pr
       ],
     };
   };
-  const userOptions = users.map((u) => ({ id: u.id, label: u.name ?? u.email }));
+  const userOptions = users.map((u) => ({ id: u.id, label: staffLabel(u) }));
   const validateHint = uiHints.find((h) => h.code === "VALIDATE_RECORD");
   const validateRecordTooltip = localizedText(validateHint?.descriptionEn, validateHint?.descriptionFr, locale);
 

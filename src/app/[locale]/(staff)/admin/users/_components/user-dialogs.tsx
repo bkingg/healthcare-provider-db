@@ -12,9 +12,10 @@ import { RefSelect } from "@/components/ref-select";
 import { FieldError } from "@/components/field-error";
 import { SubmitButton } from "@/components/submit-button";
 import type { ActionResult } from "@/lib/validation/common";
+import { suggestHandle } from "@/lib/handle";
 
 type RoleOption = { id: string; label: string };
-type UserRow = { id: string; email: string; name: string | null; roleId: string | null; maxSearchResults: number | null };
+type UserRow = { id: string; email: string; handle: string; name: string | null; roleId: string | null; maxSearchResults: number | null };
 
 /** Shown once, right after createUserAction/resetUserPasswordAction return a
  * temporary password — there's no other way to retrieve it afterward (only
@@ -50,11 +51,35 @@ function TempPasswordReveal({ password, onDone }: { password: string; onDone: ()
   );
 }
 
+/** Handle field with a fixed "@" in front — the "@" isn't stored. */
+function HandleInput({ value, defaultValue, onChange }: { value?: string; defaultValue?: string; onChange?: (v: string) => void }) {
+  return (
+    <div className="flex items-stretch">
+      <span className="flex items-center border-2 border-r-0 border-pn-border-muted bg-pn-panel px-2 text-[13px] text-pn-gray-2">@</span>
+      <Input
+        id="handle"
+        name="handle"
+        required
+        autoComplete="off"
+        spellCheck={false}
+        value={value}
+        defaultValue={defaultValue}
+        onChange={onChange ? (e) => onChange(e.target.value) : undefined}
+      />
+    </div>
+  );
+}
+
 function CreateUserForm({ roles, onDone }: { roles: RoleOption[]; onDone: () => void }) {
   const t = useTranslations("Admin");
   const [state, formAction] = useActionState<ActionResult<{ tempPassword: string }> | null, FormData>(createUserAction, null);
   const errors = state && !state.success ? state.errors : {};
   const tempPassword = state?.success ? state.data?.tempPassword : undefined;
+  // Controlled so a failed save keeps what was typed; the handle follows the
+  // email as a suggestion until the admin edits it themselves.
+  const [email, setEmail] = useState("");
+  const [handle, setHandle] = useState("");
+  const [handleEdited, setHandleEdited] = useState(false);
 
   if (tempPassword) {
     return (
@@ -75,8 +100,30 @@ function CreateUserForm({ roles, onDone }: { roles: RoleOption[]; onDone: () => 
       <form action={formAction} className="flex flex-col gap-3">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="email">{t("colEmail")}</Label>
-          <Input id="email" name="email" type="email" required />
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (!handleEdited) setHandle(suggestHandle(e.target.value));
+            }}
+          />
           <FieldError messages={errors.email} />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="handle">{t("colHandle")}</Label>
+          <HandleInput
+            value={handle}
+            onChange={(v) => {
+              setHandle(v);
+              setHandleEdited(true);
+            }}
+          />
+          <p className="text-xs text-pn-gray-3">{t("handleHint")}</p>
+          <FieldError messages={errors.handle} />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="name">{t("colName")}</Label>
@@ -157,6 +204,12 @@ export function EditUserDialog({ user, roles }: { user: UserRow; roles: RoleOpti
         </DialogHeader>
         <form action={formAction} className="flex flex-col gap-3">
           <input type="hidden" name="id" value={user.id} />
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="handle">{t("colHandle")}</Label>
+            <HandleInput defaultValue={user.handle} />
+            <p className="text-xs text-pn-gray-3">{t("handleHint")}</p>
+            <FieldError messages={errors.handle} />
+          </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="name">{t("colName")}</Label>
             <Input id="name" name="name" defaultValue={user.name ?? ""} />
