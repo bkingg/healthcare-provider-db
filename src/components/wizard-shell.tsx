@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 // Internal English identifiers, not shown to the user — WIZARD_STEPS is also
 // used by providers/new/[id]/page.tsx to compute currentStep counts, so the
@@ -110,12 +111,16 @@ export function WizardShell({
       </div>
 
       <div className="flex flex-none items-center justify-between border-t-2 border-pn-ink bg-pn-panel px-5 py-2.5">
-        {backHref ? <Button variant="outline" render={<Link href={backHref}>{t("back")}</Link>} /> : <span />}
+        {backHref ? <Link href={backHref} className={cn(buttonVariants({ variant: "outline" }))}>
+            {t("back")}
+          </Link> : <span />}
         <div className="flex items-center gap-2">
           <span className="mr-1.5 text-[11.5px] text-pn-gray-2">{t("stepsComplete", { count: metForCount, total: WIZARD_STEPS.length })}</span>
           {continueSlot ??
             (continueHref && !continueDisabled ? (
-              <Button render={<Link href={continueHref}>{resolvedContinueLabel}</Link>} />
+              <Link href={continueHref} className={cn(buttonVariants())}>
+                {resolvedContinueLabel}
+              </Link>
             ) : continueHref ? (
               <Button disabled>{resolvedContinueLabel}</Button>
             ) : null)}

@@ -3,7 +3,8 @@ import { formatProviderNumber } from "@/lib/providerNumber";
 import { getLocale, getTranslations } from "next-intl/server";
 import { localizedText } from "@/lib/localizedText";
 import { Link } from "@/i18n/navigation";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { getActivationGaps, getProviderProfile } from "@/data/providers";
 import {
   listAddressTypes,
@@ -74,7 +75,9 @@ export default async function NewProviderStepPage(props: PageProps<"/[locale]/pr
       subtitle={t("draftSubtitle", { name: provider.names[0]?.fullNameText ?? formatProviderNumber(provider.providerNumber) })}
       backHref={step > 2 ? `/providers/new/${id}?step=${step - 1}` : undefined}
       continueHref={step < 6 ? `/providers/new/${id}?step=${step + 1}` : undefined}
-      continueSlot={step === 6 ? <Button render={<Link href={`/providers/${id}`}>{t("finish")}</Link>} /> : undefined}
+      continueSlot={step === 6 ? <Link href={`/providers/${id}`} className={cn(buttonVariants())}>
+            {t("finish")}
+          </Link> : undefined}
       sideContent={
         <div className="border-2 border-pn-ink">
           <div className="bg-pn-ink px-3 py-1.5 text-[10px] font-bold tracking-[0.09em] text-white uppercase">{t("beforeActivation")}</div>
