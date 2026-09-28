@@ -35,6 +35,10 @@ model Member {
   policyNumber   String?          @map("policy_number")
   coverageStart  DateTime?        @map("coverage_start") @db.Date
   coverageEnd    DateTime?        @map("coverage_end") @db.Date
+  /// False for someone Nomad helps without cover ("Not covered"): every case
+  /// for them is a special request (free or at a set cost). Left out of
+  /// covered-member counts.
+  isCovered      Boolean          @default(true) @map("is_covered")
 
   loginTokens    MemberLoginToken[]
   sessions       MemberSession[]

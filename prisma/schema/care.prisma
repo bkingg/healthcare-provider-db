@@ -58,9 +58,24 @@ enum CaseRag {
   RED
 }
 
+/// How the member got in touch. MEMBER_APP cases come from the app; the
+/// others are opened by staff. (STAFF is an early value, no longer offered.)
 enum CaseChannel {
   MEMBER_APP
   STAFF
+  PHONE
+  EMAIL
+  WHATSAPP
+  WALK_IN
+}
+
+/// Whether Nomad helps under the member's cover, or as a special request:
+/// someone not covered (or something outside cover) taken on free of charge
+/// or at a set cost. Accepted by any case manager; recorded in the timeline.
+enum CaseCoverage {
+  COVERED
+  SPECIAL_FREE
+  SPECIAL_PAID
 }
 
 /// A member's request for help. requestedBy is who asked (signed in);
@@ -110,6 +125,13 @@ model CareCase {
   actions         CaseAction[]
   notifications   StaffNotification[]
   channel         CaseChannel     @default(MEMBER_APP)
+  coverage        CaseCoverage    @default(COVERED)
+  /// When the member got in touch — the response timer starts here. Same as
+  /// createdAt for app requests; staff can log an earlier call or email.
+  contactedAt     DateTime        @default(now()) @map("contacted_at")
+  /// Whether the member sees this case (and staff messages) in the app. App
+  /// requests always do; staff-created cases start hidden.
+  visibleToMember Boolean         @default(true) @map("visible_to_member")
   createdAt       DateTime        @default(now()) @map("created_at")
   updatedAt       DateTime        @updatedAt @map("updated_at")
 
@@ -179,6 +201,8 @@ enum CaseEventType {
   ACTION_DONE
   ACTION_REOPENED
   ACTIONS_CLOSED_WITH_CASE
+  COVERAGE_CHANGED
+  VISIBILITY_CHANGED
 }
 
 enum CaseActorType {

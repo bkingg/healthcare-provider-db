@@ -11,6 +11,8 @@ import { localizedText } from "@/lib/localizedText";
 import { caseQueue, queueCounts, refreshOverdueCases, type QueueFilters } from "@/data/caseOps";
 import { COLOUR_STYLE, ColourPill, type Colour } from "./_components/colour";
 import { CasesTabs } from "./_components/cases-tabs";
+import { ChannelIcon, CoverageTag } from "./_components/channel-icon";
+import { Plus } from "lucide-react";
 import { staffLabel } from "@/lib/handle";
 import { formatDakarDateTime } from "@/lib/formatDate";
 import { actionTiming } from "@/lib/caseActions";
@@ -30,6 +32,8 @@ function parseFilters(raw: Record<string, string | string[] | undefined>): Queue
     status: status && ["NEW", "IN_PROGRESS", "WAITING_MEMBER", "RESOLVED", "CLOSED", "ALL"].includes(status) ? (status as QueueFilters["status"]) : q ? "ALL" : "OPEN",
     assigned: assigned === "ME" || assigned === "UNASSIGNED" ? assigned : "ANY",
     mentioned: one("mentioned") === "1",
+    channel: ["MEMBER_APP", "PHONE", "EMAIL", "WHATSAPP", "WALK_IN"].includes(one("channel") ?? "") ? (one("channel") as QueueFilters["channel"]) : undefined,
+    coverage: one("coverage") === "COVERED" || one("coverage") === "SPECIAL" ? (one("coverage") as "COVERED" | "SPECIAL") : undefined,
   };
 }
 
@@ -91,6 +95,9 @@ export default async function CasesPage(props: PageProps<"/[locale]/cases">) {
             <Clock size={13} aria-hidden /> {inOffice ? t("officeHours") : t("onCall")}
           </div>
         </div>
+        <Link href="/cases/new" className="flex h-8 items-center gap-1.5 bg-pn-accent px-3 text-xs font-semibold text-white no-underline hover:bg-pn-accent-hover">
+          <Plus size={14} aria-hidden /> {t("newCase.button")}
+        </Link>
       </div>
 
       <div className="flex flex-none flex-wrap gap-2 px-5 pt-4">
@@ -136,6 +143,25 @@ export default async function CasesPage(props: PageProps<"/[locale]/cases">) {
             <option value="UNASSIGNED">{t("assignedFilter.UNASSIGNED")}</option>
           </select>
         </label>
+        <label className="flex flex-col gap-1 text-[10.5px] tracking-[0.06em] text-pn-gray-2 uppercase">
+          {t("newCase.channel")}
+          <select name="channel" defaultValue={filters.channel ?? ""} className="h-8 border-2 border-pn-border-muted bg-white px-2 text-[13px] tracking-normal text-pn-ink normal-case">
+            <option value="">{t("anyChannel")}</option>
+            {["MEMBER_APP", "PHONE", "EMAIL", "WHATSAPP", "WALK_IN"].map((ch) => (
+              <option key={ch} value={ch}>
+                {t(`channel.${ch}`)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-[10.5px] tracking-[0.06em] text-pn-gray-2 uppercase">
+          {t("newCase.coverage")}
+          <select name="coverage" defaultValue={filters.coverage ?? ""} className="h-8 border-2 border-pn-border-muted bg-white px-2 text-[13px] tracking-normal text-pn-ink normal-case">
+            <option value="">{t("anyCoverage")}</option>
+            <option value="COVERED">{t("coverage.COVERED")}</option>
+            <option value="SPECIAL">{t("specialRequests")}</option>
+          </select>
+        </label>
         <label className="flex h-8 cursor-pointer items-center gap-1.5 text-[13px]">
           <input type="checkbox" name="mentioned" value="1" defaultChecked={filters.mentioned} className="h-4 w-4 accent-pn-ink" />
           {t("mentionedMe")}
@@ -167,6 +193,8 @@ export default async function CasesPage(props: PageProps<"/[locale]/cases">) {
                     <ColourPill rag={c.rag} label={t(`colour.${c.rag}`)} />
                     <span className="text-[14px] font-bold">{localizedText(c.category.nameEn, c.category.nameFr, locale)}</span>
                     <span className="text-[12px] text-pn-gray-3 tabular-nums">{formatCaseNumber(c.caseNumber)}</span>
+                    <ChannelIcon channel={c.channel} label={t(`channel.${c.channel}`)} size={12} />
+                    <CoverageTag coverage={c.coverage} label={t(`coverage.${c.coverage}`)} />
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {c.ragReasons.map((r) => (
@@ -209,7 +237,7 @@ export default async function CasesPage(props: PageProps<"/[locale]/cases">) {
                   ) : (
                     <span className="text-pn-gray-3">—</span>
                   )}
-                  <div className="text-[12px] text-pn-gray-2">{t("waitingSince", { time: shortDuration(now.getTime() - c.createdAt.getTime()) })}</div>
+                  <div className="text-[12px] text-pn-gray-2">{t("waitingSince", { time: shortDuration(now.getTime() - c.contactedAt.getTime()) })}</div>
                 </div>
               </Link>
             </li>

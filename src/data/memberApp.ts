@@ -9,12 +9,14 @@ import type { MemberRequestInput } from "@/lib/validation/memberRequest";
  * member and only ever returns that member's own household's data. */
 
 /** Who this member can ask for help for: a primary member for anyone active
- * in their household; a dependent (e.g. an adult spouse with their own
- * sign-in) only for themselves. */
+ * and covered in their household; a dependent (e.g. an adult spouse with
+ * their own sign-in) only for themselves. Someone not covered can't ask in
+ * the app — Nomad takes those on as special requests, by phone. */
 export async function requestablePeople(member: CurrentMember) {
+  if (!member.isCovered) return [];
   if (member.primaryMemberId) return [member];
   const dependents = await prisma.member.findMany({
-    where: { primaryMemberId: member.id, status: "ACTIVE" },
+    where: { primaryMemberId: member.id, status: "ACTIVE", isCovered: true },
     include: { relationship: true },
     orderBy: { dateOfBirth: "asc" },
   });
@@ -22,11 +24,13 @@ export async function requestablePeople(member: CurrentMember) {
 }
 
 /** Requests this member can see: a primary member sees their whole
- * household's; a dependent sees the ones they made or that are about them. */
+ * household's; a dependent sees the ones they made or that are about them.
+ * Only cases shown in the app — staff-created ones start hidden. */
 function visibleCasesWhere(member: CurrentMember) {
-  return member.primaryMemberId
+  const whose = member.primaryMemberId
     ? { OR: [{ requestedById: member.id }, { patientId: member.id }] }
     : { OR: [{ requestedById: member.id }, { patient: { OR: [{ id: member.id }, { primaryMemberId: member.id }] } }] };
+  return { AND: [{ visibleToMember: true }, whose] };
 }
 
 export function listMemberCases(member: CurrentMember) {

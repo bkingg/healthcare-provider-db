@@ -7,7 +7,7 @@ import { searchAddress } from "@/lib/geocode";
 import { searchProviders } from "./search";
 import { parseCaseNumber } from "@/lib/caseNumber";
 import { parseMemberNumber } from "@/lib/memberNumber";
-import type { CaseEventType, CaseStatus, Prisma } from "../../generated/prisma/client";
+import type { CaseChannel, CaseEventType, CaseStatus, Prisma } from "../../generated/prisma/client";
 import { normalizeHandle } from "@/lib/handle";
 import { addActionTx, closeOpenActionsTx, recordMentionsTx, type NewAction } from "./caseActions";
 
@@ -43,12 +43,24 @@ function addEvent(tx: Tx, caseId: string, e: { type: CaseEventType; actorType: "
  * and the "created" and "colour set" timeline entries. */
 export async function createCaseWithTimeline(data: Prisma.CareCaseUncheckedCreateInput) {
   return prisma.$transaction(async (tx) => {
-    const now = new Date();
-    const created = await tx.careCase.create({ data: { ...data, responseDueAt: await dueFor(data.rag as Rag, now, tx) } });
-    await addEvent(tx, created.id, { type: "CREATED", actorType: "MEMBER", memberId: data.requestedById });
-    await addEvent(tx, created.id, { type: "COLOUR_SET", actorType: "SYSTEM", data: { to: created.rag, reasons: created.ragReasons } });
+    const created = await createCaseTx(tx, data, { actorType: "MEMBER", memberId: data.requestedById });
     return created;
   });
+}
+
+/** Creates a case with its timeline inside a transaction — used by the member
+ * app and by staff opening a case for a call, email, etc. The response timer
+ * runs from when the member got in touch (contactedAt, default now). */
+export async function createCaseTx(tx: Tx, data: Prisma.CareCaseUncheckedCreateInput, by: { actorType: "MEMBER"; memberId: string } | { actorType: "STAFF"; staffId: string }) {
+  const contactedAt = data.contactedAt ? new Date(data.contactedAt) : new Date();
+  const created = await tx.careCase.create({ data: { ...data, contactedAt, responseDueAt: await dueFor(data.rag as Rag, contactedAt, tx) } });
+  await addEvent(tx, created.id, {
+    type: "CREATED",
+    ...by,
+    ...(by.actorType === "STAFF" && { data: { channel: created.channel, coverage: created.coverage, contactedAt: contactedAt.toISOString(), visibleToMember: created.visibleToMember } }),
+  });
+  await addEvent(tx, created.id, { type: "COLOUR_SET", actorType: "SYSTEM", data: { to: created.rag, reasons: created.ragReasons } });
+  return created;
 }
 
 /** The member answers Nomad. Reopens a resolved or waiting case and restarts
@@ -119,7 +131,16 @@ export async function refreshOverdueCases(now = new Date()): Promise<number> {
 
 // --------------------------------------------------------------------- queue
 
-export type QueueFilters = { q?: string; colour?: Rag; status: "OPEN" | CaseStatus | "ALL"; assigned: "ANY" | "ME" | "UNASSIGNED"; mentioned?: boolean };
+export type QueueFilters = {
+  q?: string;
+  colour?: Rag;
+  status: "OPEN" | CaseStatus | "ALL";
+  assigned: "ANY" | "ME" | "UNASSIGNED";
+  mentioned?: boolean;
+  channel?: CaseChannel;
+  /** COVERED, or SPECIAL for both kinds of special request. */
+  coverage?: "COVERED" | "SPECIAL";
+};
 
 /** Cases matching the header search box: case number (CAS-000038, 38),
  * member number (MBR-000001 — also finds cases for that member's
@@ -177,6 +198,8 @@ export async function caseQueue(filters: QueueFilters, staffId: string) {
     ...(filters.status === "OPEN" ? { status: { in: OPEN_STATUSES } } : filters.status === "ALL" ? {} : { status: filters.status }),
     ...(filters.assigned === "ME" ? { assignedToId: staffId } : filters.assigned === "UNASSIGNED" ? { assignedToId: null } : {}),
     ...(filters.mentioned && { events: { some: { mentions: { some: { userId: staffId } } } } }),
+    ...(filters.channel && { channel: filters.channel }),
+    ...(filters.coverage === "COVERED" ? { coverage: "COVERED" as const } : filters.coverage === "SPECIAL" ? { coverage: { in: ["SPECIAL_FREE" as const, "SPECIAL_PAID" as const] } } : {}),
   };
   const cases = await prisma.careCase.findMany({
     where,
@@ -198,7 +221,7 @@ export async function caseQueue(filters: QueueFilters, staffId: string) {
     (a, b) =>
       ragRank(a.rag as Rag) - ragRank(b.rag as Rag) ||
       (a.responseDueAt?.getTime() ?? Infinity) - (b.responseDueAt?.getTime() ?? Infinity) ||
-      a.createdAt.getTime() - b.createdAt.getTime(),
+      a.contactedAt.getTime() - b.contactedAt.getTime(),
   );
   return cases;
 }
@@ -314,10 +337,15 @@ export function listActiveNoteTemplates() {
 }
 
 /** A message the member sees in the app. It's a response: the timer stops,
- * and a new case moves to "in progress". */
+ * and a new case moves to "in progress". Only for cases shown in the
+ * member's app. */
+export class CaseHiddenFromMemberError extends Error {}
+
 export async function messageMember(caseId: string, body: string, staffId: string) {
   await prisma.$transaction(async (tx) => {
     const c = await tx.careCase.findUniqueOrThrow({ where: { id: caseId } });
+    // The member couldn't see it: show the case in their app first.
+    if (!c.visibleToMember) throw new CaseHiddenFromMemberError("This case isn't shown in the member's app.");
     const status = c.status === "NEW" ? "IN_PROGRESS" : c.status;
     await tx.careCase.update({ where: { id: caseId }, data: { status, responseDueAt: null, ...(c.assignedToId ? {} : { assignedToId: staffId }) } });
     await addEvent(tx, caseId, { type: "MESSAGE_TO_MEMBER", actorType: "STAFF", staffId, body, visibleToMember: true });

@@ -1,5 +1,6 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { getCurrentMember } from "@/lib/memberAuth";
+import { redirect } from "@/i18n/navigation";
 import { localizedText } from "@/lib/localizedText";
 import { ageFromDateOfBirth } from "@/lib/memberNumber";
 import { normalizeCallbackPhone } from "@/lib/phone";
@@ -11,6 +12,8 @@ export default async function RequestHelpPage() {
   const t = await getTranslations("MemberApp");
   const locale = await getLocale();
   const member = (await getCurrentMember())!;
+  // Someone not covered asks Nomad by phone (see the home page).
+  if (!member.isCovered) redirect({ href: "/m", locale });
   const [people, categories] = await Promise.all([requestablePeople(member), listActiveCaseCategories()]);
 
   return (

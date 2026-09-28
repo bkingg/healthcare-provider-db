@@ -9,6 +9,9 @@ import { GeocodeThrottledError, GeocodeUpstreamError } from "@/lib/geocode";
 import * as ops from "@/data/caseOps";
 import { addAction, NotACaseWorkerError, setActionDone, type NewAction } from "@/data/caseActions";
 import { parseDueInput } from "@/lib/caseActions";
+import { normalizeCallbackPhone } from "@/lib/phone";
+import { staffCaseFormObject, staffCaseSchema, type StaffCaseInput } from "@/lib/validation/staffCase";
+import { createStaffCase, findMembersForCase, setCaseCoverage, setCaseVisibility, StaffCaseError } from "@/data/staffCases";
 
 /** Every case action re-checks canWorkCases server-side — the nav link and
  * pages hide behind it too, but a form POST doesn't. */
@@ -104,7 +107,12 @@ export async function messageMemberAction(_prev: ActionResult | null, formData: 
   const actor = await requireCaseWorker();
   const parsed = z.object({ caseId: id, body: text("The message") }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return fail(parsed.error.flatten().fieldErrors);
-  await ops.messageMember(parsed.data.caseId, parsed.data.body, actor.id);
+  try {
+    await ops.messageMember(parsed.data.caseId, parsed.data.body, actor.id);
+  } catch (err) {
+    if (err instanceof ops.CaseHiddenFromMemberError) return fail({ form: ["hiddenFromMember"] });
+    throw err;
+  }
   refresh();
   return { success: true };
 }
@@ -137,5 +145,89 @@ export async function findProvidersAction(_prev: ActionResult<{ count: number; r
 export async function toggleProviderAction(formData: FormData): Promise<void> {
   const actor = await requireCaseWorker();
   await ops.toggleProviderSelected(id.parse(formData.get("caseId")), id.parse(formData.get("providerId")), actor.id);
+  refresh();
+}
+
+// ------------------------------------------------------------- new staff case
+
+/** Every problem with the New case form, keyed by field ("newPerson.email",
+ * "actionDue"…), as message codes the form translates. */
+export async function createStaffCaseAction(_prev: ActionResult<{ id: string }> | null, formData: FormData): Promise<ActionResult<{ id: string }>> {
+  const actor = await requireCaseWorker();
+  const errors: Record<string, string[]> = {};
+  const parsed = staffCaseSchema.safeParse(staffCaseFormObject(formData));
+  if (!parsed.success) for (const issue of parsed.error.issues) errors[issue.path.join(".")] ??= [issue.message];
+
+  const phone = normalizeCallbackPhone(String(formData.get("contactPhone") ?? ""), "SN");
+  if (!phone) errors.contactPhone ??= ["phone"];
+
+  let action: StaffCaseInput["action"];
+  if (formData.get("withAction") === "1") {
+    const fields = parseActionFields(formData);
+    if (fields.ok) action = fields.action;
+    else Object.assign(errors, fields.errors);
+  }
+  if (!parsed.success || Object.keys(errors).length) return fail(errors);
+
+  const { colourRag, colourReason, ...form } = parsed.data;
+  try {
+    const created = await createStaffCase(
+      { ...form, contactPhone: phone!, colour: colourRag ? { rag: colourRag, reason: colourReason ?? "" } : undefined, action },
+      actor.id,
+    );
+    refresh();
+    return { success: true, data: { id: created.id } };
+  } catch (err) {
+    if (err instanceof StaffCaseError) return fail({ [err.field]: [err.code] });
+    if (err instanceof NotACaseWorkerError) return fail({ actionOwnerId: ["owner"] });
+    throw err;
+  }
+}
+
+/** Member lookup for the New case form (name, member ID, phone, email). */
+export async function findMembersForCaseAction(q: string) {
+  await requireCaseWorker();
+  const rows = await findMembersForCase(String(q ?? "").slice(0, 100));
+  return rows.map((m) => ({
+    id: m.id,
+    name: `${m.firstName} ${m.lastName}`,
+    memberNumber: m.memberNumber,
+    organization: m.organization?.name ?? null,
+    isCovered: m.isCovered,
+    phone: m.phone,
+    email: m.email,
+    household: m.household.map((h) => ({
+      id: h.id,
+      name: `${h.firstName} ${h.lastName}`,
+      memberNumber: h.memberNumber,
+      isPrimary: h.primaryMemberId === null,
+      relationshipEn: h.relationship?.nameEn ?? null,
+      relationshipFr: h.relationship?.nameFr ?? null,
+      isCovered: h.isCovered,
+      dateOfBirth: h.dateOfBirth ? h.dateOfBirth.toISOString().slice(0, 10) : null,
+      phone: h.phone,
+    })),
+  }));
+}
+
+export type MemberMatch = Awaited<ReturnType<typeof findMembersForCaseAction>>[number];
+
+export async function setCaseCoverageAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const actor = await requireCaseWorker();
+  const caseId = id.parse(formData.get("caseId"));
+  const coverage = z.enum(["COVERED", "SPECIAL_FREE", "SPECIAL_PAID"]).parse(formData.get("coverage"));
+  try {
+    await setCaseCoverage(caseId, coverage, actor.id);
+  } catch (err) {
+    if (err instanceof StaffCaseError) return fail({ [err.field]: [err.code] });
+    throw err;
+  }
+  refresh();
+  return { success: true };
+}
+
+export async function setCaseVisibilityAction(formData: FormData): Promise<void> {
+  const actor = await requireCaseWorker();
+  await setCaseVisibility(id.parse(formData.get("caseId")), formData.get("visible") === "1", actor.id);
   refresh();
 }

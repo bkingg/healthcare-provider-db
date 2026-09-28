@@ -30,6 +30,11 @@ const memberFields = z
     policyNumber: optionalString,
     coverageStart: optionalIsoDate,
     coverageEnd: optionalIsoDate,
+    /** "0" from the form's Not covered choice; anything else is covered. */
+    isCovered: z
+      .string()
+      .optional()
+      .transform((v) => v !== "0"),
   })
   .refine((m) => !m.primaryMemberId || m.relationshipId, {
     path: ["relationshipId"],
@@ -53,4 +58,5 @@ export const memberSearchSchema = z.object({
   q: optionalString,
   organizationId: optionalUuid,
   status: z.enum(["ACTIVE", "INACTIVE", "ALL"]).catch("ACTIVE"),
+  coverage: z.enum(["ALL", "COVERED", "NOT_COVERED"]).catch("ALL"),
 });

@@ -237,7 +237,7 @@ export function WriteBox({
           </button>
         )
       )}
-      {formError && <p className="m-0 text-[12px] text-[#b91c1c]">{formError}</p>}
+      {formError && <p className="m-0 text-[12px] text-[#b91c1c]">{t.has(`writeError.${formError}`) ? t(`writeError.${formError}`) : formError}</p>}
       <button
         type="submit"
         disabled={pending || !text.trim()}

@@ -34,6 +34,7 @@ export type MemberFormValues = {
   policyNumber?: string;
   coverageStart?: string;
   coverageEnd?: string;
+  isCovered?: boolean;
 };
 
 export type MemberFormOptions = {
@@ -74,6 +75,7 @@ export function MemberFormDialog({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isDependent, setIsDependent] = useState(Boolean(values.primaryMemberId));
+  const [isCovered, setIsCovered] = useState(values.isCovered ?? true);
   const [state, formAction] = useActionState<ActionResult<{ id: string }> | null, FormData>(
     mode === "edit" ? updateMemberAction : createMemberAction,
     null,
@@ -200,6 +202,26 @@ export function MemberFormDialog({
           )}
 
           <SectionTitle>{t("sectionCover")}</SectionTitle>
+          <div className="flex flex-col gap-1.5 sm:col-span-2">
+            <input type="hidden" name="isCovered" value={isCovered ? "1" : "0"} />
+            <div role="radiogroup" aria-label={t("coverStatus")} className="flex flex-wrap gap-2">
+              {[true, false].map((covered) => (
+                <button
+                  key={String(covered)}
+                  type="button"
+                  role="radio"
+                  aria-checked={isCovered === covered}
+                  onClick={() => setIsCovered(covered)}
+                  className={`cursor-pointer border-2 px-3 py-1 text-xs font-semibold ${
+                    isCovered === covered ? "border-pn-ink bg-pn-ink text-white" : "border-pn-border-muted hover:border-pn-ink"
+                  }`}
+                >
+                  {covered ? t("covered") : t("notCovered")}
+                </button>
+              ))}
+            </div>
+            {!isCovered && <span className="text-[11.5px] text-pn-gray-2">{t("notCoveredHint")}</span>}
+          </div>
           <Field id="organizationId" label={t("organization")} errors={errors.organizationId} wide>
             {/* The empty option is how a group member is turned back into an
              * individual member — a Select can't otherwise be cleared. */}

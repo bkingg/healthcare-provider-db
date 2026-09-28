@@ -29,9 +29,11 @@ const listInclude = {
   _count: { select: { dependents: true } },
 } satisfies Prisma.MemberInclude;
 
-export async function searchMembers(filters: { q?: string; organizationId?: string; status: "ACTIVE" | "INACTIVE" | "ALL" }) {
+export async function searchMembers(filters: { q?: string; organizationId?: string; status: "ACTIVE" | "INACTIVE" | "ALL"; coverage?: "ALL" | "COVERED" | "NOT_COVERED" }) {
   const where: Prisma.MemberWhereInput = {
     ...(filters.status !== "ALL" && { status: filters.status }),
+    ...(filters.coverage === "COVERED" && { isCovered: true }),
+    ...(filters.coverage === "NOT_COVERED" && { isCovered: false }),
     ...(filters.organizationId && { organizationId: filters.organizationId }),
   };
   if (filters.q) {
@@ -122,6 +124,7 @@ function toData(input: MemberInput) {
     policyNumber: input.policyNumber ?? null,
     coverageStart: input.coverageStart ?? null,
     coverageEnd: input.coverageEnd ?? null,
+    isCovered: input.isCovered,
   };
 }
 

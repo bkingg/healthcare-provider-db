@@ -9,6 +9,7 @@ import { memberSearchSchema } from "@/lib/validation/members";
 import { searchMembers, listActiveOrganizations } from "@/data/members";
 import { PnTag } from "@/components/pn-tag";
 import { MemberFormDialog } from "./_components/member-form-dialog";
+import { NotCoveredTag } from "./_components/not-covered-tag";
 import { loadMemberFormOptions } from "./_components/form-options";
 
 export default async function MembersPage(props: PageProps<"/[locale]/members">) {
@@ -22,6 +23,7 @@ export default async function MembersPage(props: PageProps<"/[locale]/members">)
     q: typeof raw.q === "string" ? raw.q : undefined,
     organizationId: typeof raw.organizationId === "string" ? raw.organizationId : undefined,
     status: typeof raw.status === "string" ? raw.status : undefined,
+    coverage: typeof raw.coverage === "string" ? raw.coverage : undefined,
   });
   const [{ members, total, limit }, organizations, formOptions] = await Promise.all([
     searchMembers(filters),
@@ -87,6 +89,14 @@ export default async function MembersPage(props: PageProps<"/[locale]/members">)
             <option value="ALL">{t("statusALL")}</option>
           </select>
         </label>
+        <label className="flex flex-col gap-1 text-[10.5px] tracking-[0.06em] text-pn-gray-2 uppercase">
+          {t("coverStatus")}
+          <select name="coverage" defaultValue={filters.coverage} className="h-8 border-2 border-pn-border-muted bg-white px-2 text-[13px] tracking-normal text-pn-ink normal-case">
+            <option value="ALL">{t("coverageALL")}</option>
+            <option value="COVERED">{t("covered")}</option>
+            <option value="NOT_COVERED">{t("notCovered")}</option>
+          </select>
+        </label>
         <button type="submit" className="h-8 cursor-pointer border-2 border-pn-ink bg-pn-ink px-4 text-xs font-semibold text-white">
           {t("applyFilters")}
         </button>
@@ -114,6 +124,7 @@ export default async function MembersPage(props: PageProps<"/[locale]/members">)
                     <Link href={`/members/${m.id}`} className="font-semibold text-pn-ink hover:underline">
                       {m.lastName.toUpperCase()} {m.firstName}
                     </Link>
+                    {!m.isCovered && <NotCoveredTag label={t("notCovered")} />}
                   </td>
                   <td className="px-3 py-2 text-pn-gray-2 tabular-nums">{formatMemberNumber(m.memberNumber)}</td>
                   <td className="px-3 py-2 text-pn-gray-1">

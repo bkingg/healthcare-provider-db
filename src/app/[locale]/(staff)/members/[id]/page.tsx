@@ -9,6 +9,7 @@ import { localizedText } from "@/lib/localizedText";
 import { getMemberWithHousehold } from "@/data/members";
 import { PnTag } from "@/components/pn-tag";
 import { MemberFormDialog, type MemberFormValues } from "../_components/member-form-dialog";
+import { NotCoveredTag } from "../_components/not-covered-tag";
 import { loadMemberFormOptions } from "../_components/form-options";
 import { setMemberStatusAction } from "../actions";
 
@@ -55,6 +56,7 @@ export default async function MemberPage(props: PageProps<"/[locale]/members/[id
     policyNumber: member.policyNumber ?? undefined,
     coverageStart: isoDate(member.coverageStart),
     coverageEnd: isoDate(member.coverageEnd),
+    isCovered: member.isCovered,
   };
   // "Add dependent" starts from the primary member's household details.
   const dependentDefaults: MemberFormValues | null = primary
@@ -69,6 +71,7 @@ export default async function MemberPage(props: PageProps<"/[locale]/members/[id
         policyNumber: primary.policyNumber ?? undefined,
         coverageStart: isoDate(primary.coverageStart),
         coverageEnd: isoDate(primary.coverageEnd),
+        isCovered: primary.isCovered,
       }
     : null;
 
@@ -91,6 +94,7 @@ export default async function MemberPage(props: PageProps<"/[locale]/members/[id
               {member.primaryMemberId ? (relName(member.relationship) ?? t("dependent")) : t("primary")}
             </span>
             {member.organization ? <span>{member.organization.name}</span> : <span>{t("individual")}</span>}
+            {!member.isCovered && <NotCoveredTag label={t("notCovered")} />}
             {age !== null && <span>· {t("ageYears", { age })}</span>}
           </div>
         </div>

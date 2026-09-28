@@ -1,11 +1,11 @@
 import { getLocale, getTranslations } from "next-intl/server";
-import { ChevronRight, LifeBuoy } from "lucide-react";
+import { ChevronRight, LifeBuoy, Phone } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { getCurrentMember } from "@/lib/memberAuth";
 import { formatCaseNumber } from "@/lib/caseNumber";
 import { formatDakarDate } from "@/lib/formatDate";
 import { localizedText } from "@/lib/localizedText";
-import { listMemberCases } from "@/data/memberApp";
+import { emergencyContactsFor, listMemberCases } from "@/data/memberApp";
 import { EmergencyPanel } from "../_components/emergency-panel";
 import { StatusChip } from "../_components/status-chip";
 
@@ -13,7 +13,7 @@ export default async function MemberHomePage() {
   const t = await getTranslations("MemberApp");
   const locale = await getLocale();
   const member = (await getCurrentMember())!;
-  const cases = await listMemberCases(member);
+  const [cases, contacts] = await Promise.all([listMemberCases(member), member.isCovered ? null : emergencyContactsFor(member.countryId)]);
 
   return (
     <main className="flex flex-col">
@@ -21,16 +21,29 @@ export default async function MemberHomePage() {
       <div className="flex flex-col gap-6 px-4 py-6">
         <h1 className="m-0 text-[26px] leading-tight font-extrabold tracking-[-0.02em]">{t("hello", { name: member.firstName })}</h1>
 
-        <Link href="/m/request" className="flex min-h-16 items-center justify-between gap-3 bg-pn-accent px-5 py-4 text-white no-underline active:bg-pn-accent-hover">
-          <span className="flex items-center gap-3">
-            <LifeBuoy size={26} aria-hidden />
-            <span className="flex flex-col">
-              <span className="text-[19px] font-extrabold">{t("requestHelp")}</span>
-              <span className="text-[14px] opacity-90">{t("requestHelpSub")}</span>
+{member.isCovered ? (
+                  <Link href="/m/request" className="flex min-h-16 items-center justify-between gap-3 bg-pn-accent px-5 py-4 text-white no-underline active:bg-pn-accent-hover">
+            <span className="flex items-center gap-3">
+              <LifeBuoy size={26} aria-hidden />
+              <span className="flex flex-col">
+                <span className="text-[19px] font-extrabold">{t("requestHelp")}</span>
+                <span className="text-[14px] opacity-90">{t("requestHelpSub")}</span>
+              </span>
             </span>
-          </span>
-          <ChevronRight size={22} aria-hidden />
-        </Link>
+            <ChevronRight size={22} aria-hidden />
+          </Link>
+        ) : (
+          // Not covered: Nomad can still help, as a special request — by phone.
+          <div className="flex flex-col gap-2 border-2 border-pn-ink bg-white px-4 py-4">
+            <p className="m-0 text-[16px] font-bold">{t("notCoveredTitle")}</p>
+            <p className="m-0 text-[14px] text-pn-gray-1">{t("notCoveredBody")}</p>
+            {contacts?.nomadNumbers.map((n) => (
+              <a key={n.id} href={`tel:${n.phone.replace(/[^+\d]/g, "")}`} className="flex min-h-12 items-center gap-2 bg-pn-accent px-4 text-[16px] font-bold text-white no-underline">
+                <Phone size={18} aria-hidden /> {t("callNomad", { phone: n.phone })}
+              </a>
+            ))}
+          </div>
+        )}
 
         <section className="flex flex-col gap-2">
           <h2 className="m-0 text-[13px] font-bold tracking-[0.08em] text-pn-gray-1 uppercase">{t("yourRequests")}</h2>

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
-import { ArrowLeft, Check, ChevronRight, ExternalLink, Eye, Lock, MapPinned, MessageCircle, Phone } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, ExternalLink, Eye, EyeOff, Lock, MapPinned, MessageCircle, Phone } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { getCurrentActor } from "@/lib/actor";
 import { canManageMembers, requireWorkCases } from "@/lib/rbac";
@@ -20,7 +20,9 @@ import { FindProviders } from "../_components/find-providers";
 import { AssigneePicker } from "../_components/assignee-picker";
 import { ActionsPanel, type ActionItem } from "../_components/actions-panel";
 import { StatusForm } from "../_components/status-form";
-import { assignCaseAction, toggleProviderAction } from "../actions";
+import { CoverageForm } from "../_components/coverage-form";
+import { ChannelIcon, CoverageTag } from "../_components/channel-icon";
+import { assignCaseAction, setCaseVisibilityAction, toggleProviderAction } from "../actions";
 import { staffLabel } from "@/lib/handle";
 import { actionTiming } from "@/lib/caseActions";
 import { markCaseNotificationsRead } from "@/data/caseActions";
@@ -128,7 +130,11 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
     const d = (e.data ?? {}) as Record<string, unknown>;
     switch (e.type) {
       case "CREATED":
-        return t("event.CREATED");
+        return e.actorType === "STAFF" ? t("event.CREATED_STAFF", { channel: t(`channel.${d.channel ?? "PHONE"}`).toLowerCase() }) : t("event.CREATED");
+      case "COVERAGE_CHANGED":
+        return t("event.COVERAGE_CHANGED", { to: t(`coverage.${d.to}`) });
+      case "VISIBILITY_CHANGED":
+        return d.visible ? t("event.SHOWN_TO_MEMBER") : t("event.HIDDEN_FROM_MEMBER");
       case "COLOUR_SET":
         return t("event.COLOUR_SET", { to: t(`colour.${d.to}`) });
       case "ESCALATED":
@@ -180,7 +186,15 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
               · {overdue ? t("overdueBy", { time: shortDuration(now.getTime() - due!.getTime()) }) : t("dueIn", { time: shortDuration(due!.getTime() - now.getTime()) })}
             </span>
           )}
-          <span className="text-pn-gray-3">· {t("receivedAt", { when: formatDakarDateTime(c.createdAt, locale) })}</span>
+          <span className="flex items-center gap-1 text-pn-gray-3">
+            · <ChannelIcon channel={c.channel} label={t(`channel.${c.channel}`)} size={12} /> {t("contactedAtLine", { channel: t(`channel.${c.channel}`), when: formatDakarDateTime(c.contactedAt, locale) })}
+          </span>
+          <CoverageTag coverage={c.coverage} label={t(`coverage.${c.coverage}`)} />
+          {!c.visibleToMember && (
+            <span className="flex items-center gap-1 bg-pn-panel px-1.5 text-[11.5px] font-semibold text-pn-gray-1">
+              <EyeOff size={11} aria-hidden /> {t("hiddenFromApp")}
+            </span>
+          )}
         </div>
 
         <div className="flex flex-wrap items-end gap-2 pt-1">
@@ -201,6 +215,7 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
           </form>
 <StatusForm key={`status-${c.updatedAt.getTime()}`} caseId={c.id} current={c.status} openActions={openActionCount} />
           <ColourOverride caseId={c.id} current={c.rag} />
+          <CoverageForm key={`coverage-${c.updatedAt.getTime()}`} caseId={c.id} current={c.coverage} patientCovered={c.patient.isCovered} />
         </div>
       </div>
 
@@ -270,9 +285,11 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
                 </Row>
               )}
               <Row label={t("cover")}>
-                {c.patient.organization
-                  ? [c.patient.organization.name, c.patient.planName, c.patient.policyNumber].filter(Boolean).join(" · ")
-                  : t("individual")}
+                {!c.patient.isCovered
+                  ? t("notCoveredPerson")
+                  : c.patient.organization
+                    ? [c.patient.organization.name, c.patient.planName, c.patient.policyNumber].filter(Boolean).join(" · ")
+                    : t("individual")}
               </Row>
               <Row label={t("language")}>{c.patient.preferredLanguage === "en" ? "English" : "Français"}</Row>
             </dl>
@@ -323,13 +340,23 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
            * be sent to a member by mistake. */}
           <Section title={t("conversationWith", { name: c.requestedBy.firstName })} action={awaitingReply ? <span className="bg-[#e0ecff] px-1.5 text-[11px] font-semibold text-[#1d4ed8]">{t("replyNeeded", { name: c.requestedBy.firstName })}</span> : undefined}>
             <div className="flex flex-col gap-3 border-2 border-pn-ink bg-white p-3">
-              <p className="m-0 flex items-center gap-1.5 text-[11.5px] text-pn-gray-2">
-                <Eye size={12} aria-hidden /> {t("conversationVisible", { name: c.requestedBy.firstName })}
-              </p>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="m-0 flex items-center gap-1.5 text-[11.5px] text-pn-gray-2">
+                  {c.visibleToMember ? <Eye size={12} aria-hidden /> : <EyeOff size={12} aria-hidden />}
+                  {c.visibleToMember ? t("conversationVisible", { name: c.requestedBy.firstName }) : t("conversationHidden", { name: c.requestedBy.firstName })}
+                </p>
+                <form action={setCaseVisibilityAction}>
+                  <input type="hidden" name="caseId" value={c.id} />
+                  <input type="hidden" name="visible" value={c.visibleToMember ? "0" : "1"} />
+                  <button type="submit" className={`cursor-pointer px-2 py-0.5 text-[11.5px] font-semibold ${c.visibleToMember ? "text-pn-gray-2 hover:text-pn-ink hover:underline" : "border-2 border-pn-ink bg-white hover:bg-pn-surface-hover"}`}>
+                    {c.visibleToMember ? t("hideFromApp") : t("showInApp", { name: c.requestedBy.firstName })}
+                  </button>
+                </form>
+              </div>
               {/* column-reverse keeps the newest message in view, next to the box. */}
               <div className="flex max-h-[520px] flex-col-reverse overflow-auto">
                 <ol className="m-0 flex list-none flex-col gap-2 p-0">
-                  {conversation.length === 0 && <li className="py-6 text-center text-[12.5px] text-pn-gray-3">{t("conversationEmpty", { name: c.requestedBy.firstName })}</li>}
+                  {conversation.length === 0 && c.visibleToMember && <li className="py-6 text-center text-[12.5px] text-pn-gray-3">{t("conversationEmpty", { name: c.requestedBy.firstName })}</li>}
                   {conversation.map((e) => {
                     const fromMember = e.type === "MESSAGE_FROM_MEMBER";
                     return (
@@ -345,7 +372,11 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
                   })}
                 </ol>
               </div>
-              <WriteBox variant="message" caseId={c.id} memberName={c.requestedBy.firstName} memberLanguage={c.requestedBy.preferredLanguage} />
+              {c.visibleToMember ? (
+                <WriteBox variant="message" caseId={c.id} memberName={c.requestedBy.firstName} memberLanguage={c.requestedBy.preferredLanguage} />
+              ) : (
+                <p className="m-0 border-l-4 border-pn-border-muted bg-pn-panel px-3 py-2 text-[12.5px] text-pn-gray-1">{t("hiddenNoMessages", { name: c.requestedBy.firstName })}</p>
+              )}
             </div>
           </Section>
 
