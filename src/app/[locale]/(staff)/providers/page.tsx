@@ -13,6 +13,8 @@ import { SearchFilterBar } from "./_components/search-filter-bar";
 import { ResultsTable } from "./_components/results-table";
 import { ColumnsMenu } from "./_components/columns-menu";
 import { PageSizeSelect } from "@/components/page-size-select";
+import { Suspense } from "react";
+import { TaggingBar } from "@/components/tagging-bar";
 
 export default async function ProvidersPage(props: PageProps<"/[locale]/providers">) {
   const t = await getTranslations("Search");
@@ -54,6 +56,9 @@ export default async function ProvidersPage(props: PageProps<"/[locale]/provider
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
+        <Suspense fallback={null}>
+          <TaggingBar />
+        </Suspense>
         <div className="flex-none border-b-2 border-pn-ink px-5 pt-3.5 pb-3">
           <div className="flex items-end justify-between gap-5">
             <div>

@@ -1155,7 +1155,9 @@
       "CREATED_STAFF": "opened the case · {channel}",
       "COVERAGE_CHANGED": "changed cover to {to}",
       "SHOWN_TO_MEMBER": "showed the case in the member's app",
-      "HIDDEN_FROM_MEMBER": "hid the case from the member's app"
+      "HIDDEN_FROM_MEMBER": "hid the case from the member's app",
+      "PROVIDER_TAGGED": "tagged {code} as a facility in use",
+      "PROVIDER_UNTAGGED": "removed the tag on {code}"
     },
     "statusLabel": "Status",
     "conversationWith": "Conversation with {name}",
@@ -1362,6 +1364,25 @@
         "reasonRequired": "Say why you chose a different colour."
       }
     },
-    "notCoveredPerson": "Not covered — special requests only"
+    "notCoveredPerson": "Not covered — special requests only",
+    "tagging": {
+      "title": "Facilities in use",
+      "searchProviders": "Search providers",
+      "empty": "No facilities tagged. Tag the provider the member is using — search for it, or type its ID below.",
+      "byId": "Tag by ID",
+      "find": "Find",
+      "notFound": "No provider has that ID.",
+      "tagToCase": "Tag to case",
+      "tagging": "Tagging…",
+      "tagged": "Tagged",
+      "alreadyTagged": "Already tagged",
+      "remove": "Remove",
+      "taggedBy": "tagged by {who} · {when}",
+      "doNotUseWarning": "DO NOT USE provider — tag only if the member is already there.",
+      "bar": "Tagging providers for {caseNumber} · {patient}",
+      "taggedCount": "{count, plural, =0 {none tagged yet} one {# tagged} other {# tagged}}",
+      "backToCase": "Back to case",
+      "stop": "Stop tagging"
+    }
   }
 }

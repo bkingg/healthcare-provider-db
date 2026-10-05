@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
-import { ArrowLeft, Check, ChevronRight, ExternalLink, Eye, EyeOff, Lock, MapPinned, MessageCircle, Phone } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, ExternalLink, Eye, EyeOff, Lock, MapPinned, MessageCircle, Phone, Search } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { getCurrentActor } from "@/lib/actor";
 import { canManageMembers, requireWorkCases } from "@/lib/rbac";
@@ -22,7 +22,10 @@ import { ActionsPanel, type ActionItem } from "../_components/actions-panel";
 import { StatusForm } from "../_components/status-form";
 import { CoverageForm } from "../_components/coverage-form";
 import { ChannelIcon, CoverageTag } from "../_components/channel-icon";
-import { assignCaseAction, setCaseVisibilityAction, toggleProviderAction } from "../actions";
+import { TagById } from "../_components/tag-by-id";
+import { assignCaseAction, setCaseVisibilityAction, toggleProviderAction, untagProviderAction } from "../actions";
+import { DoNotUseFlag } from "@/components/do-not-use-flag";
+import { PnTag } from "@/components/pn-tag";
 import { staffLabel } from "@/lib/handle";
 import { actionTiming } from "@/lib/caseActions";
 import { markCaseNotificationsRead } from "@/data/caseActions";
@@ -131,6 +134,9 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
     switch (e.type) {
       case "CREATED":
         return e.actorType === "STAFF" ? t("event.CREATED_STAFF", { channel: t(`channel.${d.channel ?? "PHONE"}`).toLowerCase() }) : t("event.CREATED");
+      case "PROVIDER_TAGGED":
+      case "PROVIDER_UNTAGGED":
+        return t(`event.${e.type}`, { code: String(d.code ?? "?") });
       case "COVERAGE_CHANGED":
         return t("event.COVERAGE_CHANGED", { to: t(`coverage.${d.to}`) });
       case "VISIBILITY_CHANGED":
@@ -295,34 +301,105 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
             </dl>
           </Section>
 
+          <Section
+            title={t("tagging.title")}
+            action={
+              <Link href={`/providers?tagCase=${c.id}`} className="flex h-8 items-center gap-1.5 border-2 border-pn-ink bg-white px-3 text-xs font-semibold text-pn-ink no-underline hover:bg-pn-surface-hover">
+                <Search size={13} aria-hidden /> {t("tagging.searchProviders")}
+              </Link>
+            }
+          >
+            {c.providerTags.length === 0 ? (
+              <p className="m-0 text-[12.5px] text-pn-gray-2">{t("tagging.empty")}</p>
+            ) : (
+              <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+                {c.providerTags.map((tag) => {
+                  const p = tag.provider;
+                  const type = p.providerTypes[0]?.providerType;
+                  return (
+                    <li key={p.id} className={`flex flex-wrap items-center justify-between gap-2 border-2 px-3 py-2 ${p.status === "DO_NOT_USE" ? "border-[#c62828] bg-[#fdecec]" : "border-pn-ink bg-white"}`}>
+                      <div className="min-w-0">
+                        <Link href={`/providers/${p.id}`} className="flex items-center gap-1.5 text-[13.5px] font-semibold text-pn-ink hover:underline">
+                          <DoNotUseFlag status={p.status} />
+                          {p.names[0]?.fullNameText ?? formatProviderNumber(p.providerNumber)}
+                          <span className="font-normal text-pn-gray-3 tabular-nums">{formatProviderNumber(p.providerNumber)}</span>
+                        </Link>
+                        <div className="flex flex-wrap items-center gap-x-2 text-[12px] text-pn-gray-2">
+                          {type && <span>{localizedText(type.nameEn, type.nameFr, locale)}</span>}
+                          {p.addresses[0]?.city && <span>· {p.addresses[0].city}</span>}
+                          {p.phones[0] && (
+                            <a href={`tel:${p.phones[0].number.replace(/[^+\d]/g, "")}`} className="flex items-center gap-1 font-semibold text-pn-ink tabular-nums no-underline">
+                              · <Phone size={11} aria-hidden /> {p.phones[0].number}
+                            </a>
+                          )}
+                          {p.status !== "ACTIVE" && <PnTag status={p.status} />}
+                          <span className="text-pn-gray-3">· {t("tagging.taggedBy", { who: staffLabel(tag.taggedBy), when: formatDakarDateTime(tag.createdAt, locale) })}</span>
+                        </div>
+                      </div>
+                      <form action={untagProviderAction}>
+                        <input type="hidden" name="caseId" value={c.id} />
+                        <input type="hidden" name="providerId" value={p.id} />
+                        <button type="submit" className="cursor-pointer text-[12px] font-semibold text-pn-gray-2 hover:text-[#b91c1c] hover:underline">
+                          {t("tagging.remove")}
+                        </button>
+                      </form>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            <TagById caseId={c.id} taggedIds={c.providerTags.map((tag) => tag.providerId)} />
+          </Section>
+
           <Section title={t("providers")} action={<FindProviders caseId={c.id} hasResults={c.providerOptions.length > 0} />}>
             {c.providerOptions.length === 0 ? (
               <p className="m-0 text-[12.5px] text-pn-gray-2">{t("providersHint")}</p>
             ) : (
+              // Grid rows: details | distance | button. The button column has a
+              // fixed width, so "Mark chosen" and "Chosen" line up row to row.
               <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
                 {c.providerOptions.map((o) => {
                   const p = o.provider;
                   const type = p.providerTypes[0]?.providerType;
+                  const meta = [type ? localizedText(type.nameEn, type.nameFr, locale) : null, p.addresses[0]?.city].filter(Boolean).join(" · ");
                   return (
-                    <li key={o.providerId} className={`flex flex-wrap items-center justify-between gap-2 border px-3 py-2 ${o.selected ? "border-pn-accent bg-pn-accent-soft" : "border-pn-rule bg-white"}`}>
+                    <li
+                      key={o.providerId}
+                      className={`grid grid-cols-[minmax(0,1fr)_auto_120px] items-center gap-3 border border-l-4 px-3 py-2 max-[520px]:grid-cols-[minmax(0,1fr)_auto] ${
+                        o.selected ? "border-pn-accent bg-pn-accent-soft" : "border-pn-rule border-l-pn-border-muted bg-white"
+                      }`}
+                    >
                       <div className="min-w-0">
-                        <Link href={`/providers/${p.id}`} className="flex items-center gap-1 text-[13.5px] font-semibold text-pn-ink hover:underline">
-                          {p.names[0]?.fullNameText ?? formatProviderNumber(p.providerNumber)} <ExternalLink size={11} aria-hidden />
+                        <Link href={`/providers/${p.id}`} className="flex min-w-0 items-baseline gap-1.5 text-[13.5px] font-semibold text-pn-ink hover:underline">
+                          <span className="truncate" title={p.names[0]?.fullNameText ?? undefined}>
+                            {p.names[0]?.fullNameText ?? formatProviderNumber(p.providerNumber)}
+                          </span>
+                          <span className="flex-none text-[12px] font-normal text-pn-gray-3 tabular-nums">{formatProviderNumber(p.providerNumber)}</span>
+                          <ExternalLink size={11} aria-hidden className="flex-none self-center text-pn-gray-3" />
                         </Link>
-                        <div className="flex flex-wrap items-center gap-x-2 text-[12px] text-pn-gray-2">
-                          {type && <span>{localizedText(type.nameEn, type.nameFr, locale)}</span>}
-                          {o.distanceKm !== null && <span>· {t("km", { km: o.distanceKm })}</span>}
-                          {p.addresses[0]?.city && <span>· {p.addresses[0].city}</span>}
-                          {p.phones[0] && <span className="tabular-nums">· {p.phones[0].number}</span>}
+                        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[12px] text-pn-gray-2">
+                          {meta && <span>{meta}</span>}
+                          {p.phones[0] && (
+                            <a href={`tel:${p.phones[0].number.replace(/[^+\d]/g, "")}`} className="flex items-center gap-1 font-semibold text-pn-gray-1 tabular-nums no-underline hover:text-pn-ink">
+                              <Phone size={11} aria-hidden /> {p.phones[0].number}
+                            </a>
+                          )}
                           {p.isOpen24_7 && <span className="bg-pn-panel px-1 text-[11px] font-semibold text-pn-gray-1">{t("open247")}</span>}
                           {p.erOpen24_7 && <span className="bg-[#fbe5e5] px-1 text-[11px] font-semibold text-[#991b1b]">{t("er247")}</span>}
                         </div>
                       </div>
-                      <form action={toggleProviderAction}>
+                      <div className="text-right text-[13px] font-semibold text-pn-ink tabular-nums">{o.distanceKm !== null ? t("km", { km: o.distanceKm }) : <span className="text-pn-gray-3">—</span>}</div>
+                      <form action={toggleProviderAction} className="max-[520px]:col-span-2">
                         <input type="hidden" name="caseId" value={c.id} />
                         <input type="hidden" name="providerId" value={o.providerId} />
-                        <button type="submit" className={`flex h-7 cursor-pointer items-center gap-1 border-2 px-2 text-[12px] font-semibold ${o.selected ? "border-pn-accent bg-pn-accent text-white" : "border-pn-ink bg-white"}`}>
-                          {o.selected && <Check size={12} aria-hidden />}
+                        <button
+                          type="submit"
+                          aria-pressed={o.selected}
+                          className={`flex h-8 w-full cursor-pointer items-center justify-center gap-1 border-2 text-[12px] font-semibold ${
+                            o.selected ? "border-pn-accent bg-pn-accent text-white hover:bg-pn-accent-hover" : "border-pn-ink bg-white hover:bg-pn-surface-hover"
+                          }`}
+                        >
+                          {o.selected && <Check size={13} aria-hidden />}
                           {o.selected ? t("chosen") : t("choose")}
                         </button>
                       </form>

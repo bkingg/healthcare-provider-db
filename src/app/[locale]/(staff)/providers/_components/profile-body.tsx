@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { localizedText } from "@/lib/localizedText";
 import { ProviderHeader, type ProfileTab } from "./provider-header";
@@ -22,6 +22,7 @@ import { NotesWidget } from "./notes-widget";
 import { WebsiteWidget } from "./website-widget";
 import type { ProviderProfile } from "@/data/providers";
 import type { DqRuleRef, DataQualityException } from "../../../../../../generated/prisma/client";
+import { TaggingBar } from "@/components/tagging-bar";
 
 type Options = { id: string; label: string }[];
 
@@ -224,6 +225,9 @@ export function ProfileBody({
   return (
     <CanEditProvider canEdit={canEdit}>
     <div className="flex min-h-0 flex-1 flex-col">
+      <Suspense fallback={null}>
+        <TaggingBar />
+      </Suspense>
       <ProviderHeader
         provider={provider}
         countries={countries}

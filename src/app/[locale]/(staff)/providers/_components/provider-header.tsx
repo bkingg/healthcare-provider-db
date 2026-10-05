@@ -26,6 +26,7 @@ import { OperatingStatus, ProviderNameKind, ProviderStatus } from "@/lib/enums";
 import type { ActionResult } from "@/lib/validation/common";
 import type { ProviderProfile } from "@/data/providers";
 import { staffLabel } from "@/lib/handle";
+import { TagToCaseButton } from "@/components/tag-to-case-button";
 
 // Internal English identifiers — used for tab-switch state/comparisons in
 // profile-body.tsx, not shown to the user. Display labels come from the
@@ -363,6 +364,7 @@ export function ProviderHeader({
 
         <div className="flex flex-none flex-col items-end gap-1 pt-4">
           <div className="flex flex-wrap justify-end gap-2">
+            <TagToCaseButton providerId={provider.id} size="md" />
             <CopyRecordButton provider={provider} />
             <Button variant="outline" disabled className="flex h-8 items-center gap-[7px] border-2 border-pn-ink bg-transparent px-3 text-xs font-semibold">
               <History size={14} /> {t("auditHistory")}

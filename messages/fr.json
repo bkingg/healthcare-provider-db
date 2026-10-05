@@ -1125,7 +1125,7 @@
     "km": "{km} km",
     "er247": "Urgences 24/7",
     "open247": "Ouvert 24/7",
-    "choose": "Marquer comme choisi",
+    "choose": "Choisir",
     "chosen": "Choisi",
     "saveNote": "Enregistrer la note interne",
     "saving": "Enregistrement…",
@@ -1155,7 +1155,9 @@
       "CREATED_STAFF": "a ouvert le dossier · {channel}",
       "COVERAGE_CHANGED": "a changé la couverture en {to}",
       "SHOWN_TO_MEMBER": "a affiché le dossier dans l’appli du membre",
-      "HIDDEN_FROM_MEMBER": "a masqué le dossier dans l’appli du membre"
+      "HIDDEN_FROM_MEMBER": "a masqué le dossier dans l’appli du membre",
+      "PROVIDER_TAGGED": "a associé {code} comme établissement utilisé",
+      "PROVIDER_UNTAGGED": "a retiré l’association de {code}"
     },
     "statusLabel": "Statut",
     "conversationWith": "Conversation avec {name}",
@@ -1362,6 +1364,25 @@
         "reasonRequired": "Indiquez pourquoi vous avez choisi une autre couleur."
       }
     },
-    "notCoveredPerson": "Non couvert — demandes spéciales uniquement"
+    "notCoveredPerson": "Non couvert — demandes spéciales uniquement",
+    "tagging": {
+      "title": "Établissements utilisés",
+      "searchProviders": "Rechercher des prestataires",
+      "empty": "Aucun établissement associé. Associez le prestataire que le membre utilise — recherchez-le, ou saisissez son identifiant ci-dessous.",
+      "byId": "Associer par identifiant",
+      "find": "Trouver",
+      "notFound": "Aucun prestataire n’a cet identifiant.",
+      "tagToCase": "Associer au dossier",
+      "tagging": "Association…",
+      "tagged": "Associé",
+      "alreadyTagged": "Déjà associé",
+      "remove": "Retirer",
+      "taggedBy": "associé par {who} · {when}",
+      "doNotUseWarning": "Prestataire À NE PAS UTILISER — associez-le uniquement si le membre y est déjà.",
+      "bar": "Association de prestataires pour {caseNumber} · {patient}",
+      "taggedCount": "{count, plural, =0 {aucun associé} one {# associé} other {# associés}}",
+      "backToCase": "Retour au dossier",
+      "stop": "Arrêter l’association"
+    }
   }
 }

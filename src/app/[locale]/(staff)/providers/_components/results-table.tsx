@@ -13,6 +13,7 @@ import { usePanelWidths } from "@/lib/panel-widths";
 import type { searchProviders } from "@/data/search";
 import type { SortColumn } from "@/lib/validation/search";
 import { PROVIDER_COLUMNS, buildGridTemplate, useVisibleColumns, type ProviderColumnKey } from "./column-visibility";
+import { TagToCaseButton } from "@/components/tag-to-case-button";
 
 type ProviderRow = Awaited<ReturnType<typeof searchProviders>>["providers"][number];
 type RawParams = Record<string, string | string[] | undefined>;
@@ -186,7 +187,8 @@ export function ResultsTable({
                         <div key={key} className="min-w-0">
                           <div className="flex min-w-0 items-center gap-1.5 font-semibold">
                             <DoNotUseFlag status={p.status} />
-                            <span className="overflow-hidden text-ellipsis whitespace-nowrap">{primaryName}</span>
+                            <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{primaryName}</span>
+                            <TagToCaseButton providerId={p.id} />
                           </div>
                           <div className="overflow-hidden text-ellipsis whitespace-nowrap text-[11px] text-pn-gray-3">{p.externalId ?? ""}</div>
                         </div>

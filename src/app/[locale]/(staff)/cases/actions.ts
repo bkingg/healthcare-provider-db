@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { getCurrentActor } from "@/lib/actor";
-import { requireWorkCases } from "@/lib/rbac";
+import { canWorkCases, requireWorkCases } from "@/lib/rbac";
 import { fail, type ActionResult } from "@/lib/validation/common";
 import { GeocodeThrottledError, GeocodeUpstreamError } from "@/lib/geocode";
 import * as ops from "@/data/caseOps";
@@ -12,6 +12,8 @@ import { parseDueInput } from "@/lib/caseActions";
 import { normalizeCallbackPhone } from "@/lib/phone";
 import { staffCaseFormObject, staffCaseSchema, type StaffCaseInput } from "@/lib/validation/staffCase";
 import { createStaffCase, findMembersForCase, setCaseCoverage, setCaseVisibility, StaffCaseError } from "@/data/staffCases";
+import { findProviderForTag, tagProvider, taggingContext, untagProvider } from "@/data/caseProviderTags";
+import { parseProviderNumber } from "@/lib/providerNumber";
 
 /** Every case action re-checks canWorkCases server-side — the nav link and
  * pages hide behind it too, but a form POST doesn't. */
@@ -230,4 +232,35 @@ export async function setCaseVisibilityAction(formData: FormData): Promise<void>
   const actor = await requireCaseWorker();
   await setCaseVisibility(id.parse(formData.get("caseId")), formData.get("visible") === "1", actor.id);
   refresh();
+}
+
+// ---------------------------------------------------------- provider tags
+
+/** "Tag by ID" preview: the provider a typed NMD ID points at, or null. */
+export async function findProviderForTagAction(raw: string) {
+  await requireCaseWorker();
+  const n = parseProviderNumber(String(raw ?? ""), { allowBare: true });
+  return n === null ? null : findProviderForTag(n);
+}
+
+export async function tagProviderAction(caseId: string, providerId: string): Promise<{ ok: boolean }> {
+  const actor = await requireCaseWorker();
+  await tagProvider(id.parse(caseId), id.parse(providerId), actor.id);
+  refresh();
+  return { ok: true };
+}
+
+export async function untagProviderAction(formData: FormData): Promise<void> {
+  const actor = await requireCaseWorker();
+  await untagProvider(id.parse(formData.get("caseId")), id.parse(formData.get("providerId")), actor.id);
+  refresh();
+}
+
+/** For the tagging bar in Provider search. Null if the case is gone or the
+ * user can't work cases (the bar then simply doesn't show). */
+export async function taggingContextAction(caseId: string) {
+  const actor = await getCurrentActor();
+  if (!canWorkCases(actor)) return null;
+  const parsed = id.safeParse(caseId);
+  return parsed.success ? taggingContext(parsed.data) : null;
 }

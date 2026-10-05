@@ -124,6 +124,7 @@ model CareCase {
   providerOptions CaseProviderOption[]
   actions         CaseAction[]
   notifications   StaffNotification[]
+  providerTags    CaseProviderTag[]
   channel         CaseChannel     @default(MEMBER_APP)
   coverage        CaseCoverage    @default(COVERED)
   /// When the member got in touch — the response timer starts here. Same as
@@ -203,6 +204,8 @@ enum CaseEventType {
   ACTIONS_CLOSED_WITH_CASE
   COVERAGE_CHANGED
   VISIBILITY_CHANGED
+  PROVIDER_TAGGED
+  PROVIDER_UNTAGGED
 }
 
 enum CaseActorType {
@@ -368,4 +371,23 @@ model StaffNotification {
 enum StaffNotificationKind {
   MENTION
   ACTION_ASSIGNED
+}
+
+/// A provider (facility) the member is actively using, tagged to the case by
+/// staff — found with Provider search or typed by ID (NMD-…). Unlike the
+/// "Find providers" shortlist, any provider can be tagged, DO NOT USE
+/// included (shown flagged). Removing a tag deletes the row; the timeline
+/// keeps the history.
+model CaseProviderTag {
+  caseId      String   @map("case_id") @db.Uuid
+  case        CareCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  providerId  String   @map("provider_id") @db.Uuid
+  provider    Provider @relation(fields: [providerId], references: [id])
+  taggedById  String   @map("tagged_by_id") @db.Uuid
+  taggedBy    User     @relation(fields: [taggedById], references: [id])
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@id([caseId, providerId])
+  @@index([providerId])
+  @@map("case_provider_tag")
 }

@@ -7,6 +7,7 @@ import { searchAddress } from "@/lib/geocode";
 import { searchProviders } from "./search";
 import { parseCaseNumber } from "@/lib/caseNumber";
 import { parseMemberNumber } from "@/lib/memberNumber";
+import { parseProviderNumber } from "@/lib/providerNumber";
 import type { CaseChannel, CaseEventType, CaseStatus, Prisma } from "../../generated/prisma/client";
 import { normalizeHandle } from "@/lib/handle";
 import { addActionTx, closeOpenActionsTx, recordMentionsTx, type NewAction } from "./caseActions";
@@ -150,7 +151,8 @@ export type QueueFilters = {
  * "awa medication". What the member wrote isn't searched, by design.
  * An @handle ("@jerome", or the start of one while typing) limits the
  * results to cases assigned to that staff member, and combines with the
- * rest: "@jerome awa". */
+ * rest: "@jerome awa". A provider ID ("NMD-000012") finds the cases that
+ * provider is tagged to. */
 async function caseSearchWhere(query: string): Promise<Prisma.CareCaseWhereInput> {
   const handles = query.split(/\s+/).filter((w) => w.startsWith("@") && w.length > 1).map(normalizeHandle);
   const q = query
@@ -160,6 +162,8 @@ async function caseSearchWhere(query: string): Promise<Prisma.CareCaseWhereInput
     .trim();
   const byAssignee: Prisma.CareCaseWhereInput[] = handles.map((h) => ({ assignedTo: { handle: { startsWith: h } } }));
   if (!q) return { AND: byAssignee };
+  const providerNumber = parseProviderNumber(q);
+  if (providerNumber !== null) return { AND: [...byAssignee, { providerTags: { some: { provider: { providerNumber } } } }] };
   const or: Prisma.CareCaseWhereInput[] = [];
   const caseNumber = parseCaseNumber(q);
   if (caseNumber !== null) or.push({ caseNumber });
@@ -257,6 +261,20 @@ export async function getCaseForStaff(id: string) {
           mentions: { select: { handle: true, user: { select: { id: true, name: true, email: true, handle: true } } } },
         },
         orderBy: { createdAt: "asc" },
+      },
+      providerTags: {
+        orderBy: { createdAt: "asc" },
+        include: {
+          taggedBy: { select: { id: true, name: true, email: true, handle: true } },
+          provider: {
+            include: {
+              names: { orderBy: { isPrimary: "desc" }, take: 1 },
+              providerTypes: { include: { providerType: true }, orderBy: { isPrimary: "desc" }, take: 1 },
+              phones: { where: { isActive: true }, orderBy: { createdAt: "asc" }, take: 1 },
+              addresses: { orderBy: { isPrimary: "desc" }, take: 1 },
+            },
+          },
+        },
       },
       actions: {
         orderBy: { dueAt: "asc" },

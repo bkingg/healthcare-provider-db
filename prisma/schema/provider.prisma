@@ -66,6 +66,7 @@ model Provider {
   providerTypes          ProviderProviderType[]
   specialties            ProviderSpecialty[]
   caseOptions            CaseProviderOption[]
+  caseTags               CaseProviderTag[]
   languages              ProviderLanguage[]
   capabilities           ProviderCapability[]
   credentials            Credential[]
