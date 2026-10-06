@@ -15,7 +15,8 @@
     "reports": "Reports & KPIs",
     "resizeWorkspace": "Drag to resize the Workspace panel (double-click to reset)",
     "members": "Members",
-    "cases": "Cases"
+    "cases": "Cases",
+    "medicationCatalog": "Medication catalog"
   },
   "Header": {
     "settings": "Settings",
@@ -153,7 +154,8 @@
       "caseCategories": "Request categories",
       "emergencyContacts": "Emergency numbers",
       "responseTargets": "Response times",
-      "noteTemplates": "Note templates"
+      "noteTemplates": "Note templates",
+      "medicationRequirements": "Medication requirements"
     },
     "fields": {
       "paymentCategory": "Payment category",
@@ -205,7 +207,11 @@
       "responseMinutes": "Response time (minutes)",
       "businessHoursOnly": "Count office hours only (Mon–Fri 09:00–17:00)",
       "templateBodyEn": "Template (English) — “## ” for headings, “- ” for bullet points",
-      "templateBodyFr": "Template (French) — “## ” for headings, “- ” for bullet points"
+      "templateBodyFr": "Template (French) — “## ” for headings, “- ” for bullet points",
+      "requirementAppliesTo": "Applies to",
+      "requirementKind": "Kind",
+      "instructionsEn": "Instructions (English)",
+      "instructionsFr": "Instructions (French)"
     },
     "marker": {
       "default": "Default",
@@ -248,7 +254,8 @@
       "locations": "Locations",
       "accessScreenText": "Access & screen text",
       "expandAll": "Expand all",
-      "collapseAll": "Collapse all"
+      "collapseAll": "Collapse all",
+      "medicationDelivery": "Medication delivery"
     }
   },
   "Login": {
@@ -1383,6 +1390,109 @@
       "taggedCount": "{count, plural, =0 {none tagged yet} one {# tagged} other {# tagged}}",
       "backToCase": "Back to case",
       "stop": "Stop tagging"
+    }
+  },
+  "MedicationCatalog": {
+    "title": "Medication catalog",
+    "intro": "What members can order. Loaded from a standardized list (such as Senegal's LNMPE) by import, with the flags Nomad adds: regulatory class, psychotropic, cold chain and prescription.",
+    "results": "items",
+    "showingFirst": "showing the first {limit}",
+    "samplesNote": "{count, plural, one {# sample item} other {# sample items}} — example data, flags not checked by a pharmacist",
+    "import": "Import",
+    "add": "Add medication",
+    "edit": "Edit",
+    "editTitle": "Edit {code}",
+    "save": "Save",
+    "search": "Search",
+    "searchPlaceholder": "Generic, brand, strength or code",
+    "regulatoryClass": "Regulatory class",
+    "any": "Any",
+    "status": "Status",
+    "statusActive": "Active",
+    "statusInactive": "Inactive",
+    "statusAll": "All",
+    "sampleFilter": "Sample data",
+    "sampleOnly": "Sample only",
+    "sampleHide": "Hide sample",
+    "coldChain": "Cold chain",
+    "psychotropic": "Psychotropic",
+    "apply": "Apply",
+    "colMedication": "Medication",
+    "colBrand": "Brand",
+    "colClass": "Class",
+    "colFlags": "Flags",
+    "colSource": "Source",
+    "flagRx": "Rx",
+    "flagPsy": "Psychotropic",
+    "flagCold": "Cold chain",
+    "sample": "SAMPLE",
+    "deactivate": "Deactivate",
+    "activate": "Activate",
+    "noResults": "No medications match.",
+    "empty": "The catalog is empty. Import a medication list to start.",
+    "listedNeedsRx": "Listed medications (Liste I, Liste II, narcotics) always need a prescription.",
+    "class": {
+      "NOT_LISTED": "Not listed",
+      "LIST_II": "Liste II",
+      "LIST_I": "Liste I",
+      "NARCOTIC": "Narcotic"
+    },
+    "field": {
+      "code": "Code",
+      "dci": "Generic name (DCI)",
+      "brandName": "Brand",
+      "strength": "Strength",
+      "form": "Form",
+      "presentation": "Pack",
+      "therapeuticClass": "Therapeutic class",
+      "source": "Source",
+      "prescriptionRequired": "Prescription required",
+      "isPsychotropic": "Psychotropic",
+      "isColdChain": "Cold chain (2–8 °C)"
+    }
+  },
+  "MedicationImport": {
+    "breadcrumb": "Medication catalog",
+    "title": "Import medications",
+    "intro": "Load or update the catalog from a spreadsheet. Rows are matched by code: new codes are added, existing ones updated. Nothing is saved until you press Import.",
+    "step1": "1. Get the template",
+    "step1Help": "The Excel template has an Instructions sheet explaining each column. Regulatory class and yes/no columns accept English or French.",
+    "downloadXlsx": "Excel template",
+    "downloadCsv": "CSV template",
+    "step2": "2. Upload and check",
+    "fileLabel": "File (.xlsx or .csv)",
+    "sourceLabel": "Source (optional)",
+    "sourceHelp": "Used for rows whose source column is empty, e.g. \"LNMPE 2025\".",
+    "checkFile": "Check file",
+    "working": "Working…",
+    "fileProblem": "The file couldn't be used",
+    "newCount": "{count} new",
+    "updatedCount": "{count} updated",
+    "unchangedCount": "{count} unchanged",
+    "errorCount": "{count, plural, one {# with errors} other {# with errors}}",
+    "importButton": "Import {count, plural, one {# item} other {# items}}",
+    "errorsSkipped": "Rows with errors are skipped.",
+    "nothingToSave": "Nothing new or changed to save.",
+    "allRows": "All rows",
+    "rowsWithErrors": "Rows with errors",
+    "showErrorsOnly": "Show errors only",
+    "showAllRows": "Show all rows",
+    "colRow": "Row",
+    "colCode": "Code",
+    "colMedication": "Medication",
+    "colClass": "Class",
+    "colResult": "Result",
+    "noErrors": "No rows with errors.",
+    "doneTitle": "{created} added, {updated} updated",
+    "doneDetail": "From {file}.",
+    "doneSkipped": "{skipped} rows with errors were skipped.",
+    "viewCatalog": "View the catalog",
+    "importAnother": "Import another file",
+    "action": {
+      "NEW": "New",
+      "UPDATE": "Update",
+      "UNCHANGED": "Unchanged",
+      "null": "—"
     }
   }
 }

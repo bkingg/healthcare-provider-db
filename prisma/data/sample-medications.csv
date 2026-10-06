@@ -1,0 +1,32 @@
+code,dci,brand_name,strength,form,presentation,therapeutic_class,regulatory_class,psychotropic,cold_chain,prescription_required,source,active
+SAMPLE-0002,Amoxicilline,Clamoxyl,500mg,gélule,,Anti-infectieux · Anti-bactériens,LIST_I,no,no,yes,LNMPE 2022 (sample),yes
+SAMPLE-0006,Amoxicilline + Acide clavulanique,Augmentin,500mg/62.5mg,sachet,,Anti-infectieux · Anti-bactériens,LIST_I,no,no,yes,LNMPE 2022 (sample),yes
+SAMPLE-0009,Azithromycine,Zithromax,500mg,comprimé,,Anti-infectieux · Anti-bactériens,LIST_I,no,no,yes,LNMPE 2022 (sample),yes
+SAMPLE-0014,Céfixime,Oroken,200mg,comprimé,,Anti-infectieux · Anti-bactériens,LIST_I,no,no,yes,LNMPE 2022 (sample),yes
+SAMPLE-0018,Ciprofloxacine,Cifran,250mg,comprimé,,Anti-infectieux · Anti-bactériens,LIST_I,no,no,yes,LNMPE 2022 (sample),yes
+SAMPLE-0022,Doxycycline,Vibra,100mg,comprimé,,Anti-infectieux · Anti-bactériens,LIST_I,no,no,yes,LNMPE 2022 (sample),yes
+SAMPLE-0023,Erythromycine,Ery,500mg,comprimé,,Anti-infectieux · Anti-bactériens,LIST_I,no,no,yes,LNMPE 2022 (sample),yes
+SAMPLE-0033,Sulfaméthoxazole + Triméthoprime,Bactrim,800mg/160mg,comprimé,,Anti-infectieux · Anti-bactériens,LIST_I,no,no,yes,LNMPE 2022 (sample),yes
+SAMPLE-0043,Isoniazide,Rimifon,300mg,comprimé,,Anti-infectieux · Antituberculeux,LIST_I,no,no,yes,LNMPE 2022 (sample),yes
+SAMPLE-0044,Lévofloxacine,Tavanic,250mg,comprimé,,Anti-infectieux · Antituberculeux,LIST_I,no,no,yes,LNMPE 2022 (sample),yes
+SAMPLE-0182,Tramadol,Trabar,100mg/2ml,injectable,,Prémédication anesthésique,LIST_I,yes,no,yes,LNMPE 2022 (sample),yes
+SAMPLE-0187,Acide acétylsalicylique,Aspirine,500mg,comprimé,,Analgésiques non opioïdes,NOT_LISTED,no,no,no,LNMPE 2022 (sample),yes
+SAMPLE-0190,Ibuprofène,Brufen,400mg,comprimé,,Analgésiques non opioïdes,NOT_LISTED,no,no,no,LNMPE 2022 (sample),yes
+SAMPLE-0191,Ibuprofène,Advil,100mg/5ml,sirop,,Analgésiques non opioïdes,NOT_LISTED,no,no,no,LNMPE 2022 (sample),yes
+SAMPLE-0194,Diclofénac,Voltarène,50mg,comprimé,,Analgésiques non opioïdes,LIST_II,no,no,yes,LNMPE 2022 (sample),yes
+SAMPLE-0195,Paracétamol,Doliprane,500mg,comprimé,,Analgésiques non opioïdes,NOT_LISTED,no,no,no,LNMPE 2022 (sample),yes
+SAMPLE-0196,Paracétamol,Doliprane,125mg/5ml,sirop,,Analgésiques non opioïdes,NOT_LISTED,no,no,no,LNMPE 2022 (sample),yes
+SAMPLE-0199,Prednisone,Cortancyl,5mg,comprimé,,Anti-inflammatoires,LIST_I,no,no,yes,LNMPE 2022 (sample),yes
+SAMPLE-0200,Prednisone,Cortancyl,20mg,comprimé,,Anti-inflammatoires,LIST_I,no,no,yes,LNMPE 2022 (sample),yes
+SAMPLE-0201,Buprénorphine,Temgésic,0.2mg,comprimé perlingual,,Opioïdes,LIST_I,yes,no,yes,LNMPE 2022 (sample),yes
+SAMPLE-0202,Morphine chlorhydrate,Morphine,5mg,comprimé,,Opioïdes,NARCOTIC,no,no,yes,LNMPE 2022 (sample),yes
+SAMPLE-0203,Morphine chlorhydrate,Skenan,10mg,comprimé,,Opioïdes,NARCOTIC,no,no,yes,LNMPE 2022 (sample),yes
+SAMPLE-0206,Morphine chlorhydrate LP,Actiskenan,10mg,comprimé,,Opioïdes,NARCOTIC,no,no,yes,LNMPE 2022 (sample),yes
+SAMPLE-0212,Méthadone,,5mg,gélule,,Opioïdes,NARCOTIC,no,no,yes,LNMPE 2022 (sample),yes
+SAMPLE-0213,Méthadone,,5mg,sirop,,Opioïdes,NARCOTIC,no,no,yes,LNMPE 2022 (sample),yes
+SAMPLE-0215,Cétirizine,Zyrtec,10mg,comprimé,,Anti-allergiques,NOT_LISTED,no,no,no,LNMPE 2022 (sample),yes
+SAMPLE-0217,Dexchlorphéniramine,Polaramine,2mg,comprimé,,Anti-allergiques,LIST_II,no,no,yes,LNMPE 2022 (sample),yes
+SAMPLE-0223,Prométhazine,Phénergan,25mg,comprimé,,Anti-allergiques,LIST_II,no,no,yes,LNMPE 2022 (sample),yes
+SAMPLE-INS-RAPIDE,Insuline rapide,Actrapid,100UI,injectable,,Insulines et autres antidiabétiques,LIST_II,no,yes,yes,LNMPE 2022 (sample),yes
+SAMPLE-INS-MIXTE,Insuline mixte 30%,Mixtard,100UI,injectable,,Insulines et autres antidiabétiques,LIST_II,no,yes,yes,LNMPE 2022 (sample),yes
+SAMPLE-INS-LENTE,Insuline lente,Insulatard,100UI,injectable,,Insulines et autres antidiabétiques,LIST_II,no,yes,yes,LNMPE 2022 (sample),yes

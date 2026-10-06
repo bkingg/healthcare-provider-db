@@ -1,0 +1,95 @@
+/// Medication ordering & delivery (module step 1): the medication catalog and
+/// the documents / handling each kind of medication needs. The catalog is
+/// imported from a standardized list (e.g. Senegal's Liste Nationale des
+/// Médicaments et Produits Essentiels — LNMPE) — never hard-coded. Nomad adds
+/// the flags the source lists don't carry (regulatory class, cold chain…).
+
+/// Senegal's classes of "substances vénéneuses" (Loi n°2023-06): Liste I
+/// (toxic), Liste II (dangerous) and narcotics (stupéfiants). Anything listed
+/// needs a prescription.
+enum MedicationRegulatoryClass {
+  NOT_LISTED
+  LIST_II
+  LIST_I
+  NARCOTIC
+}
+
+/// One orderable product: a generic (DCI) at a strength and form, with its
+/// usual brand. `code` is the stable key re-imports match on.
+model Medication {
+  id                   String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                 String                    @unique
+  /// Generic name (DCI / INN), e.g. "Paracétamol".
+  dci                  String
+  brandName            String?                   @map("brand_name")
+  /// As written in the source, e.g. "500mg", "100UI", "125mg/5ml".
+  strength             String?
+  /// e.g. comprimé, gélule, sirop, injectable.
+  form                 String
+  /// Pack size, e.g. "boîte de 16" (the LNMPE doesn't give one).
+  presentation         String?
+  therapeuticClass     String?                   @map("therapeutic_class")
+  regulatoryClass      MedicationRegulatoryClass @default(NOT_LISTED) @map("regulatory_class")
+  isPsychotropic       Boolean                   @default(false) @map("is_psychotropic")
+  /// Must be kept cold (2–8 °C) in transit.
+  isColdChain          Boolean                   @default(false) @map("is_cold_chain")
+  /// Always true for listed classes; can also be set for an unlisted item.
+  prescriptionRequired Boolean                   @default(false) @map("prescription_required")
+  /// Where the row came from, e.g. "LNMPE 2025".
+  source               String?
+  /// Example rows for testing — flags are suggestions, not checked by a
+  /// pharmacist. Removable in one go.
+  isSample             Boolean                   @default(false) @map("is_sample")
+  isActive             Boolean                   @default(true) @map("is_active")
+  createdAt            DateTime                  @default(now()) @map("created_at")
+  updatedAt            DateTime                  @updatedAt @map("updated_at")
+  createdBy            String?                   @map("created_by") @db.Uuid
+  updatedBy            String?                   @map("updated_by") @db.Uuid
+
+  @@index([dci])
+  @@index([brandName])
+  @@map("medication")
+}
+
+/// What triggers a requirement: a regulatory class, or a flag on the item.
+enum MedicationRequirementTrigger {
+  PRESCRIPTION_REQUIRED
+  LIST_II
+  LIST_I
+  NARCOTIC
+  PSYCHOTROPIC
+  COLD_CHAIN
+}
+
+enum MedicationRequirementKind {
+  /// A photo/scan the member uploads (e.g. the prescription).
+  UPLOAD
+  /// A paper original the courier must collect before the pharmacy (e.g. a
+  /// narcotics prescription on a carnet à souches sheet).
+  ORIGINAL_TO_COLLECT
+  /// An identity document (patient's, or the bearer's).
+  ID_DOCUMENT
+  /// Handling instructions for the pharmacy and courier (e.g. keep cold).
+  HANDLING
+}
+
+/// The documents and handling an order needs, by what's in it — editable in
+/// Admin > Value lists > Medication delivery. An order collects every active
+/// requirement triggered by any of its items.
+model MedicationRequirementRef {
+  id            String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code          String                       @unique
+  nameEn        String                       @map("name_en")
+  nameFr        String?                      @map("name_fr")
+  /// What the member / courier / pharmacy is asked to do.
+  descriptionEn String?                      @map("description_en")
+  descriptionFr String?                      @map("description_fr")
+  appliesTo     MedicationRequirementTrigger @map("applies_to")
+  kind          MedicationRequirementKind
+  sortOrder     Int                          @default(0) @map("sort_order")
+  isActive      Boolean                      @default(true) @map("is_active")
+  createdAt     DateTime                     @default(now()) @map("created_at")
+  updatedAt     DateTime                     @updatedAt @map("updated_at")
+
+  @@map("medication_requirement_ref")
+}

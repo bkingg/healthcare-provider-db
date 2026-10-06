@@ -2,6 +2,7 @@ import "server-only";
 import Papa from "papaparse";
 import ExcelJS from "exceljs";
 import { prisma } from "@/lib/prisma";
+import { cellText } from "./sheetFile";
 import { AuditAction } from "@/lib/enums";
 import {
   MAX_IMPORT_ROWS,
@@ -32,22 +33,6 @@ function checkHeaders(headers: string[]): string[] {
   const normalized = headers.map(normalizeHeader);
   const missing = ["household_id", "first_name", "last_name"].filter((h) => !normalized.includes(h));
   return missing.length ? [`Missing required column(s): ${missing.join(", ")}. Start from the template so the headers match.`] : [];
-}
-
-/** Excel cells arrive typed: real dates as Date (kept as calendar dates —
- * Excel has no time zone, so read in UTC), numbers as numbers, and links,
- * formulas and rich text as objects. Everything becomes the text a CSV
- * would have held. */
-function cellText(value: ExcelJS.CellValue): string {
-  if (value === null || value === undefined) return "";
-  if (value instanceof Date) return value.toISOString().slice(0, 10);
-  if (typeof value === "object") {
-    if ("text" in value && typeof value.text === "string") return value.text;
-    if ("result" in value) return cellText(value.result as ExcelJS.CellValue);
-    if ("richText" in value) return value.richText.map((r) => r.text).join("");
-    return "";
-  }
-  return String(value);
 }
 
 const DATE_COLUMNS = new Set(["date_of_birth", "coverage_start", "coverage_end"]);

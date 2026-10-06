@@ -3,18 +3,7 @@
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { ResizeHandle } from "@/components/resize-handle";
-import {
-  BarChart3,
-  Building2,
-  FilePlus,
-  ListTree,
-  Map as MapIcon,
-  Search,
-  Inbox,
-  Upload,
-  Users,
-  UsersRound,
-} from "lucide-react";
+import { BarChart3, Building2, FilePlus, ListTree, Map as MapIcon, Search, Inbox, Upload, Users, UsersRound, Pill } from "lucide-react";
 
 type WorkspaceItem = {
   href: string;
@@ -68,7 +57,15 @@ export function SidebarNav({
 
   const adminItems: WorkspaceItem[] = [
     ...(canEditValueLists
-      ? [{ href: "/admin", label: t("admin"), icon: ListTree, match: (p: string) => p.startsWith("/admin") && !p.startsWith("/admin/users") }]
+      ? [
+          {
+            href: "/admin",
+            label: t("admin"),
+            icon: ListTree,
+            match: (p: string) => p.startsWith("/admin") && !["/admin/users", "/admin/reports", "/admin/medications"].some((x) => p.startsWith(x)),
+          },
+          { href: "/admin/medications", label: t("medicationCatalog"), icon: Pill, match: (p: string) => p.startsWith("/admin/medications") },
+        ]
       : []),
     ...(canManageUsers ? [{ href: "/admin/users", label: t("users"), icon: Users, match: (p: string) => p.startsWith("/admin/users") }] : []),
     ...(canViewReports

@@ -14,6 +14,8 @@
     "db:seed": "prisma db seed",
     "db:seed-demo": "tsx prisma/seed-senegal-demo.ts",
     "db:seed-demo-cases": "tsx prisma/seed-demo-cases.ts",
+    "db:seed-sample-medications": "tsx prisma/seed-sample-medications.ts",
+    "db:seed-test-pharmacies": "tsx prisma/seed-test-pharmacies.ts",
     "db:studio": "prisma studio",
     "db:search-setup": "prisma db execute --file prisma/sql/enable-search.sql"
   },

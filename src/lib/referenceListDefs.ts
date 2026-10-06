@@ -58,6 +58,7 @@ export const REFERENCE_LIST_KEYS = [
   "emergencyContacts",
   "responseTargets",
   "noteTemplates",
+  "medicationRequirements",
 ] as const;
 
 export type ReferenceListKey = (typeof REFERENCE_LIST_KEYS)[number];
@@ -70,6 +71,7 @@ export const REFERENCE_LIST_GROUPS = [
   { key: "memberApp", lists: ["caseCategories", "emergencyContacts"] },
   { key: "memberEnrollment", lists: ["organizations", "memberRelationships"] },
   { key: "caseManagement", lists: ["responseTargets", "noteTemplates"] },
+  { key: "medicationDelivery", lists: ["medicationRequirements"] },
   // Everything about provider records, ordered by theme: details, contacts,
   // networks, payments and bank details, credentials and ratings, documents
   // and data quality.
@@ -137,6 +139,26 @@ export type ReferenceListDef = {
 };
 
 export const REFERENCE_LIST_DEFS = {
+  // Documents and handling a medication order needs, by what's in it (see
+  // prisma/schema/medication.prisma). The starting rows are suggestions for
+  // Nomad's pharmacist to confirm.
+  medicationRequirements: {
+    key: "medicationRequirements",
+    labelKey: "medicationRequirements",
+    model: "MedicationRequirementRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "nameEn",
+    fields: [
+      { key: "nameEn", labelKey: "nameEn", kind: "text", required: true },
+      { key: "nameFr", labelKey: "nameFr", kind: "text" },
+      { key: "appliesTo", labelKey: "requirementAppliesTo", kind: "select", required: true, options: ["PRESCRIPTION_REQUIRED", "LIST_II", "LIST_I", "NARCOTIC", "PSYCHOTROPIC", "COLD_CHAIN"] },
+      { key: "kind", labelKey: "requirementKind", kind: "select", required: true, options: ["UPLOAD", "ORIGINAL_TO_COLLECT", "ID_DOCUMENT", "HANDLING"] },
+      { key: "descriptionEn", labelKey: "instructionsEn", kind: "textarea", rows: 3 },
+      { key: "descriptionFr", labelKey: "instructionsFr", kind: "textarea", rows: 3 },
+      { key: "sortOrder", labelKey: "sortOrder", kind: "number", integer: true },
+    ],
+    defaultOrderBy: [{ sortOrder: "asc" }, { nameEn: "asc" }] as Record<string, "asc" | "desc">[],
+  },
   providerTypes: {
     key: "providerTypes",
     labelKey: "providerTypes",

@@ -15,7 +15,8 @@
     "reports": "Rapports et KPI",
     "resizeWorkspace": "Faites glisser pour redimensionner le panneau Espace de travail (double-clic pour réinitialiser)",
     "members": "Membres",
-    "cases": "Dossiers"
+    "cases": "Dossiers",
+    "medicationCatalog": "Catalogue médicaments"
   },
   "Header": {
     "settings": "Paramètres",
@@ -153,7 +154,8 @@
       "caseCategories": "Catégories de demande",
       "emergencyContacts": "Numéros d'urgence",
       "responseTargets": "Délais de réponse",
-      "noteTemplates": "Modèles de note"
+      "noteTemplates": "Modèles de note",
+      "medicationRequirements": "Exigences médicaments"
     },
     "fields": {
       "paymentCategory": "Catégorie de paiement",
@@ -205,7 +207,11 @@
       "responseMinutes": "Délai de réponse (minutes)",
       "businessHoursOnly": "Heures de bureau uniquement (lun–ven 09:00–17:00)",
       "templateBodyEn": "Modèle (anglais) — « ## » pour les titres, « - » pour les puces",
-      "templateBodyFr": "Modèle (français) — « ## » pour les titres, « - » pour les puces"
+      "templateBodyFr": "Modèle (français) — « ## » pour les titres, « - » pour les puces",
+      "requirementAppliesTo": "S’applique à",
+      "requirementKind": "Type",
+      "instructionsEn": "Instructions (anglais)",
+      "instructionsFr": "Instructions (français)"
     },
     "marker": {
       "default": "Défaut",
@@ -248,7 +254,8 @@
       "locations": "Localisations",
       "accessScreenText": "Accès et textes d'écran",
       "expandAll": "Tout déplier",
-      "collapseAll": "Tout replier"
+      "collapseAll": "Tout replier",
+      "medicationDelivery": "Livraison de médicaments"
     }
   },
   "Login": {
@@ -1383,6 +1390,109 @@
       "taggedCount": "{count, plural, =0 {aucun associé} one {# associé} other {# associés}}",
       "backToCase": "Retour au dossier",
       "stop": "Arrêter l’association"
+    }
+  },
+  "MedicationCatalog": {
+    "title": "Catalogue des médicaments",
+    "intro": "Ce que les membres peuvent commander. Chargé par import depuis une liste standardisée (comme la LNMPE du Sénégal), avec les indicateurs ajoutés par Nomad : classe réglementaire, psychotrope, chaîne du froid et ordonnance.",
+    "results": "articles",
+    "showingFirst": "affichage des {limit} premiers",
+    "samplesNote": "{count, plural, one {# article d’exemple} other {# articles d’exemple}} — données de test, indicateurs non vérifiés par un pharmacien",
+    "import": "Importer",
+    "add": "Ajouter un médicament",
+    "edit": "Modifier",
+    "editTitle": "Modifier {code}",
+    "save": "Enregistrer",
+    "search": "Recherche",
+    "searchPlaceholder": "DCI, marque, dosage ou code",
+    "regulatoryClass": "Classe réglementaire",
+    "any": "Toutes",
+    "status": "Statut",
+    "statusActive": "Actif",
+    "statusInactive": "Inactif",
+    "statusAll": "Tous",
+    "sampleFilter": "Données d’exemple",
+    "sampleOnly": "Exemples seulement",
+    "sampleHide": "Masquer les exemples",
+    "coldChain": "Chaîne du froid",
+    "psychotropic": "Psychotrope",
+    "apply": "Appliquer",
+    "colMedication": "Médicament",
+    "colBrand": "Marque",
+    "colClass": "Classe",
+    "colFlags": "Indicateurs",
+    "colSource": "Source",
+    "flagRx": "Ordonnance",
+    "flagPsy": "Psychotrope",
+    "flagCold": "Froid",
+    "sample": "EXEMPLE",
+    "deactivate": "Désactiver",
+    "activate": "Activer",
+    "noResults": "Aucun médicament ne correspond.",
+    "empty": "Le catalogue est vide. Importez une liste de médicaments pour commencer.",
+    "listedNeedsRx": "Les médicaments listés (Liste I, Liste II, stupéfiants) exigent toujours une ordonnance.",
+    "class": {
+      "NOT_LISTED": "Non listé",
+      "LIST_II": "Liste II",
+      "LIST_I": "Liste I",
+      "NARCOTIC": "Stupéfiant"
+    },
+    "field": {
+      "code": "Code",
+      "dci": "Nom générique (DCI)",
+      "brandName": "Marque",
+      "strength": "Dosage",
+      "form": "Forme",
+      "presentation": "Conditionnement",
+      "therapeuticClass": "Classe thérapeutique",
+      "source": "Source",
+      "prescriptionRequired": "Ordonnance requise",
+      "isPsychotropic": "Psychotrope",
+      "isColdChain": "Chaîne du froid (2–8 °C)"
+    }
+  },
+  "MedicationImport": {
+    "breadcrumb": "Catalogue des médicaments",
+    "title": "Importer des médicaments",
+    "intro": "Chargez ou mettez à jour le catalogue depuis un tableur. Les lignes sont reconnues par leur code : les nouveaux codes sont ajoutés, les codes existants mis à jour. Rien n’est enregistré avant d’appuyer sur Importer.",
+    "step1": "1. Obtenir le modèle",
+    "step1Help": "Le modèle Excel contient une feuille Instructions qui explique chaque colonne. La classe réglementaire et les colonnes oui/non acceptent l’anglais ou le français.",
+    "downloadXlsx": "Modèle Excel",
+    "downloadCsv": "Modèle CSV",
+    "step2": "2. Téléverser et vérifier",
+    "fileLabel": "Fichier (.xlsx ou .csv)",
+    "sourceLabel": "Source (facultatif)",
+    "sourceHelp": "Utilisée pour les lignes dont la colonne source est vide, p. ex. « LNMPE 2025 ».",
+    "checkFile": "Vérifier le fichier",
+    "working": "En cours…",
+    "fileProblem": "Le fichier n’a pas pu être utilisé",
+    "newCount": "{count} nouveaux",
+    "updatedCount": "{count} mis à jour",
+    "unchangedCount": "{count} inchangés",
+    "errorCount": "{count, plural, one {# avec erreurs} other {# avec erreurs}}",
+    "importButton": "Importer {count, plural, one {# article} other {# articles}}",
+    "errorsSkipped": "Les lignes en erreur sont ignorées.",
+    "nothingToSave": "Rien de nouveau ou de modifié à enregistrer.",
+    "allRows": "Toutes les lignes",
+    "rowsWithErrors": "Lignes en erreur",
+    "showErrorsOnly": "Erreurs seulement",
+    "showAllRows": "Toutes les lignes",
+    "colRow": "Ligne",
+    "colCode": "Code",
+    "colMedication": "Médicament",
+    "colClass": "Classe",
+    "colResult": "Résultat",
+    "noErrors": "Aucune ligne en erreur.",
+    "doneTitle": "{created} ajoutés, {updated} mis à jour",
+    "doneDetail": "Depuis {file}.",
+    "doneSkipped": "{skipped} lignes en erreur ont été ignorées.",
+    "viewCatalog": "Voir le catalogue",
+    "importAnother": "Importer un autre fichier",
+    "action": {
+      "NEW": "Nouveau",
+      "UPDATE": "Mise à jour",
+      "UNCHANGED": "Inchangé",
+      "null": "—"
     }
   }
 }
