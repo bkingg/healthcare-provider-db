@@ -67,6 +67,8 @@ model Provider {
   specialties            ProviderSpecialty[]
   caseOptions            CaseProviderOption[]
   caseTags               CaseProviderTag[]
+  pharmacyQuotes         PharmacyQuote[]
+  priceObservations      MedicationPriceObservation[]
   languages              ProviderLanguage[]
   capabilities           ProviderCapability[]
   credentials            Credential[]

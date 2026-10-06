@@ -6,6 +6,7 @@ import type { MedicationOrderInput } from "@/lib/validation/medicationOrder";
 import type { CurrentMember } from "@/lib/memberAuth";
 import { createCaseTx } from "./caseOps";
 import { requestablePeople } from "./memberApp";
+import { prepareQuotes } from "./pharmacyQuotes";
 
 /** Medication orders placed by members in the app (medication delivery,
  * step 2). Each order is a case of type Medication, so it gets a colour,
@@ -169,4 +170,10 @@ export function orderForCase(caseId: string) {
       documents: { include: { file: { select: { id: true, originalName: true, contentType: true, sizeBytes: true } } }, orderBy: { createdAt: "asc" } },
     },
   });
+}
+
+/** After a new order: pick and prepare the pharmacies to ask (step 3). */
+export async function prepareQuotesForCase(caseId: string) {
+  const order = await prisma.medicationOrder.findUnique({ where: { caseId }, select: { id: true } });
+  if (order) await prepareQuotes(order.id);
 }

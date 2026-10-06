@@ -39,6 +39,7 @@ const DELEGATES: Record<ReferenceListKey, AnyDelegate> = {
   serviceTypes: prisma.serviceTypeRef,
   dataQualityRules: prisma.dqRuleRef,
   medicationRequirements: prisma.medicationRequirementRef,
+  medicationSettings: prisma.medicationDeliverySetting,
   userRoles: prisma.userRole,
   uiHints: prisma.uiHintRef,
   organizations: prisma.organizationRef,

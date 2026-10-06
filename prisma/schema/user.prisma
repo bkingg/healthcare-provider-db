@@ -55,6 +55,7 @@ model User {
   notificationsSent       StaffNotification[]    @relation("NotificationBy")
   caseProviderTags        CaseProviderTag[]
   uploadedFiles           StoredFile[]           @relation("FileUploadedByStaff")
+  pharmacyQuotesSent      PharmacyQuote[]        @relation("QuoteSentBy")
 
   @@map("app_user")
 }

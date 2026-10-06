@@ -46,7 +46,8 @@ model Medication {
   createdBy            String?                   @map("created_by") @db.Uuid
   updatedBy            String?                   @map("updated_by") @db.Uuid
 
-  orderLines MedicationOrderLine[]
+  orderLines        MedicationOrderLine[]
+  priceObservations MedicationPriceObservation[]
 
   @@index([dci])
   @@index([brandName])
@@ -141,6 +142,10 @@ model MedicationOrder {
   updatedAt          DateTime              @updatedAt @map("updated_at")
 
   lines     MedicationOrderLine[]
+  quotes    PharmacyQuote[]
+  /// The quote Nomad (or staff) chose — set from step 3.
+  chosenQuoteId String? @unique @map("chosen_quote_id") @db.Uuid
+  chosenQuote   PharmacyQuote? @relation("ChosenQuote", fields: [chosenQuoteId], references: [id])
   documents MedicationOrderDocument[]
 
   @@index([status])
@@ -167,6 +172,7 @@ model MedicationOrderLine {
   prescriptionRequired Boolean                    @default(false) @map("prescription_required")
   /// Boxes / bottles / units, as the member asked.
   quantity             Int
+  quoteLines           PharmacyQuoteLine[]
   sortOrder            Int                        @default(0) @map("sort_order")
 
   @@index([orderId])
@@ -187,5 +193,155 @@ model MedicationOrderDocument {
 
   @@index([orderId])
   @@map("medication_order_document")
+}
+
+enum PharmacyQuoteStatus {
+  /// Picked for this order; not sent yet.
+  PREPARED
+  /// Sent (a private link is live).
+  SENT
+  ANSWERED
+  /// The pharmacy said it can't fill the order.
+  DECLINED
+  /// The link ran out without an answer.
+  EXPIRED
+  CANCELLED
+}
+
+enum QuoteAvailability {
+  AVAILABLE
+  PARTIAL
+  UNAVAILABLE
+}
+
+/// One pharmacy asked about one order (medication delivery, step 3). The
+/// pharmacy answers on a private link (/q/<token>, no login); only a hash of
+/// the token is stored, and sending again makes a new link.
+model PharmacyQuote {
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId            String              @map("order_id") @db.Uuid
+  order              MedicationOrder     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  providerId         String              @map("provider_id") @db.Uuid
+  provider           Provider            @relation(fields: [providerId], references: [id])
+  status             PharmacyQuoteStatus @default(PREPARED)
+  /// Where it ranked and why, when it was picked.
+  rank               Int
+  distanceKm         Float?              @map("distance_km")
+  openWhenAsked      Boolean             @map("open_when_asked")
+  tokenHash          String?             @unique @map("token_hash")
+  sentAt             DateTime?           @map("sent_at")
+  sentById           String?             @map("sent_by_id") @db.Uuid
+  sentBy             User?               @relation("QuoteSentBy", fields: [sentById], references: [id])
+  expiresAt          DateTime?           @map("expires_at")
+  answeredAt         DateTime?           @map("answered_at")
+  preparationMinutes Int?                @map("preparation_minutes")
+  /// Confirmations the order needed (null when not asked).
+  canDispenseNarcotic Boolean?           @map("can_dispense_narcotic")
+  canPackColdChain   Boolean?            @map("can_pack_cold_chain")
+  pharmacistName     String?             @map("pharmacist_name")
+  note               String?
+  /// Entered by staff from a phone call rather than on the link.
+  enteredByStaff     Boolean             @default(false) @map("entered_by_staff")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+
+  lines        PharmacyQuoteLine[]
+  chosenFor    MedicationOrder?    @relation("ChosenQuote")
+
+  @@unique([orderId, providerId])
+  @@index([providerId, sentAt])
+  @@map("pharmacy_quote")
+}
+
+/// The pharmacy's answer for one item of the order.
+model PharmacyQuoteLine {
+  id               String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  quoteId          String              @map("quote_id") @db.Uuid
+  quote            PharmacyQuote       @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  orderLineId      String              @map("order_line_id") @db.Uuid
+  orderLine        MedicationOrderLine @relation(fields: [orderLineId], references: [id], onDelete: Cascade)
+  availability     QuoteAvailability
+  /// Packs they can supply (for PARTIAL: fewer than asked).
+  quantityOffered  Int?                @map("quantity_offered")
+  /// Price of one pack, in FCFA.
+  packPriceXof     Int?                @map("pack_price_xof")
+  /// e.g. "Boîte de 16" — prices are only comparable per pack size.
+  packDescription  String?             @map("pack_description")
+  unitsPerPack     Int?                @map("units_per_pack")
+  /// A pharmacist's proposal (e.g. another brand of the same generic) —
+  /// needs the member's approval.
+  substitution     String?
+
+  priceObservation MedicationPriceObservation?
+
+  @@unique([quoteId, orderLineId])
+  @@map("pharmacy_quote_line")
+}
+
+enum PriceTimeBand {
+  /// 07:00–18:00 Dakar
+  DAY
+  /// 18:00–22:00
+  EVENING
+  /// 22:00–07:00
+  NIGHT
+}
+
+/// Medication price history for analysis (business intelligence): one row
+/// per priced quote line, written when the pharmacy answers and never
+/// edited — a correction is a new row. Holds no personal data about the
+/// member. Whether the quote was chosen is read from the quote.
+model MedicationPriceObservation {
+  id                String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  observedAt        DateTime          @map("observed_at")
+  medicationId      String?           @map("medication_id") @db.Uuid
+  medication        Medication?       @relation(fields: [medicationId], references: [id])
+  /// The item as named at the time (catalog label, or free text).
+  itemLabel         String            @map("item_label")
+  packDescription   String?           @map("pack_description")
+  unitsPerPack      Int?              @map("units_per_pack")
+  pricePerPackXof   Int               @map("price_per_pack_xof")
+  pricePerUnitXof   Float?            @map("price_per_unit_xof")
+  providerId        String            @map("provider_id") @db.Uuid
+  provider          Provider          @relation(fields: [providerId], references: [id])
+  city              String?
+  latitude          Float?
+  longitude         Float?
+  /// 1 = Monday … 7 = Sunday, Dakar time.
+  dayOfWeek         Int               @map("day_of_week")
+  timeBand          PriceTimeBand     @map("time_band")
+  pharmacyOpen24_7  Boolean           @map("pharmacy_open_24_7")
+  availability      QuoteAvailability
+  isSubstitution    Boolean           @map("is_substitution")
+  /// Minutes from sending the request to the answer.
+  responseMinutes   Int?              @map("response_minutes")
+  source            String            @default("QUOTE")
+  /// Far from the usual price for this item — for staff to check.
+  isOutlier         Boolean           @default(false) @map("is_outlier")
+  quoteLineId       String?           @unique @map("quote_line_id") @db.Uuid
+  quoteLine         PharmacyQuoteLine? @relation(fields: [quoteLineId], references: [id], onDelete: SetNull)
+  quoteId           String?           @map("quote_id") @db.Uuid
+  createdAt         DateTime          @default(now()) @map("created_at")
+
+  @@index([medicationId, observedAt])
+  @@index([providerId, observedAt])
+  @@map("medication_price_observation")
+}
+
+/// Medication delivery settings — fixed rows looked up by code, numbers
+/// only, edited in Admin > Value lists > Medication delivery (admins change
+/// the value, not the rows).
+model MedicationDeliverySetting {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  labelEn   String   @map("label_en")
+  labelFr   String?  @map("label_fr")
+  value     Int
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("medication_delivery_setting")
 }
 

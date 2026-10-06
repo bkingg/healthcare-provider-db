@@ -31,6 +31,11 @@ import { actionTiming } from "@/lib/caseActions";
 import { markCaseNotificationsRead } from "@/data/caseActions";
 import { orderForCase } from "@/data/medicationOrders";
 import { MedicationOrderSummary } from "@/components/medication-order-summary";
+import { pharmacyCandidates, prepareQuotes, quotesForOrder, refreshQuotes, responseStats } from "@/data/pharmacyQuotes";
+import { rankPharmacies } from "@/lib/pharmacyRanking";
+import { isOpenAt } from "@/lib/openNow";
+import { formatProviderNumber as providerCode } from "@/lib/providerNumber";
+import { PharmacyPanel } from "../_components/pharmacy-panel";
 import type { NoteMentions } from "@/components/formatted-note";
 
 type TimelineEvent = NonNullable<Awaited<ReturnType<typeof getCaseForStaff>>>["events"][number];
@@ -59,6 +64,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">) {
   const t = await getTranslations("Cases");
   const tm = await getTranslations("MemberApp");
+  const tOrder = await getTranslations("MemberOrder");
   const locale = await getLocale();
   const actor = await getCurrentActor();
   requireWorkCases(actor);
@@ -79,6 +85,77 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
   if (!c) notFound();
   // Opening the case counts as having seen what you were told about it.
   await markCaseNotificationsRead(c.id, actor.id);
+
+  // Medication order: expire stale quote links and, once everyone asked has
+  // replied (or the wait is over), choose the best quote — then load the
+  // pharmacies panel.
+  let pharmacies: React.ComponentProps<typeof PharmacyPanel> | null = null;
+  if (medicationOrder) {
+    // An order still waiting with no pharmacies picked (e.g. placed before
+    // this existed, or the first pick failed): pick them now.
+    if (medicationOrder.status === "REQUESTED") await prepareQuotes(medicationOrder.id);
+    await refreshQuotes(medicationOrder.id);
+    const [{ order: qo, urgent, comparison }, candidates, stats] = await Promise.all([quotesForOrder(medicationOrder.id), pharmacyCandidates(), responseStats()]);
+    const asked = new Set(qo.quotes.map((q) => q.providerId));
+    const point = qo.deliveryLatitude !== null && qo.deliveryLongitude !== null ? { lat: qo.deliveryLatitude, lng: qo.deliveryLongitude } : null;
+    const nowDate = new Date();
+    const nameOf = (id: string) => qo.quotes.find((q) => q.id === id)?.provider.names[0]?.fullNameText ?? "";
+    pharmacies = {
+      orderId: qo.id,
+      chosenQuoteId: qo.chosenQuoteId,
+      bestId: comparison.bestId,
+      urgent,
+      totalItems: qo.lines.length,
+      needsNarcotic: qo.hasNarcotic,
+      needsCold: qo.hasColdChain,
+      items: qo.lines.map((l) => ({
+        id: l.id,
+        label: l.freeText ?? [l.dci, l.strength, l.form].filter(Boolean).join(" "),
+        brand: l.brandName,
+        quantity: l.quantity,
+        narcotic: l.regulatoryClass === "NARCOTIC",
+        cold: l.isColdChain,
+      })),
+      quotes: qo.quotes.map((q) => {
+        const row = comparison.rows.find((r) => r.id === q.id);
+        return {
+          id: q.id,
+          providerName: q.provider.names[0]?.fullNameText ?? "",
+          providerCode: providerCode(q.provider.providerNumber),
+          status: q.status,
+          openNow: isOpenAt(q.provider, nowDate),
+          distanceKm: q.distanceKm,
+          sentAt: q.sentAt ? formatDakarDateTime(q.sentAt, locale) : null,
+          answeredAt: q.answeredAt ? formatDakarDateTime(q.answeredAt, locale) : null,
+          expiresAt: q.expiresAt ? formatDakarDateTime(q.expiresAt, locale) : null,
+          hasPhone: Boolean(q.provider.phones[0]?.number),
+          enteredByStaff: q.enteredByStaff,
+          initial:
+            q.status === "ANSWERED" || q.status === "DECLINED"
+              ? {
+                  preparationMinutes: q.preparationMinutes,
+                  canDispenseNarcotic: q.canDispenseNarcotic,
+                  canPackColdChain: q.canPackColdChain,
+                  pharmacistName: q.pharmacistName,
+                  note: q.note,
+                  lines: q.lines.map((l) => ({ orderLineId: l.orderLineId, availability: l.availability, quantityOffered: l.quantityOffered, packPriceXof: l.packPriceXof, packDescription: l.packDescription, unitsPerPack: l.unitsPerPack, substitution: l.substitution })),
+                }
+              : null,
+          row: row
+            ? { eligible: row.eligible, reason: row.reason, complete: row.complete, covered: row.coveredLineIds.length, medicinesXof: row.medicinesXof, deliveryXof: row.deliveryXof, totalXof: row.totalXof, doorMinutes: row.doorMinutes, hasSubstitution: row.hasSubstitution }
+            : null,
+        };
+      }),
+      candidates: rankPharmacies(candidates, point, nowDate, stats)
+        .filter((p) => !asked.has(p.id))
+        .slice(0, 25)
+        .map((p) => ({ id: p.id, name: p.name, code: providerCode(p.providerNumber), openNow: p.openNow, distanceKm: p.distanceKm })),
+      partial: comparison.partial ? { provider: nameOf(comparison.partial.quoteId), missing: comparison.partial.missing.map((m) => ({ label: m.label, elsewhere: m.elsewhere })) } : null,
+      fasterButDearer: comparison.fasterButDearer ? { provider: nameOf(comparison.fasterButDearer.quoteId), percentMore: comparison.fasterButDearer.percentMore } : null,
+    };
+  }
+  // Reloaded after the check above, which may have chosen a quote.
+  const orderShown = medicationOrder ? await orderForCase(id) : null;
 
   const now = new Date();
   const due = c.responseDueAt;
@@ -136,6 +213,12 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
     switch (e.type) {
       case "CREATED":
         return e.actorType === "STAFF" ? t("event.CREATED_STAFF", { channel: t(`channel.${d.channel ?? "PHONE"}`).toLowerCase() }) : t("event.CREATED");
+      case "QUOTE_SENT":
+      case "QUOTE_ANSWERED":
+      case "QUOTE_CHOSEN":
+        return t(`event.${e.type}${e.type === "QUOTE_ANSWERED" && d.declined ? "_DECLINED" : e.type === "QUOTE_CHOSEN" && d.auto ? "_AUTO" : ""}`, { provider: String(d.provider ?? "?") });
+      case "ORDER_STATUS_CHANGED":
+        return t("event.ORDER_STATUS_CHANGED", { to: tOrder(`status.${String(d.to)}`) });
       case "PROVIDER_TAGGED":
       case "PROVIDER_UNTAGGED":
         return t(`event.${e.type}`, { code: String(d.code ?? "?") });
@@ -273,7 +356,12 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
 
           {medicationOrder && (
             <Section title={t("medicationOrder")}>
-              <MedicationOrderSummary order={medicationOrder} viewer="staff" />
+              {orderShown && <MedicationOrderSummary order={orderShown} viewer="staff" />}
+              {pharmacies && (
+                <div className="mt-2 border-t border-pn-rule pt-3">
+                  <PharmacyPanel {...pharmacies} />
+                </div>
+              )}
             </Section>
           )}
 

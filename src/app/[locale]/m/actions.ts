@@ -11,7 +11,7 @@ import { memberReply } from "@/data/caseOps";
 import { normalizeCallbackPhone } from "@/lib/phone";
 import { fail, type ActionResult } from "@/lib/validation/common";
 import { medicationOrderSchema } from "@/lib/validation/medicationOrder";
-import { createMemberMedicationOrder, OrderRejectedError, searchCatalogForMember } from "@/data/medicationOrders";
+import { createMemberMedicationOrder, OrderRejectedError, prepareQuotesForCase, searchCatalogForMember } from "@/data/medicationOrders";
 
 export type LoginLinkState = { sent: true; devLink?: string } | { sent: false; error: string } | null;
 
@@ -111,6 +111,9 @@ export async function placeMedicationOrderAction(_prev: ActionResult | null, for
   let caseId: string;
   try {
     caseId = (await createMemberMedicationOrder(member, parsed.data, contactPhone)).id;
+    // Pick the pharmacies to ask straight away (staff then send). Never
+    // blocks the order if it fails — staff can add pharmacies by hand.
+    await prepareQuotesForCase(caseId).catch((e) => console.error("prepareQuotes failed", e));
   } catch (err) {
     if (err instanceof OrderRejectedError) return fail(err.errors);
     throw err;

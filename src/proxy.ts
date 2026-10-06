@@ -34,6 +34,9 @@ export async function proxy(request: NextRequest) {
   // other route below stays behind the staff login, so a member session can
   // never reach a staff page.
   if (routeSegment === "m") return intlResponse;
+  // A pharmacy's quote page (/q/<private link>): no login — the link itself
+  // is the key (see src/data/pharmacyQuotes.ts quoteByToken).
+  if (routeSegment === "q") return intlResponse;
 
   const session = await auth();
 

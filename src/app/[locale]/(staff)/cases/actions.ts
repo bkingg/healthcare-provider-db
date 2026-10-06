@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { getCurrentActor } from "@/lib/actor";
 import { canWorkCases, requireWorkCases } from "@/lib/rbac";
 import { fail, type ActionResult } from "@/lib/validation/common";
@@ -14,6 +15,10 @@ import { staffCaseFormObject, staffCaseSchema, type StaffCaseInput } from "@/lib
 import { createStaffCase, findMembersForCase, setCaseCoverage, setCaseVisibility, StaffCaseError } from "@/data/staffCases";
 import { findProviderForTag, tagProvider, taggingContext, untagProvider } from "@/data/caseProviderTags";
 import { parseProviderNumber } from "@/lib/providerNumber";
+import { addPharmacyToOrder, chooseQuote, QuoteAnswerError, saveQuoteAnswer, sendQuote } from "@/data/pharmacyQuotes";
+import { quoteAnswerSchema } from "@/lib/validation/quoteAnswer";
+import type { QuoteFormState } from "@/app/[locale]/q/actions";
+import { prisma } from "@/lib/prisma";
 
 /** Every case action re-checks canWorkCases server-side — the nav link and
  * pages hide behind it too, but a form POST doesn't. */
@@ -263,4 +268,66 @@ export async function taggingContextAction(caseId: string) {
   if (!canWorkCases(actor)) return null;
   const parsed = id.safeParse(caseId);
   return parsed.success ? taggingContext(parsed.data) : null;
+}
+
+// ---------------------------------------------------- pharmacy quotes (step 3)
+
+/** This site's address as the pharmacy will open it (APP_BASE_URL when set,
+ * else the address staff are using). */
+async function baseUrl() {
+  if (process.env.APP_BASE_URL) return process.env.APP_BASE_URL.replace(/\/$/, "");
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
+  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  return `${proto}://${host}`;
+}
+
+/** Makes a fresh private link and returns the WhatsApp message to send. */
+export async function sendQuoteAction(quoteId: string) {
+  const actor = await requireCaseWorker();
+  const result = await sendQuote(id.parse(quoteId), actor.id, await baseUrl());
+  refresh();
+  return result;
+}
+
+export async function addPharmacyAction(orderId: string, providerId: string): Promise<void> {
+  await requireCaseWorker();
+  await addPharmacyToOrder(id.parse(orderId), id.parse(providerId));
+  refresh();
+}
+
+/** Staff enter an answer a pharmacy gave by phone. */
+export async function enterQuoteAnswerAction(_prev: QuoteFormState, formData: FormData): Promise<QuoteFormState> {
+  const actor = await requireCaseWorker();
+  const quoteId = id.safeParse(formData.get("quoteId"));
+  if (!quoteId.success) return { ok: false, error: "invalid" };
+  let raw: unknown;
+  try {
+    raw = JSON.parse(String(formData.get("answer") ?? ""));
+  } catch {
+    return { ok: false, error: "invalid" };
+  }
+  const parsed = quoteAnswerSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "invalid" };
+  // Not yet sent (answered on the phone straight away): count it as sent now.
+  await prisma.pharmacyQuote.updateMany({ where: { id: quoteId.data, sentAt: null }, data: { sentAt: new Date(), sentById: actor.id } });
+  try {
+    await saveQuoteAnswer(quoteId.data, parsed.data.decline ? { ...parsed.data, lines: [] } : parsed.data, { staffId: actor.id });
+  } catch (err) {
+    if (err instanceof QuoteAnswerError) return { ok: false, error: err.message === "decided" ? "decided" : "invalid" };
+    throw err;
+  }
+  refresh();
+  return { ok: true, declined: parsed.data.decline };
+}
+
+export async function chooseQuoteAction(formData: FormData): Promise<void> {
+  const actor = await requireCaseWorker();
+  const orderId = id.parse(formData.get("orderId"));
+  const quoteId = id.parse(formData.get("quoteId"));
+  const order = await prisma.medicationOrder.findUniqueOrThrow({ where: { id: orderId }, select: { chosenQuoteId: true } });
+  if (order.chosenQuoteId === quoteId) return;
+  if (order.chosenQuoteId) await prisma.medicationOrder.update({ where: { id: orderId }, data: { chosenQuoteId: null } });
+  await chooseQuote(orderId, quoteId, actor.id);
+  refresh();
 }

@@ -59,6 +59,7 @@ export const REFERENCE_LIST_KEYS = [
   "responseTargets",
   "noteTemplates",
   "medicationRequirements",
+  "medicationSettings",
 ] as const;
 
 export type ReferenceListKey = (typeof REFERENCE_LIST_KEYS)[number];
@@ -71,7 +72,7 @@ export const REFERENCE_LIST_GROUPS = [
   { key: "memberApp", lists: ["caseCategories", "emergencyContacts"] },
   { key: "memberEnrollment", lists: ["organizations", "memberRelationships"] },
   { key: "caseManagement", lists: ["responseTargets", "noteTemplates"] },
-  { key: "medicationDelivery", lists: ["medicationRequirements"] },
+  { key: "medicationDelivery", lists: ["medicationRequirements", "medicationSettings"] },
   // Everything about provider records, ordered by theme: details, contacts,
   // networks, payments and bank details, credentials and ratings, documents
   // and data quality.
@@ -139,6 +140,22 @@ export type ReferenceListDef = {
 };
 
 export const REFERENCE_LIST_DEFS = {
+  // Numbers the medication-delivery flow reads by code (quote link life,
+  // waiting times, delivery estimate…): admins change values, not rows.
+  medicationSettings: {
+    key: "medicationSettings",
+    labelKey: "medicationSettings",
+    model: "MedicationDeliverySetting",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "labelEn",
+    editOnly: true,
+    fields: [
+      { key: "labelEn", labelKey: "labelEn", kind: "text", required: true },
+      { key: "labelFr", labelKey: "labelFr", kind: "text" },
+      { key: "value", labelKey: "settingValue", kind: "number", integer: true, required: true },
+    ],
+    defaultOrderBy: [{ sortOrder: "asc" }] as Record<string, "asc" | "desc">[],
+  },
   // Documents and handling a medication order needs, by what's in it (see
   // prisma/schema/medication.prisma). The starting rows are suggestions for
   // Nomad's pharmacist to confirm.
