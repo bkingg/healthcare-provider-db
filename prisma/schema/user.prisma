@@ -56,6 +56,7 @@ model User {
   caseProviderTags        CaseProviderTag[]
   uploadedFiles           StoredFile[]           @relation("FileUploadedByStaff")
   pharmacyQuotesSent      PharmacyQuote[]        @relation("QuoteSentBy")
+  orderPaymentsRecorded   MedicationOrderPayment[] @relation("PaymentRecordedBy")
 
   @@map("app_user")
 }

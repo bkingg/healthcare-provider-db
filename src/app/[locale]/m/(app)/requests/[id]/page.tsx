@@ -12,6 +12,8 @@ import { markSeenByMember, memberConversation } from "@/data/caseOps";
 import { ReplyForm } from "./reply-form";
 import { orderForCase } from "@/data/medicationOrders";
 import { MedicationOrderSummary } from "@/components/medication-order-summary";
+import { memberPriceView } from "@/data/orderView";
+import { OrderPrice } from "./order-price";
 import { EmergencyPanel } from "../../../_components/emergency-panel";
 import { StatusChip } from "../../../_components/status-chip";
 
@@ -33,6 +35,7 @@ export default async function MemberRequestPage(props: PageProps<"/[locale]/m/re
   const request = await getMemberCase(member, id);
   if (!request) notFound();
   const [conversation, order] = await Promise.all([memberConversation(request.id), orderForCase(request.id)]);
+  const priceView = order ? await memberPriceView(order.id, locale) : null;
   // Opening the request marks Nomad's messages as read.
   await markSeenByMember(request.id);
 
@@ -79,6 +82,12 @@ export default async function MemberRequestPage(props: PageProps<"/[locale]/m/re
           <section className="flex flex-col gap-2">
             <h2 className="m-0 text-[13px] font-bold tracking-[0.08em] text-pn-gray-1 uppercase">{t("yourOrder")}</h2>
             <MedicationOrderSummary order={order} viewer="member" />
+          </section>
+        )}
+        {priceView && (
+          <section id="price" className="flex flex-col gap-2">
+            <h2 className="m-0 text-[13px] font-bold tracking-[0.08em] text-pn-gray-1 uppercase">{t("priceAndPayment")}</h2>
+            <OrderPrice v={priceView} />
           </section>
         )}
         <section id="conversation" className="flex flex-col gap-3">

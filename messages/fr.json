@@ -54,7 +54,13 @@
     "gaveYouAction": "{who} vous a confié une action",
     "someone": "Quelqu’un",
     "unread": "non lu",
-    "ago": "il y a {time}"
+    "ago": "il y a {time}",
+    "orderUpdate": {
+      "PRICE_APPROVED": "{who} a accepté le prix des médicaments",
+      "PRICE_DECLINED": "{who} a refusé le prix des médicaments",
+      "PAYMENT_REPORTED": "{who} indique avoir payé — à vérifier",
+      "other": "Mise à jour de commande"
+    }
   },
   "Admin": {
     "colHandle": "Identifiant",
@@ -156,7 +162,8 @@
       "responseTargets": "Délais de réponse",
       "noteTemplates": "Modèles de note",
       "medicationRequirements": "Exigences médicaments",
-      "medicationSettings": "Réglages livraison de médicaments"
+      "medicationSettings": "Réglages livraison de médicaments",
+      "paymentLinks": "Liens de paiement"
     },
     "fields": {
       "paymentCategory": "Catégorie de paiement",
@@ -213,7 +220,9 @@
       "requirementKind": "Type",
       "instructionsEn": "Instructions (anglais)",
       "instructionsFr": "Instructions (français)",
-      "settingValue": "Valeur"
+      "settingValue": "Valeur",
+      "paymentMethod": "Moyen de paiement",
+      "paymentUrl": "Lien (https://…)"
     },
     "marker": {
       "default": "Défaut",
@@ -1041,7 +1050,8 @@
     "callNomad": "Appeler Nomad · {phone}",
     "orderMedication": "Commander des médicaments",
     "orderMedicationSub": "Livrés depuis une pharmacie proche",
-    "yourOrder": "Votre commande"
+    "yourOrder": "Votre commande",
+    "priceAndPayment": "Prix et paiement"
   },
   "Cases": {
     "assigneeSearch": "Nom ou @identifiant",
@@ -1175,7 +1185,14 @@
       "QUOTE_ANSWERED_DECLINED": "{provider} ne peut pas honorer la commande",
       "QUOTE_CHOSEN": "a retenu l’offre de {provider}",
       "QUOTE_CHOSEN_AUTO": "a retenu automatiquement l’offre de {provider} (meilleure réponse)",
-      "ORDER_STATUS_CHANGED": "commande : {to}"
+      "ORDER_STATUS_CHANGED": "commande : {to}",
+      "PRICE_SENT": "Prix envoyé au membre : {total} FCFA",
+      "PRICE_REVISED": "Prix révisé envoyé au membre : {total} FCFA",
+      "PRICE_APPROVED": "Prix accepté : {amount} FCFA",
+      "PRICE_DECLINED": "Prix refusé : {ref}",
+      "PAYMENT_REPORTED": "Le membre signale avoir payé {amount} FCFA (transaction {ref})",
+      "PAYMENT_CONFIRMED": "Paiement confirmé : {amount} FCFA (transaction {ref})",
+      "PHARMACY_PAID": "Pharmacie payée : {amount} FCFA (transaction {ref})"
     },
     "statusLabel": "Statut",
     "conversationWith": "Conversation avec {name}",
@@ -1402,7 +1419,8 @@
       "backToCase": "Retour au dossier",
       "stop": "Arrêter l’association"
     },
-    "medicationOrder": "Commande de médicaments"
+    "medicationOrder": "Commande de médicaments",
+    "priceAndPayment": "Prix et paiement"
   },
   "MedicationCatalog": {
     "title": "Catalogue des médicaments",
@@ -1657,7 +1675,8 @@
       "quantity": "Indiquez combien de boîtes vous avez.",
       "invalid": "Un problème est survenu — réessayez.",
       "linkGone": "Ce lien ne fonctionne plus.",
-      "decided": "Cette commande a déjà été confiée à une pharmacie."
+      "decided": "Cette commande a déjà été confiée à une pharmacie.",
+      "locked": "Cette réponse est figée : le membre a déjà un prix basé dessus. Retenez une autre pharmacie pour la changer."
     },
     "saved": "Enregistré.",
     "sending": "Envoi…",
@@ -1712,5 +1731,104 @@
     "nowhere": "personne ne l’a encore — interrogez une autre pharmacie",
     "itemsCount": "{covered}/{total} articles",
     "breakdown": "médicaments {medicines} + livraison ~{delivery}"
+  },
+  "MemberPay": {
+    "substitution": "Remplacé : {text}",
+    "unavailable": "Non disponible, non inclus : {items}",
+    "medicines": "Médicaments",
+    "delivery": "Livraison",
+    "fee": "Frais de service Nomad",
+    "total": "Total",
+    "thanks": "Merci — nous avons bien reçu votre réponse.",
+    "approveIntro": "Voici le prix de votre commande. Merci de l'accepter pour que nous puissions continuer.",
+    "expired": "Ce prix a expiré. Nomad va vous envoyer un prix à jour très vite.",
+    "validUntil": "Ce prix est valable jusqu'à {when}.",
+    "declineReason": "Pourquoi refusez-vous ? (facultatif)",
+    "approve": "Accepter {total}",
+    "confirmDecline": "Oui, annuler ma commande",
+    "back": "Retour",
+    "decline": "Refuser",
+    "checking": "Merci. Nous vérifions votre paiement et vous confirmons très vite.",
+    "rejected": "Nous n'avons pas trouvé votre paiement. {note} Vérifiez et réessayez, ou appelez-nous.",
+    "payIntro": "Veuillez payer {total} à Nomad. Indiquez {ref} comme motif du paiement.",
+    "noLinks": "Les liens de paiement ne sont pas encore prêts. Nomad vous appellera pour organiser le paiement.",
+    "afterPaying": "Après avoir payé, dites-le-nous ici :",
+    "paidWith": "Payé avec",
+    "transactionId": "ID de transaction (dans votre SMS de confirmation)",
+    "iHavePaid": "J'ai payé",
+    "paidConfirmed": "Paiement de {total} reçu. Merci !",
+    "error": {
+      "notFound": "Cette commande est introuvable.",
+      "notAwaiting": "Ce prix n'attend plus de réponse.",
+      "priceExpired": "Ce prix a expiré. Nomad va vous envoyer un prix à jour.",
+      "notAwaitingPayment": "Cette commande n'attend pas de paiement.",
+      "alreadyReported": "Vous nous avez déjà signalé votre paiement — nous le vérifions.",
+      "invalid": "Veuillez vérifier ce que vous avez saisi.",
+      "other": "Une erreur s'est produite. Veuillez réessayer."
+    }
+  },
+  "OrderPay": {
+    "noPriceYet": "Aucun prix envoyé.",
+    "medicines": "Médicaments",
+    "delivery": "Livraison",
+    "fee": "Frais Nomad",
+    "total": "Total",
+    "sentAt": "Envoyé {when}",
+    "validUntil": "valable jusqu'à {when}",
+    "expiredAt": "expiré {when}",
+    "revisedBecause": "Révisé : {note}",
+    "approvedInApp": "Accepté par le membre dans l'appli, {when}",
+    "approvedByPhone": "Accord enregistré par l'équipe (téléphone), {when}",
+    "declined": "Refusé par le membre, {when} : {reason}",
+    "resend": "Renvoyer avec une nouvelle validité",
+    "recordApproval": "Enregistrer l'accord par téléphone",
+    "revise": "Réviser le prix",
+    "reason": "Motif (visible dans l'historique)",
+    "resendRevised": "Envoyer le prix révisé",
+    "memberPayment": "Paiement du membre",
+    "memberSaysPaid": "Le membre dit avoir payé {amount} par {method}, transaction {ref} ({when}). Vérifiez le compte Nomad.",
+    "methodLabel": "Moyen",
+    "amount": "Montant (FCFA)",
+    "transactionId": "ID de transaction",
+    "confirmReceived": "Confirmer la réception",
+    "recordPayment": "Enregistrer un paiement",
+    "rejectNote": "Pourquoi introuvable (visible par le membre)",
+    "notFound": "Introuvable",
+    "exactLink": "Lien de paiement pour cette commande (facultatif)",
+    "saveLink": "Enregistrer le lien",
+    "noLinksWarning": "Aucun lien de paiement configuré — le membre voit « Nomad vous appellera ». Ajoutez-les dans Admin → Listes de valeurs → Liens de paiement.",
+    "payPharmacy": "Payer la pharmacie · {pharmacy}",
+    "noApprovedDetails": "Cette pharmacie n'a pas de coordonnées de paiement approuvées. Ajoutez-les et approuvez-les sur sa fiche d'abord.",
+    "recordPayout": "Enregistrer le paiement à la pharmacie",
+    "history": "Paiements",
+    "direction": {
+      "FROM_MEMBER": "Du membre",
+      "TO_PHARMACY": "À la pharmacie"
+    },
+    "method": {
+      "WAVE": "Wave",
+      "ORANGE_MONEY": "Orange Money",
+      "CASH": "Espèces",
+      "OTHER": "Autre"
+    },
+    "paymentStatus": {
+      "REPORTED": "Signalé",
+      "CONFIRMED": "Confirmé",
+      "REJECTED": "Introuvable"
+    },
+    "error": {
+      "notFound": "Commande introuvable.",
+      "notAwaiting": "Le prix n'attend pas d'accord.",
+      "priceExpired": "Le prix a expiré — renvoyez-le d'abord.",
+      "notAwaitingPayment": "La commande n'attend pas de paiement.",
+      "notPaid": "Le paiement du membre n'est pas encore confirmé.",
+      "details": "Choisissez des coordonnées de paiement approuvées.",
+      "noQuote": "Aucune pharmacie choisie.",
+      "nothingAvailable": "La pharmacie choisie n'a aucun des produits.",
+      "note": "Indiquez un motif (au moins 3 caractères).",
+      "reference": "Saisissez l'ID de transaction.",
+      "invalid": "Vérifiez les valeurs saisies.",
+      "other": "Une erreur s'est produite."
+    }
   }
 }

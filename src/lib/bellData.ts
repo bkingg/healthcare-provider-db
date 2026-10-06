@@ -12,7 +12,9 @@ export type BellData = {
   due: { actionId: string; title: string; dueAt: string; case: BellCase }[];
   items: {
     id: string;
-    kind: "MENTION" | "ACTION_ASSIGNED";
+    kind: "MENTION" | "ACTION_ASSIGNED" | "ORDER_UPDATE";
+    /** For ORDER_UPDATE: what happened (a timeline entry type). */
+    eventType: string | null;
     read: boolean;
     at: string;
     actor: string | null;
@@ -45,9 +47,10 @@ export function toBellData(raw: Raw): BellData {
       kind: n.kind,
       read: n.readAt !== null,
       at: n.createdAt.toISOString(),
-      actor: n.actor ? staffLabel(n.actor) : null,
-      text: n.kind === "MENTION" ? notePreview(n.event?.body ?? "") : (n.action?.title ?? ""),
-      href: n.kind === "MENTION" && n.eventId ? `/cases/${n.caseId}?note=${n.eventId}` : `/cases/${n.caseId}?action=${n.actionId ?? ""}`,
+      eventType: n.kind === "ORDER_UPDATE" ? (n.event?.type ?? null) : null,
+      actor: n.actor ? staffLabel(n.actor) : n.event?.member?.firstName ?? null,
+      text: n.kind === "MENTION" ? notePreview(n.event?.body ?? "") : n.kind === "ORDER_UPDATE" ? (n.event?.body ?? "") : (n.action?.title ?? ""),
+      href: n.kind === "MENTION" && n.eventId ? `/cases/${n.caseId}?note=${n.eventId}` : n.kind === "ORDER_UPDATE" ? `/cases/${n.caseId}` : `/cases/${n.caseId}?action=${n.actionId ?? ""}`,
       case: toCase(n.case),
     })),
   };

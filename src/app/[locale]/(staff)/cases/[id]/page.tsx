@@ -36,6 +36,8 @@ import { rankPharmacies } from "@/lib/pharmacyRanking";
 import { isOpenAt } from "@/lib/openNow";
 import { formatProviderNumber as providerCode } from "@/lib/providerNumber";
 import { PharmacyPanel } from "../_components/pharmacy-panel";
+import { OrderPaymentPanel } from "../_components/order-payment-panel";
+import { staffPaymentView } from "@/data/orderView";
 import type { NoteMentions } from "@/components/formatted-note";
 
 type TimelineEvent = NonNullable<Awaited<ReturnType<typeof getCaseForStaff>>>["events"][number];
@@ -156,6 +158,7 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
   }
   // Reloaded after the check above, which may have chosen a quote.
   const orderShown = medicationOrder ? await orderForCase(id) : null;
+  const paymentView = orderShown ? await staffPaymentView(orderShown.id, locale) : null;
 
   const now = new Date();
   const due = c.responseDueAt;
@@ -217,6 +220,14 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
       case "QUOTE_ANSWERED":
       case "QUOTE_CHOSEN":
         return t(`event.${e.type}${e.type === "QUOTE_ANSWERED" && d.declined ? "_DECLINED" : e.type === "QUOTE_CHOSEN" && d.auto ? "_AUTO" : ""}`, { provider: String(d.provider ?? "?") });
+      case "PRICE_SENT":
+        return t(d.revised ? "event.PRICE_REVISED" : "event.PRICE_SENT", { total: Number(d.totalXof ?? 0).toLocaleString("fr-FR") });
+      case "PRICE_APPROVED":
+      case "PRICE_DECLINED":
+      case "PAYMENT_REPORTED":
+      case "PAYMENT_CONFIRMED":
+      case "PHARMACY_PAID":
+        return t(`event.${e.type}`, { amount: Number(d.amountXof ?? d.totalXof ?? 0).toLocaleString("fr-FR"), ref: String(d.reference ?? e.body ?? "—") });
       case "ORDER_STATUS_CHANGED":
         return t("event.ORDER_STATUS_CHANGED", { to: tOrder(`status.${String(d.to)}`) });
       case "PROVIDER_TAGGED":
@@ -360,6 +371,12 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
               {pharmacies && (
                 <div className="mt-2 border-t border-pn-rule pt-3">
                   <PharmacyPanel {...pharmacies} />
+                </div>
+              )}
+              {paymentView?.price && (
+                <div className="mt-2 flex flex-col gap-2 border-t border-pn-rule pt-3">
+                  <span className="text-[11px] font-bold tracking-[0.06em] text-pn-gray-2 uppercase">{t("priceAndPayment")}</span>
+                  <OrderPaymentPanel v={paymentView} />
                 </div>
               )}
             </Section>

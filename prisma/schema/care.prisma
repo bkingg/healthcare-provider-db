@@ -211,6 +211,12 @@ enum CaseEventType {
   QUOTE_ANSWERED
   QUOTE_CHOSEN
   ORDER_STATUS_CHANGED
+  PRICE_SENT
+  PRICE_APPROVED
+  PRICE_DECLINED
+  PAYMENT_REPORTED
+  PAYMENT_CONFIRMED
+  PHARMACY_PAID
 }
 
 enum CaseActorType {
@@ -376,6 +382,9 @@ model StaffNotification {
 enum StaffNotificationKind {
   MENTION
   ACTION_ASSIGNED
+  /// A medication order needs staff: the member approved, declined or says
+  /// they've paid. `eventId` points at the timeline entry.
+  ORDER_UPDATE
 }
 
 /// A provider (facility) the member is actively using, tagged to the case by

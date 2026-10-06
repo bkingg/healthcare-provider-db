@@ -131,7 +131,7 @@ export async function bellFor(userId: string, now = new Date()) {
       include: {
         case: { select: caseSummarySelect },
         actor: { select: staffSelect },
-        event: { select: { body: true } },
+        event: { select: { body: true, type: true, member: { select: { firstName: true } } } },
         action: { select: { title: true, dueAt: true, completedAt: true } },
       },
     }),

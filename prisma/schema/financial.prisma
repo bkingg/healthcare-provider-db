@@ -1,5 +1,6 @@
 model BankingPayment {
   id                    String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderPayments         MedicationOrderPayment[]
   providerId            String              @map("provider_id") @db.Uuid
   provider              Provider            @relation(fields: [providerId], references: [id], onDelete: Cascade)
   payeeName             String              @map("payee_name")

@@ -16,6 +16,7 @@ import { createStaffCase, findMembersForCase, setCaseCoverage, setCaseVisibility
 import { findProviderForTag, tagProvider, taggingContext, untagProvider } from "@/data/caseProviderTags";
 import { parseProviderNumber } from "@/lib/providerNumber";
 import { addPharmacyToOrder, chooseQuote, QuoteAnswerError, saveQuoteAnswer, sendQuote } from "@/data/pharmacyQuotes";
+import { approvePrice, confirmPayment, OrderStepError, payPharmacy, rejectPayment, resendPrice, sendPrice, setOrderPaymentLink } from "@/data/orderPayments";
 import { quoteAnswerSchema } from "@/lib/validation/quoteAnswer";
 import type { QuoteFormState } from "@/app/[locale]/q/actions";
 import { prisma } from "@/lib/prisma";
@@ -314,7 +315,7 @@ export async function enterQuoteAnswerAction(_prev: QuoteFormState, formData: Fo
   try {
     await saveQuoteAnswer(quoteId.data, parsed.data.decline ? { ...parsed.data, lines: [] } : parsed.data, { staffId: actor.id });
   } catch (err) {
-    if (err instanceof QuoteAnswerError) return { ok: false, error: err.message === "decided" ? "decided" : "invalid" };
+    if (err instanceof QuoteAnswerError) return { ok: false, error: ["decided", "locked"].includes(err.message) ? err.message : "invalid" };
     throw err;
   }
   refresh();
@@ -325,9 +326,109 @@ export async function chooseQuoteAction(formData: FormData): Promise<void> {
   const actor = await requireCaseWorker();
   const orderId = id.parse(formData.get("orderId"));
   const quoteId = id.parse(formData.get("quoteId"));
-  const order = await prisma.medicationOrder.findUniqueOrThrow({ where: { id: orderId }, select: { chosenQuoteId: true } });
+  const order = await prisma.medicationOrder.findUniqueOrThrow({ where: { id: orderId }, select: { chosenQuoteId: true, status: true } });
   if (order.chosenQuoteId === quoteId) return;
+  // Another pharmacy only until the member has approved a price.
+  if (!["SEARCHING_PHARMACIES", "PHARMACY_CONFIRMED", "AWAITING_APPROVAL"].includes(order.status)) return;
   if (order.chosenQuoteId) await prisma.medicationOrder.update({ where: { id: orderId }, data: { chosenQuoteId: null } });
   await chooseQuote(orderId, quoteId, actor.id);
   refresh();
+}
+
+// ------------------------------------------- order price and payments (step 4)
+
+export type StaffOrderState = { ok: true } | { ok: false; error: string } | null;
+
+function orderError(err: unknown): StaffOrderState {
+  if (err instanceof OrderStepError) return { ok: false, error: err.message };
+  throw err;
+}
+
+/** Staff change the delivery or fee (with a reason) and re-send the price. */
+export async function revisePriceAction(_prev: StaffOrderState, formData: FormData): Promise<StaffOrderState> {
+  const actor = await requireCaseWorker();
+  const parsed = z
+    .object({ orderId: id, deliveryXof: z.coerce.number().int().min(0).max(1_000_000), feeXof: z.coerce.number().int().min(0).max(1_000_000), note: z.string().trim().min(3, "note").max(300) })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message === "note" ? "note" : "invalid" };
+  try {
+    await sendPrice(parsed.data.orderId, actor.id, parsed.data);
+  } catch (err) {
+    return orderError(err);
+  }
+  refresh();
+  return { ok: true };
+}
+
+/** Re-send the automatic price (e.g. after it expired). */
+export async function resendPriceAction(formData: FormData): Promise<void> {
+  const actor = await requireCaseWorker();
+  await resendPrice(id.parse(formData.get("orderId")), actor.id).catch((e) => {
+    if (!(e instanceof OrderStepError)) throw e;
+  });
+  refresh();
+}
+
+/** The member approved by phone. */
+export async function recordApprovalAction(formData: FormData): Promise<void> {
+  const actor = await requireCaseWorker();
+  await approvePrice({ staffId: actor.id, orderId: id.parse(formData.get("orderId")) }).catch((e) => {
+    if (!(e instanceof OrderStepError)) throw e;
+  });
+  refresh();
+}
+
+export async function confirmPaymentAction(_prev: StaffOrderState, formData: FormData): Promise<StaffOrderState> {
+  const actor = await requireCaseWorker();
+  const parsed = z
+    .object({
+      orderId: id,
+      paymentId: z.union([id, z.literal("")]).optional(),
+      method: z.enum(["WAVE", "ORANGE_MONEY", "CASH", "OTHER"]),
+      amountXof: z.coerce.number().int().min(1).max(10_000_000),
+      reference: z.string().trim().max(80).optional(),
+    })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, error: "invalid" };
+  const { orderId, paymentId, ...rest } = parsed.data;
+  if (rest.method !== "CASH" && !rest.reference) return { ok: false, error: "reference" };
+  try {
+    await confirmPayment(orderId, actor.id, { ...rest, paymentId: paymentId || undefined, reference: rest.reference ?? null });
+  } catch (err) {
+    return orderError(err);
+  }
+  refresh();
+  return { ok: true };
+}
+
+export async function rejectPaymentAction(formData: FormData): Promise<void> {
+  const actor = await requireCaseWorker();
+  await rejectPayment(id.parse(formData.get("orderId")), id.parse(formData.get("paymentId")), actor.id, String(formData.get("note") ?? "").slice(0, 300) || "Not found");
+  refresh();
+}
+
+export async function payPharmacyAction(_prev: StaffOrderState, formData: FormData): Promise<StaffOrderState> {
+  const actor = await requireCaseWorker();
+  const parsed = z
+    .object({ orderId: id, bankingPaymentId: id, amountXof: z.coerce.number().int().min(1).max(10_000_000), reference: z.string().trim().min(3, "reference").max(80) })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message === "reference" ? "reference" : "invalid" };
+  try {
+    await payPharmacy(parsed.data.orderId, actor.id, parsed.data);
+  } catch (err) {
+    return orderError(err);
+  }
+  refresh();
+  return { ok: true };
+}
+
+/** An exact-amount payment link for this order (from Wave / Orange Money). */
+export async function setPaymentLinkAction(_prev: StaffOrderState, formData: FormData): Promise<StaffOrderState> {
+  await requireCaseWorker();
+  const orderId = id.parse(formData.get("orderId"));
+  const raw = String(formData.get("url") ?? "").trim();
+  if (raw && !/^https:\/\/[^\s]{4,500}$/.test(raw)) return { ok: false, error: "url" };
+  await setOrderPaymentLink(orderId, raw || null);
+  refresh();
+  return { ok: true };
 }

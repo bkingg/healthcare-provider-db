@@ -60,6 +60,7 @@ export const REFERENCE_LIST_KEYS = [
   "noteTemplates",
   "medicationRequirements",
   "medicationSettings",
+  "paymentLinks",
 ] as const;
 
 export type ReferenceListKey = (typeof REFERENCE_LIST_KEYS)[number];
@@ -72,7 +73,7 @@ export const REFERENCE_LIST_GROUPS = [
   { key: "memberApp", lists: ["caseCategories", "emergencyContacts"] },
   { key: "memberEnrollment", lists: ["organizations", "memberRelationships"] },
   { key: "caseManagement", lists: ["responseTargets", "noteTemplates"] },
-  { key: "medicationDelivery", lists: ["medicationRequirements", "medicationSettings"] },
+  { key: "medicationDelivery", lists: ["medicationRequirements", "medicationSettings", "paymentLinks"] },
   // Everything about provider records, ordered by theme: details, contacts,
   // networks, payments and bank details, credentials and ratings, documents
   // and data quality.
@@ -140,6 +141,24 @@ export type ReferenceListDef = {
 };
 
 export const REFERENCE_LIST_DEFS = {
+  // Nomad's standard member payment links (Wave Business, Orange Money
+  // merchant) — the order screen's "Pay with…" buttons when an order has
+  // no exact-amount link of its own. Off until the real links are entered.
+  paymentLinks: {
+    key: "paymentLinks",
+    labelKey: "paymentLinks",
+    model: "PaymentLinkRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "labelEn",
+    fields: [
+      { key: "labelEn", labelKey: "labelEn", kind: "text", required: true },
+      { key: "labelFr", labelKey: "labelFr", kind: "text" },
+      { key: "method", labelKey: "paymentMethod", kind: "select", required: true, options: ["WAVE", "ORANGE_MONEY", "OTHER"] },
+      { key: "url", labelKey: "paymentUrl", kind: "text", required: true },
+      { key: "sortOrder", labelKey: "sortOrder", kind: "number", integer: true },
+    ],
+    defaultOrderBy: [{ sortOrder: "asc" }] as Record<string, "asc" | "desc">[],
+  },
   // Numbers the medication-delivery flow reads by code (quote link life,
   // waiting times, delivery estimate…): admins change values, not rows.
   medicationSettings: {

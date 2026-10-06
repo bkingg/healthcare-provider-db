@@ -54,7 +54,13 @@
     "gaveYouAction": "{who} gave you an action",
     "someone": "Someone",
     "unread": "unread",
-    "ago": "{time} ago"
+    "ago": "{time} ago",
+    "orderUpdate": {
+      "PRICE_APPROVED": "{who} approved the medication price",
+      "PRICE_DECLINED": "{who} declined the medication price",
+      "PAYMENT_REPORTED": "{who} says they've paid — please check",
+      "other": "Medication order update"
+    }
   },
   "Admin": {
     "colHandle": "Handle",
@@ -156,7 +162,8 @@
       "responseTargets": "Response times",
       "noteTemplates": "Note templates",
       "medicationRequirements": "Medication requirements",
-      "medicationSettings": "Medication delivery settings"
+      "medicationSettings": "Medication delivery settings",
+      "paymentLinks": "Payment links"
     },
     "fields": {
       "paymentCategory": "Payment category",
@@ -213,7 +220,9 @@
       "requirementKind": "Kind",
       "instructionsEn": "Instructions (English)",
       "instructionsFr": "Instructions (French)",
-      "settingValue": "Value"
+      "settingValue": "Value",
+      "paymentMethod": "Payment method",
+      "paymentUrl": "Link (https://…)"
     },
     "marker": {
       "default": "Default",
@@ -1041,7 +1050,8 @@
     "callNomad": "Call Nomad · {phone}",
     "orderMedication": "Order medication",
     "orderMedicationSub": "Delivered from a pharmacy near you",
-    "yourOrder": "Your order"
+    "yourOrder": "Your order",
+    "priceAndPayment": "Price & payment"
   },
   "Cases": {
     "assigneeSearch": "Type a name or @handle",
@@ -1175,7 +1185,14 @@
       "QUOTE_ANSWERED_DECLINED": "{provider} can't fill the order",
       "QUOTE_CHOSEN": "chose {provider}'s quote",
       "QUOTE_CHOSEN_AUTO": "chose {provider}'s quote automatically (best answer)",
-      "ORDER_STATUS_CHANGED": "order: {to}"
+      "ORDER_STATUS_CHANGED": "order: {to}",
+      "PRICE_SENT": "Price sent to the member: {total} FCFA",
+      "PRICE_REVISED": "Revised price sent to the member: {total} FCFA",
+      "PRICE_APPROVED": "Price approved: {amount} FCFA",
+      "PRICE_DECLINED": "Price declined: {ref}",
+      "PAYMENT_REPORTED": "Member reported paying {amount} FCFA (transaction {ref})",
+      "PAYMENT_CONFIRMED": "Payment confirmed: {amount} FCFA (transaction {ref})",
+      "PHARMACY_PAID": "Pharmacy paid: {amount} FCFA (transaction {ref})"
     },
     "statusLabel": "Status",
     "conversationWith": "Conversation with {name}",
@@ -1402,7 +1419,8 @@
       "backToCase": "Back to case",
       "stop": "Stop tagging"
     },
-    "medicationOrder": "Medication order"
+    "medicationOrder": "Medication order",
+    "priceAndPayment": "Price & payment"
   },
   "MedicationCatalog": {
     "title": "Medication catalog",
@@ -1657,7 +1675,8 @@
       "quantity": "Say how many packs you have.",
       "invalid": "Something went wrong — please try again.",
       "linkGone": "This link no longer works.",
-      "decided": "This order has already been placed with a pharmacy."
+      "decided": "This order has already been placed with a pharmacy.",
+      "locked": "This answer is fixed: the member already has a price based on it. Choose another pharmacy to change it."
     },
     "saved": "Saved.",
     "sending": "Sending…",
@@ -1712,5 +1731,104 @@
     "nowhere": "nobody has it yet — ask another pharmacy",
     "itemsCount": "{covered}/{total} items",
     "breakdown": "medicines {medicines} + delivery ~{delivery}"
+  },
+  "MemberPay": {
+    "substitution": "Replaced: {text}",
+    "unavailable": "Not available, not included: {items}",
+    "medicines": "Medicines",
+    "delivery": "Delivery",
+    "fee": "Nomad service fee",
+    "total": "Total",
+    "thanks": "Thank you — we've got your answer.",
+    "approveIntro": "Here is the price for your order. Please approve it so we can go ahead.",
+    "expired": "This price has expired. Nomad will send you an updated one shortly.",
+    "validUntil": "This price is valid until {when}.",
+    "declineReason": "Why are you declining? (optional)",
+    "approve": "Approve {total}",
+    "confirmDecline": "Yes, cancel my order",
+    "back": "Back",
+    "decline": "Decline",
+    "checking": "Thank you. We're checking your payment and will confirm shortly.",
+    "rejected": "We couldn't find your payment. {note} Please check and try again, or call us.",
+    "payIntro": "Please pay {total} to Nomad. Put {ref} as the reason for payment.",
+    "noLinks": "Payment links aren't ready yet. Nomad will call you to arrange payment.",
+    "afterPaying": "After paying, tell us here:",
+    "paidWith": "Paid with",
+    "transactionId": "Transaction ID (in your confirmation SMS)",
+    "iHavePaid": "I've paid",
+    "paidConfirmed": "Payment of {total} received. Thank you!",
+    "error": {
+      "notFound": "This order couldn't be found.",
+      "notAwaiting": "This price is no longer waiting for an answer.",
+      "priceExpired": "This price has expired. Nomad will send you an updated one.",
+      "notAwaitingPayment": "This order isn't waiting for payment.",
+      "alreadyReported": "You've already told us you paid — we're checking it.",
+      "invalid": "Please check what you entered.",
+      "other": "Something went wrong. Please try again."
+    }
+  },
+  "OrderPay": {
+    "noPriceYet": "No price sent yet.",
+    "medicines": "Medicines",
+    "delivery": "Delivery",
+    "fee": "Nomad fee",
+    "total": "Total",
+    "sentAt": "Sent {when}",
+    "validUntil": "valid until {when}",
+    "expiredAt": "expired {when}",
+    "revisedBecause": "Revised: {note}",
+    "approvedInApp": "Approved by the member in the app, {when}",
+    "approvedByPhone": "Approval recorded by staff (phone), {when}",
+    "declined": "Declined by the member, {when}: {reason}",
+    "resend": "Re-send with a new validity",
+    "recordApproval": "Record approval by phone",
+    "revise": "Revise price",
+    "reason": "Reason (shown in history)",
+    "resendRevised": "Send revised price",
+    "memberPayment": "Member's payment",
+    "memberSaysPaid": "Member says they paid {amount} by {method}, transaction {ref} ({when}). Check the Nomad account.",
+    "methodLabel": "Method",
+    "amount": "Amount (FCFA)",
+    "transactionId": "Transaction ID",
+    "confirmReceived": "Confirm received",
+    "recordPayment": "Record payment",
+    "rejectNote": "Why not found (shown to member)",
+    "notFound": "Not found",
+    "exactLink": "Payment link for this order (optional)",
+    "saveLink": "Save link",
+    "noLinksWarning": "No payment links are set up — the member sees \"Nomad will call you\". Add them in Admin → Value lists → Payment links.",
+    "payPharmacy": "Pay the pharmacy · {pharmacy}",
+    "noApprovedDetails": "This pharmacy has no approved payment details. Add and approve them on its record first.",
+    "recordPayout": "Record payment to pharmacy",
+    "history": "Payments",
+    "direction": {
+      "FROM_MEMBER": "From member",
+      "TO_PHARMACY": "To pharmacy"
+    },
+    "method": {
+      "WAVE": "Wave",
+      "ORANGE_MONEY": "Orange Money",
+      "CASH": "Cash",
+      "OTHER": "Other"
+    },
+    "paymentStatus": {
+      "REPORTED": "Reported",
+      "CONFIRMED": "Confirmed",
+      "REJECTED": "Not found"
+    },
+    "error": {
+      "notFound": "Order not found.",
+      "notAwaiting": "The price isn't waiting for approval.",
+      "priceExpired": "The price has expired — re-send it first.",
+      "notAwaitingPayment": "The order isn't waiting for payment.",
+      "notPaid": "The member's payment isn't confirmed yet.",
+      "details": "Choose approved payment details.",
+      "noQuote": "No pharmacy has been chosen.",
+      "nothingAvailable": "The chosen pharmacy has none of the items.",
+      "note": "Give a reason (at least 3 characters).",
+      "reference": "Enter the transaction ID.",
+      "invalid": "Check the values entered.",
+      "other": "Something went wrong."
+    }
   }
 }

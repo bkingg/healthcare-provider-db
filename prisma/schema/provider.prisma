@@ -68,6 +68,7 @@ model Provider {
   caseOptions            CaseProviderOption[]
   caseTags               CaseProviderTag[]
   pharmacyQuotes         PharmacyQuote[]
+  orderPayments          MedicationOrderPayment[]
   priceObservations      MedicationPriceObservation[]
   languages              ProviderLanguage[]
   capabilities           ProviderCapability[]

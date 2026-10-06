@@ -12,6 +12,7 @@ import { normalizeCallbackPhone } from "@/lib/phone";
 import { fail, type ActionResult } from "@/lib/validation/common";
 import { medicationOrderSchema } from "@/lib/validation/medicationOrder";
 import { createMemberMedicationOrder, OrderRejectedError, prepareQuotesForCase, searchCatalogForMember } from "@/data/medicationOrders";
+import { approvePrice, declinePrice, OrderStepError, reportPayment } from "@/data/orderPayments";
 
 export type LoginLinkState = { sent: true; devLink?: string } | { sent: false; error: string } | null;
 
@@ -119,5 +120,51 @@ export async function placeMedicationOrderAction(_prev: ActionResult | null, for
     throw err;
   }
   return redirect({ href: `/m/requests/${caseId}?sent=1`, locale });
+}
+
+// ------------------------------------------------ order price and payment
+
+export type OrderStepState = { ok: true } | { ok: false; error: string } | null;
+
+function stepError(err: unknown): OrderStepState {
+  if (err instanceof OrderStepError) return { ok: false, error: err.message };
+  throw err;
+}
+
+async function signedIn() {
+  const member = await getCurrentMember();
+  if (!member) redirect({ href: "/m/login", locale: await getLocale() });
+  return member!;
+}
+
+/** The member approves (or declines) the price of their order. */
+export async function respondToPriceAction(_prev: OrderStepState, formData: FormData): Promise<OrderStepState> {
+  const member = await signedIn();
+  const caseId = z.uuid().safeParse(formData.get("caseId"));
+  if (!caseId.success) return { ok: false, error: "notFound" };
+  try {
+    if (formData.get("decision") === "approve") await approvePrice({ member, caseId: caseId.data });
+    else await declinePrice(member, caseId.data, String(formData.get("reason") ?? "").trim().slice(0, 500) || null);
+  } catch (err) {
+    return stepError(err);
+  }
+  revalidatePath("/[locale]/m/(app)/requests/[id]", "page");
+  return { ok: true };
+}
+
+/** "I've paid": staff then check it against Nomad's account. */
+export async function reportPaymentAction(_prev: OrderStepState, formData: FormData): Promise<OrderStepState> {
+  const member = await signedIn();
+  const parsed = z
+    .object({ caseId: z.uuid(), method: z.enum(["WAVE", "ORANGE_MONEY", "OTHER"]), reference: z.string().trim().max(80).optional() })
+    .safeParse({ caseId: formData.get("caseId"), method: formData.get("method"), reference: formData.get("reference") || undefined });
+  if (!parsed.success) return { ok: false, error: "invalid" };
+  try {
+    await reportPayment(member, parsed.data.caseId, parsed.data.method, parsed.data.reference ?? null);
+  } catch (err) {
+    return stepError(err);
+  }
+  revalidatePath("/[locale]/m/(app)/requests/[id]", "page");
+  return { ok: true };
 }
 

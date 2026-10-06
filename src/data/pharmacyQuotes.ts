@@ -6,6 +6,7 @@ import { compareQuotes, isoDayOfWeek, readyToChoose, timeBand, type CompareSetti
 import { medicationLabel } from "@/lib/medications";
 import { formatCaseNumber } from "@/lib/caseNumber";
 import type { Prisma } from "../../generated/prisma/client";
+import { sendPrice } from "./orderPayments";
 
 /** Asking pharmacies about a medication order (medication delivery, step 3):
  * which pharmacies, the private quote links, their answers (which also feed
@@ -23,6 +24,13 @@ const DEFAULTS: Record<string, number> = {
   DELIVERY_PER_KM_XOF: 200,
   COURIER_MINUTES_PER_KM: 3,
   PRICE_OUTLIER_FACTOR: 3,
+  NOMAD_FEE_BASE_XOF: 1000,
+  NOMAD_FEE_PERCENT: 5,
+  NIGHT_SURCHARGE_XOF: 1000,
+  NIGHT_START_HOUR: 22,
+  NIGHT_END_HOUR: 7,
+  PRICE_ROUND_XOF: 100,
+  PRICE_VALID_MINUTES: 60,
 };
 
 /** Admin > Value lists > Medication delivery settings, with safe defaults. */
@@ -207,6 +215,8 @@ export async function saveQuoteAnswer(quoteId: string, a: QuoteAnswer, by: { sta
     include: { order: { include: { lines: true, case: { select: { id: true } } } }, provider: { include: pharmacyInclude } },
   });
   if (!by && q.order.chosenQuoteId && q.order.chosenQuoteId !== q.id) throw new QuoteAnswerError("decided");
+  // The chosen answer is fixed once the member has a price based on it.
+  if (q.order.chosenQuoteId === q.id && !["SEARCHING_PHARMACIES", "PHARMACY_CONFIRMED"].includes(q.order.status)) throw new QuoteAnswerError("locked");
   const lineIds = new Set(q.order.lines.map((l) => l.id));
   if (!a.decline && (a.lines.length !== q.order.lines.length || a.lines.some((l) => !lineIds.has(l.orderLineId)))) throw new QuoteAnswerError("lines");
 
@@ -349,4 +359,7 @@ export async function chooseQuote(orderId: string, quoteId: string, staffId: str
     await tx.caseEvent.create({ data: { caseId: o.caseId, type: "QUOTE_CHOSEN", actorType: staffId ? "STAFF" : "SYSTEM", staffId, data: { quoteId, provider: q.provider.names[0]?.fullNameText ?? null, auto: !staffId } } });
     await setOrderStatusTx(tx, orderId, "PHARMACY_CONFIRMED", staffId);
   });
+  // The member's price goes out straight away; staff can revise it. If it
+  // can't be made (e.g. nothing available), staff see the order as is.
+  await sendPrice(orderId, staffId).catch((e) => console.error("sendPrice failed", e));
 }

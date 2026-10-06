@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Popover } from "@base-ui/react/popover";
-import { AtSign, Bell, ListTodo } from "lucide-react";
+import { AtSign, Bell, ListTodo, Pill } from "lucide-react";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { formatCaseNumber } from "@/lib/caseNumber";
 import { localizedText } from "@/lib/localizedText";
@@ -145,14 +145,20 @@ export function NotificationBell({ initial }: { initial: BellData }) {
                     {data.items.map((n) => (
                       <li key={n.id} className={`border-b border-pn-rule ${n.read ? "" : "bg-[#fffaf0]"}`}>
                         <button type="button" onClick={() => go(n.href, n.id)} className="flex w-full cursor-pointer gap-2 px-3 py-2 text-left hover:bg-pn-surface-hover">
-                          {n.kind === "MENTION" ? (
+                          {n.kind === "ORDER_UPDATE" ? (
+                            <Pill size={14} className={`mt-0.5 flex-none ${n.read ? "text-pn-gray-3" : "text-[#b45309]"}`} aria-hidden />
+                          ) : n.kind === "MENTION" ? (
                             <AtSign size={14} className={`mt-0.5 flex-none ${n.read ? "text-pn-gray-3" : "text-[#b45309]"}`} aria-hidden />
                           ) : (
                             <ListTodo size={14} className={`mt-0.5 flex-none ${n.read ? "text-pn-gray-3" : "text-[#b45309]"}`} aria-hidden />
                           )}
                           <span className="min-w-0 flex-1">
                             <span className={`block text-[12.5px] ${n.read ? "text-pn-gray-2" : "font-semibold"}`}>
-                              {t(n.kind === "MENTION" ? "mentionedYou" : "gaveYouAction", { who: n.actor ?? t("someone") })}
+                              {n.kind === "ORDER_UPDATE"
+                                ? t.has(`orderUpdate.${n.eventType}`)
+                                  ? t(`orderUpdate.${n.eventType}`, { who: n.actor ?? t("someone") })
+                                  : t("orderUpdate.other")
+                                : t(n.kind === "MENTION" ? "mentionedYou" : "gaveYouAction", { who: n.actor ?? t("someone") })}
                               {!n.read && <span className="sr-only"> ({t("unread")})</span>}
                             </span>
                             {n.text && <span className="block truncate text-[12.5px] text-pn-gray-1">“{n.text}”</span>}
