@@ -10,6 +10,8 @@ import { createMemberCase, getMemberCase, RequestNotAllowedError } from "@/data/
 import { memberReply } from "@/data/caseOps";
 import { normalizeCallbackPhone } from "@/lib/phone";
 import { fail, type ActionResult } from "@/lib/validation/common";
+import { medicationOrderSchema } from "@/lib/validation/medicationOrder";
+import { createMemberMedicationOrder, OrderRejectedError, searchCatalogForMember } from "@/data/medicationOrders";
 
 export type LoginLinkState = { sent: true; devLink?: string } | { sent: false; error: string } | null;
 
@@ -76,3 +78,43 @@ export async function memberReplyAction(_prev: ActionResult | null, formData: Fo
   revalidatePath("/[locale]/m/(app)/requests/[id]", "page");
   return { success: true };
 }
+
+// ------------------------------------------------------- medication orders
+
+/** The order screen's medication search (signed-in members only). */
+export async function searchMedicationsAction(q: string) {
+  const member = await getCurrentMember();
+  if (!member || !member.isCovered) return [];
+  return searchCatalogForMember(String(q ?? "").slice(0, 80));
+}
+
+/** Places a medication order: the form sends one JSON field. Problems come
+ * back as codes keyed by section (MemberOrder.error.*). */
+export async function placeMedicationOrderAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const member = await getCurrentMember();
+  const locale = await getLocale();
+  if (!member) return redirect({ href: "/m/login", locale });
+  let raw: unknown;
+  try {
+    raw = JSON.parse(String(formData.get("order") ?? ""));
+  } catch {
+    return fail({ form: ["invalid"] });
+  }
+  const parsed = medicationOrderSchema.safeParse(raw);
+  if (!parsed.success) {
+    const errors: Record<string, string[]> = {};
+    for (const issue of parsed.error.issues) errors[String(issue.path[0] ?? "form")] ??= [issue.message];
+    return fail(errors);
+  }
+  const contactPhone = normalizeCallbackPhone(parsed.data.contactPhone, member.country?.iso2?.trim() ?? "SN");
+  if (!contactPhone) return fail({ contactPhone: ["phone"] });
+  let caseId: string;
+  try {
+    caseId = (await createMemberMedicationOrder(member, parsed.data, contactPhone)).id;
+  } catch (err) {
+    if (err instanceof OrderRejectedError) return fail(err.errors);
+    throw err;
+  }
+  return redirect({ href: `/m/requests/${caseId}?sent=1`, locale });
+}
+

@@ -29,6 +29,8 @@ import { PnTag } from "@/components/pn-tag";
 import { staffLabel } from "@/lib/handle";
 import { actionTiming } from "@/lib/caseActions";
 import { markCaseNotificationsRead } from "@/data/caseActions";
+import { orderForCase } from "@/data/medicationOrders";
+import { MedicationOrderSummary } from "@/components/medication-order-summary";
 import type { NoteMentions } from "@/components/formatted-note";
 
 type TimelineEvent = NonNullable<Awaited<ReturnType<typeof getCaseForStaff>>>["events"][number];
@@ -67,7 +69,7 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
   const search = await props.searchParams;
   const focusNoteId = typeof search.note === "string" ? search.note : null;
   const focusActionId = typeof search.action === "string" ? search.action : null;
-  const [c, workers, noteTemplates] = await Promise.all([getCaseForStaff(id), listCaseWorkers(), listActiveNoteTemplates()]);
+  const [c, workers, noteTemplates, medicationOrder] = await Promise.all([getCaseForStaff(id), listCaseWorkers(), listActiveNoteTemplates(), orderForCase(id)]);
   // Templates in the staff screen's language (French falls back to English).
   const templateOptions = noteTemplates.map((x) => ({
     id: x.id,
@@ -268,6 +270,12 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
               </Row>
             </dl>
           </Section>
+
+          {medicationOrder && (
+            <Section title={t("medicationOrder")}>
+              <MedicationOrderSummary order={medicationOrder} viewer="staff" />
+            </Section>
+          )}
 
           <Section title={t("forWhom")}>
             <dl className="m-0">

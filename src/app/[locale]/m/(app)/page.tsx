@@ -1,5 +1,5 @@
 import { getLocale, getTranslations } from "next-intl/server";
-import { ChevronRight, LifeBuoy, Phone } from "lucide-react";
+import { ChevronRight, LifeBuoy, Phone, Pill } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { getCurrentMember } from "@/lib/memberAuth";
 import { formatCaseNumber } from "@/lib/caseNumber";
@@ -21,17 +21,29 @@ export default async function MemberHomePage() {
       <div className="flex flex-col gap-6 px-4 py-6">
         <h1 className="m-0 text-[26px] leading-tight font-extrabold tracking-[-0.02em]">{t("hello", { name: member.firstName })}</h1>
 
-{member.isCovered ? (
-                  <Link href="/m/request" className="flex min-h-16 items-center justify-between gap-3 bg-pn-accent px-5 py-4 text-white no-underline active:bg-pn-accent-hover">
-            <span className="flex items-center gap-3">
-              <LifeBuoy size={26} aria-hidden />
-              <span className="flex flex-col">
-                <span className="text-[19px] font-extrabold">{t("requestHelp")}</span>
-                <span className="text-[14px] opacity-90">{t("requestHelpSub")}</span>
+        {member.isCovered ? (
+          <div className="flex flex-col gap-2">
+            <Link href="/m/request" className="flex min-h-16 items-center justify-between gap-3 bg-pn-accent px-5 py-4 text-white no-underline active:bg-pn-accent-hover">
+              <span className="flex items-center gap-3">
+                <LifeBuoy size={26} aria-hidden />
+                <span className="flex flex-col">
+                  <span className="text-[19px] font-extrabold">{t("requestHelp")}</span>
+                  <span className="text-[14px] opacity-90">{t("requestHelpSub")}</span>
+                </span>
               </span>
-            </span>
-            <ChevronRight size={22} aria-hidden />
-          </Link>
+              <ChevronRight size={22} aria-hidden />
+            </Link>
+            <Link href="/m/order" className="flex min-h-16 items-center justify-between gap-3 border-2 border-pn-ink bg-white px-5 py-4 text-pn-ink no-underline active:bg-pn-surface-hover">
+              <span className="flex items-center gap-3">
+                <Pill size={26} aria-hidden />
+                <span className="flex flex-col">
+                  <span className="text-[19px] font-extrabold">{t("orderMedication")}</span>
+                  <span className="text-[14px] text-pn-gray-1">{t("orderMedicationSub")}</span>
+                </span>
+              </span>
+              <ChevronRight size={22} aria-hidden />
+            </Link>
+          </div>
         ) : (
           // Not covered: Nomad can still help, as a special request — by phone.
           <div className="flex flex-col gap-2 border-2 border-pn-ink bg-white px-4 py-4">

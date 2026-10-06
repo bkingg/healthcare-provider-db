@@ -1,0 +1,23 @@
+/// Uploaded files (prescriptions, ID documents…). The bytes live in file
+/// storage (src/lib/storage.ts: a private local folder in development, a
+/// cloud store once hosted) under `storageKey`; nothing is ever publicly
+/// reachable — files are served only through routes that check who's asking.
+/// A file uploaded but never attached (e.g. an abandoned order) is removable.
+model StoredFile {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storageKey          String   @unique @map("storage_key")
+  originalName        String   @map("original_name")
+  contentType         String   @map("content_type")
+  sizeBytes           Int      @map("size_bytes")
+  sha256              String
+  uploadedByMemberId  String?  @map("uploaded_by_member_id") @db.Uuid
+  uploadedByMember    Member?  @relation("FileUploadedByMember", fields: [uploadedByMemberId], references: [id])
+  uploadedByStaffId   String?  @map("uploaded_by_staff_id") @db.Uuid
+  uploadedByStaff     User?    @relation("FileUploadedByStaff", fields: [uploadedByStaffId], references: [id])
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  medicationDocument MedicationOrderDocument?
+
+  @@index([uploadedByMemberId, createdAt])
+  @@map("stored_file")
+}

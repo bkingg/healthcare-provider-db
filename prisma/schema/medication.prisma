@@ -46,6 +46,8 @@ model Medication {
   createdBy            String?                   @map("created_by") @db.Uuid
   updatedBy            String?                   @map("updated_by") @db.Uuid
 
+  orderLines MedicationOrderLine[]
+
   @@index([dci])
   @@index([brandName])
   @@map("medication")
@@ -93,3 +95,97 @@ model MedicationRequirementRef {
 
   @@map("medication_requirement_ref")
 }
+
+/// Where a medication order is in its journey. Step 2 creates orders as
+/// REQUESTED; the later steps move them along.
+enum MedicationOrderStatus {
+  REQUESTED
+  SEARCHING_PHARMACIES
+  PHARMACY_CONFIRMED
+  PRICE_CONFIRMED
+  AWAITING_APPROVAL
+  AWAITING_PAYMENT
+  PAID
+  PREPARING
+  COURIER_REQUESTED
+  ORIGINAL_COLLECTED
+  PICKED_UP
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+  UNAVAILABLE
+}
+
+/// A medication order: one per case (the case's request type is Medication).
+/// Delivery details and the flags of what's in it are kept on the order, so
+/// later catalog edits don't change it.
+model MedicationOrder {
+  id                 String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  caseId             String                @unique @map("case_id") @db.Uuid
+  case               CareCase              @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  /// Who the medication is for (also the case's patient).
+  patientId          String                @map("patient_id") @db.Uuid
+  patient            Member                @relation("MedicationOrderPatient", fields: [patientId], references: [id])
+  status             MedicationOrderStatus @default(REQUESTED)
+  deliveryAddress    String                @map("delivery_address")
+  deliveryLatitude   Float?                @map("delivery_latitude")
+  deliveryLongitude  Float?                @map("delivery_longitude")
+  deliveryNotes      String?               @map("delivery_notes")
+  memberNote         String?               @map("member_note")
+  /// Rolled up from the items when the order was placed.
+  needsPrescription  Boolean               @default(false) @map("needs_prescription")
+  hasNarcotic        Boolean               @default(false) @map("has_narcotic")
+  hasPsychotropic    Boolean               @default(false) @map("has_psychotropic")
+  hasColdChain       Boolean               @default(false) @map("has_cold_chain")
+  createdAt          DateTime              @default(now()) @map("created_at")
+  updatedAt          DateTime              @updatedAt @map("updated_at")
+
+  lines     MedicationOrderLine[]
+  documents MedicationOrderDocument[]
+
+  @@index([status])
+  @@map("medication_order")
+}
+
+/// One item: a catalog medication (its details copied at order time), or a
+/// free-text item "not in the list" for the pharmacist to identify.
+model MedicationOrderLine {
+  id                   String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId              String                     @map("order_id") @db.Uuid
+  order                MedicationOrder            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  medicationId         String?                    @map("medication_id") @db.Uuid
+  medication           Medication?                @relation(fields: [medicationId], references: [id])
+  /// Set for an item not in the catalog — what the member typed.
+  freeText             String?                    @map("free_text")
+  dci                  String?
+  brandName            String?                    @map("brand_name")
+  strength             String?
+  form                 String?
+  regulatoryClass      MedicationRegulatoryClass? @map("regulatory_class")
+  isPsychotropic       Boolean                    @default(false) @map("is_psychotropic")
+  isColdChain          Boolean                    @default(false) @map("is_cold_chain")
+  prescriptionRequired Boolean                    @default(false) @map("prescription_required")
+  /// Boxes / bottles / units, as the member asked.
+  quantity             Int
+  sortOrder            Int                        @default(0) @map("sort_order")
+
+  @@index([orderId])
+  @@map("medication_order_line")
+}
+
+/// A file the member (or staff) provided for one of the order's
+/// requirements — e.g. the prescription photo. `requirementCode` is copied so
+/// renaming a rule later doesn't change past orders.
+model MedicationOrderDocument {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId         String          @map("order_id") @db.Uuid
+  order           MedicationOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  requirementCode String          @map("requirement_code")
+  fileId          String          @unique @map("file_id") @db.Uuid
+  file            StoredFile      @relation(fields: [fileId], references: [id])
+  createdAt       DateTime        @default(now()) @map("created_at")
+
+  @@index([orderId])
+  @@map("medication_order_document")
+}
+

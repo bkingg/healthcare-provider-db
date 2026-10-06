@@ -10,6 +10,8 @@ import { LinkifiedText } from "@/components/linkified-text";
 import { getMemberCase } from "@/data/memberApp";
 import { markSeenByMember, memberConversation } from "@/data/caseOps";
 import { ReplyForm } from "./reply-form";
+import { orderForCase } from "@/data/medicationOrders";
+import { MedicationOrderSummary } from "@/components/medication-order-summary";
 import { EmergencyPanel } from "../../../_components/emergency-panel";
 import { StatusChip } from "../../../_components/status-chip";
 
@@ -30,7 +32,7 @@ export default async function MemberRequestPage(props: PageProps<"/[locale]/m/re
   const { sent } = await props.searchParams;
   const request = await getMemberCase(member, id);
   if (!request) notFound();
-  const conversation = await memberConversation(request.id);
+  const [conversation, order] = await Promise.all([memberConversation(request.id), orderForCase(request.id)]);
   // Opening the request marks Nomad's messages as read.
   await markSeenByMember(request.id);
 
@@ -57,17 +59,28 @@ export default async function MemberRequestPage(props: PageProps<"/[locale]/m/re
           </Row>
           <Row label={t("sentOn")}>{formatDakarDateTime(request.createdAt, locale)}</Row>
           <Row label={t("howUrgent")}>{t(`urgency.${request.urgency}`)}</Row>
-          <Row label={t("whatYouToldUs")}>
-            <LinkifiedText text={request.description} />
-          </Row>
+          {/* A medication order shows its items below instead of the text. */}
+          {!order && (
+            <Row label={t("whatYouToldUs")}>
+              <LinkifiedText text={request.description} />
+            </Row>
+          )}
           <Row label={t("callbackNumber")}>
             {request.contactPhone}
             {request.contactHasWhatsapp && <span className="ml-2 text-[13px] font-semibold text-[#0b5a30]">{t("alsoOnWhatsapp")}</span>}
           </Row>
-          <Row label={t("location")}>
-            {[request.locationLabel, request.latitude !== null ? t("locationShared") : null].filter(Boolean).join(" · ") || t("noLocation")}
-          </Row>
+          {!order && (
+            <Row label={t("location")}>
+              {[request.locationLabel, request.latitude !== null ? t("locationShared") : null].filter(Boolean).join(" · ") || t("noLocation")}
+            </Row>
+          )}
         </dl>
+        {order && (
+          <section className="flex flex-col gap-2">
+            <h2 className="m-0 text-[13px] font-bold tracking-[0.08em] text-pn-gray-1 uppercase">{t("yourOrder")}</h2>
+            <MedicationOrderSummary order={order} viewer="member" />
+          </section>
+        )}
         <section id="conversation" className="flex flex-col gap-3">
           <h2 className="m-0 text-[13px] font-bold tracking-[0.08em] text-pn-gray-1 uppercase">{t("messagesTitle")}</h2>
           {conversation.length === 0 ? (

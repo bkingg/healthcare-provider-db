@@ -46,3 +46,6 @@ next-env.d.ts
 
 # local dev server log
 dev.log
+
+# Uploaded files in development (prescriptions, IDs) — never committed.
+/storage/

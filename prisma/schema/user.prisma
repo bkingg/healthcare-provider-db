@@ -54,6 +54,7 @@ model User {
   notifications           StaffNotification[]    @relation("NotificationFor")
   notificationsSent       StaffNotification[]    @relation("NotificationBy")
   caseProviderTags        CaseProviderTag[]
+  uploadedFiles           StoredFile[]           @relation("FileUploadedByStaff")
 
   @@map("app_user")
 }

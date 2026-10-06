@@ -44,6 +44,8 @@ model Member {
   sessions       MemberSession[]
   casesRequested CareCase[]         @relation("CasesRequested")
   casesAbout     CareCase[]         @relation("CasesAbout")
+  medicationOrdersFor MedicationOrder[] @relation("MedicationOrderPatient")
+  uploadedFiles  StoredFile[]       @relation("FileUploadedByMember")
   caseEvents     CaseEvent[]        @relation("CaseEventsByMember")
 
   status    MemberStatus @default(ACTIVE)

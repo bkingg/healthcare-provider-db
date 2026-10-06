@@ -125,6 +125,7 @@ model CareCase {
   actions         CaseAction[]
   notifications   StaffNotification[]
   providerTags    CaseProviderTag[]
+  medicationOrder MedicationOrder?
   channel         CaseChannel     @default(MEMBER_APP)
   coverage        CaseCoverage    @default(COVERED)
   /// When the member got in touch — the response timer starts here. Same as
