@@ -35,14 +35,14 @@ export async function EmergencyPanel({ countryId, compact = false }: { countryId
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="@container flex flex-col gap-3">
       <div className="flex flex-col gap-2 border-2 border-[#b91c1c] bg-[#fdf2f2] p-4">
         <div className="flex items-center gap-2 text-[16px] font-bold text-[#991b1b]">
           <Siren size={20} aria-hidden /> {t("lifeThreatening")}
         </div>
         <p className="m-0 text-[15px] text-[#3f0d0d]">{t("lifeThreateningHelp")}</p>
         {publicNumbers.length > 0 ? (
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 @lg:grid-cols-3">
             {publicNumbers.map((c) => (
               <a
                 key={c.id}

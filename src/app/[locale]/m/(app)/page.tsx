@@ -1,91 +1,51 @@
 import { getLocale, getTranslations } from "next-intl/server";
-import { ChevronRight, LifeBuoy, Phone, Pill } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { getCurrentMember } from "@/lib/memberAuth";
 import { formatCaseNumber } from "@/lib/caseNumber";
-import { formatDakarDate } from "@/lib/formatDate";
 import { localizedText } from "@/lib/localizedText";
-import { emergencyContactsFor, listMemberCases } from "@/data/memberApp";
 import { EmergencyPanel } from "../_components/emergency-panel";
-import { StatusChip } from "../_components/status-chip";
+import { MemberSidebar, requestsNeedingMember } from "../_components/member-sidebar";
+import { PANES } from "../_components/panes";
 
 export default async function MemberHomePage() {
   const t = await getTranslations("MemberApp");
   const locale = await getLocale();
   const member = (await getCurrentMember())!;
-  const [cases, contacts] = await Promise.all([listMemberCases(member), member.isCovered ? null : emergencyContactsFor(member.countryId)]);
+  const attention = await requestsNeedingMember(member);
 
   return (
     <main className="flex flex-col">
       <EmergencyPanel countryId={member.countryId} compact />
-      <div className="flex flex-col gap-6 px-4 py-6">
-        <h1 className="m-0 text-[26px] leading-tight font-extrabold tracking-[-0.02em]">{t("hello", { name: member.firstName })}</h1>
-
-        {member.isCovered ? (
-          <div className="flex flex-col gap-2">
-            <Link href="/m/request" className="flex min-h-16 items-center justify-between gap-3 bg-pn-accent px-5 py-4 text-white no-underline active:bg-pn-accent-hover">
-              <span className="flex items-center gap-3">
-                <LifeBuoy size={26} aria-hidden />
-                <span className="flex flex-col">
-                  <span className="text-[19px] font-extrabold">{t("requestHelp")}</span>
-                  <span className="text-[14px] opacity-90">{t("requestHelpSub")}</span>
-                </span>
-              </span>
-              <ChevronRight size={22} aria-hidden />
-            </Link>
-            <Link href="/m/order" className="flex min-h-16 items-center justify-between gap-3 border-2 border-pn-ink bg-white px-5 py-4 text-pn-ink no-underline active:bg-pn-surface-hover">
-              <span className="flex items-center gap-3">
-                <Pill size={26} aria-hidden />
-                <span className="flex flex-col">
-                  <span className="text-[19px] font-extrabold">{t("orderMedication")}</span>
-                  <span className="text-[14px] text-pn-gray-1">{t("orderMedicationSub")}</span>
-                </span>
-              </span>
-              <ChevronRight size={22} aria-hidden />
-            </Link>
-          </div>
-        ) : (
-          // Not covered: Nomad can still help, as a special request — by phone.
-          <div className="flex flex-col gap-2 border-2 border-pn-ink bg-white px-4 py-4">
-            <p className="m-0 text-[16px] font-bold">{t("notCoveredTitle")}</p>
-            <p className="m-0 text-[14px] text-pn-gray-1">{t("notCoveredBody")}</p>
-            {contacts?.nomadNumbers.map((n) => (
-              <a key={n.id} href={`tel:${n.phone.replace(/[^+\d]/g, "")}`} className="flex min-h-12 items-center gap-2 bg-pn-accent px-4 text-[16px] font-bold text-white no-underline">
-                <Phone size={18} aria-hidden /> {t("callNomad", { phone: n.phone })}
-              </a>
-            ))}
-          </div>
-        )}
-
-        <section className="flex flex-col gap-2">
-          <h2 className="m-0 text-[13px] font-bold tracking-[0.08em] text-pn-gray-1 uppercase">{t("yourRequests")}</h2>
-          {cases.length === 0 ? (
-            <p className="m-0 text-[15px] text-pn-gray-2">{t("noRequests")}</p>
-          ) : (
-            <ul className="m-0 flex list-none flex-col gap-2 p-0">
-              {cases.map((c) => (
-                <li key={c.id}>
-                  <Link href={`/m/requests/${c.id}`} className="flex items-center justify-between gap-3 border border-pn-rule bg-white px-4 py-3 text-pn-ink no-underline">
-                    <span className="flex min-w-0 flex-col gap-0.5">
-                      <span className="truncate text-[15px] font-semibold">{localizedText(c.category.nameEn, c.category.nameFr, locale)}</span>
-                      <span className="text-[13px] text-pn-gray-2">
-                        {c.patient.firstName} · {formatDakarDate(c.createdAt, locale)} · {formatCaseNumber(c.caseNumber)}
+      <div className={PANES}>
+        <MemberSidebar member={member} active={{ kind: "home" }} />
+        {/* Computer only: the right-hand pane before a request is opened. */}
+        <section className="hidden flex-col gap-4 px-4 py-6 lg:flex">
+          <h2 className="m-0 text-[22px] font-extrabold tracking-[-0.02em]">{t("desktopWelcomeTitle")}</h2>
+          <p className="m-0 max-w-prose text-[15px] text-pn-gray-1">{t("desktopWelcomeBody")}</p>
+          {attention.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              <h3 className="m-0 text-[13px] font-bold tracking-[0.08em] text-pn-gray-1 uppercase">{t("needsYou")}</h3>
+              <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                {attention.map((c) => (
+                  <li key={c.id}>
+                    <Link href={`/m/requests/${c.id}`} className="flex items-center justify-between gap-3 border-l-4 border-[#b45309] bg-white px-4 py-3 text-pn-ink no-underline hover:bg-pn-surface-hover">
+                      <span className="flex flex-col">
+                        <span className="text-[15px] font-semibold">{localizedText(c.category.nameEn, c.category.nameFr, locale)}</span>
+                        <span className="text-[13px] text-pn-gray-2">
+                          {c.patient.firstName} · {formatCaseNumber(c.caseNumber)} · {c.status === "WAITING_MEMBER" ? t("status.WAITING_MEMBER") : t("newMessage")}
+                        </span>
                       </span>
-                    </span>
-                    <span className="flex flex-none flex-col items-end gap-1">
-                      <StatusChip status={c.status} />
-                      {c.events[0] && (!c.memberLastSeenAt || c.events[0].createdAt > c.memberLastSeenAt) && (
-                        <span className="bg-[#1d4ed8] px-1.5 text-[11px] font-bold text-white">{t("newMessage")}</span>
-                      )}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+                      <ChevronRight size={18} aria-hidden />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <p className="m-0 border-l-4 border-pn-accent bg-white px-4 py-3 text-[15px]">{t("allCaughtUp")}</p>
           )}
         </section>
-
-        <EmergencyPanel countryId={member.countryId} />
       </div>
     </main>
   );

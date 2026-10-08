@@ -1051,7 +1051,12 @@
     "orderMedication": "Commander des médicaments",
     "orderMedicationSub": "Livrés depuis une pharmacie proche",
     "yourOrder": "Votre commande",
-    "priceAndPayment": "Prix et paiement"
+    "priceAndPayment": "Prix et paiement",
+    "back": "Retour",
+    "desktopWelcomeTitle": "Vos demandes",
+    "desktopWelcomeBody": "Choisissez une demande à gauche pour voir ses détails et les messages de Nomad, ou faites-en une nouvelle.",
+    "needsYou": "Demande votre attention",
+    "allCaughtUp": "Vous êtes à jour — rien ne vous attend."
   },
   "Cases": {
     "assigneeSearch": "Nom ou @identifiant",

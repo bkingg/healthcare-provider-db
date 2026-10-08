@@ -7,6 +7,8 @@ import { normalizeCallbackPhone } from "@/lib/phone";
 import { listActiveCaseCategories, requestablePeople } from "@/data/memberApp";
 import { EmergencyPanel } from "../../_components/emergency-panel";
 import { RequestForm } from "./request-form";
+import { MemberSidebar } from "../../_components/member-sidebar";
+import { MAIN_PANE, PANES } from "../../_components/panes";
 
 export default async function RequestHelpPage() {
   const t = await getTranslations("MemberApp");
@@ -19,6 +21,9 @@ export default async function RequestHelpPage() {
   return (
     <main className="flex flex-col">
       <EmergencyPanel countryId={member.countryId} compact />
+      <div className={PANES}>
+        <MemberSidebar member={member} active={{ kind: "request" }} className="hidden lg:flex" />
+        <div className={MAIN_PANE}>
       <div className="flex flex-col gap-2 px-4 pt-6">
         <h1 className="m-0 text-[24px] font-extrabold tracking-[-0.02em]">{t("requestHelp")}</h1>
       </div>
@@ -34,6 +39,8 @@ export default async function RequestHelpPage() {
         // they usually just confirm it.
         defaultPhone={member.phone ? (normalizeCallbackPhone(member.phone, member.country?.iso2?.trim() ?? "SN") ?? member.phone) : ""}
       />
+        </div>
+      </div>
     </main>
   );
 }

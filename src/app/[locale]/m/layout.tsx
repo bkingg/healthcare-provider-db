@@ -5,6 +5,7 @@ import { LogOut } from "lucide-react";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { getCurrentMember } from "@/lib/memberAuth";
 import { signOutMemberAction } from "./actions";
+import { BackHomeButton } from "./_components/back-home-button";
 
 export const metadata: Metadata = {
   title: "Nomad",
@@ -23,8 +24,13 @@ export default async function MemberLayout({ children }: { children: React.React
 
   return (
     <div className="min-h-full bg-[#f6f7f5] text-[15px] text-pn-ink">
-      <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-3 bg-pn-ink px-4 pt-[env(safe-area-inset-top,0px)] text-white">
+      <header className="sticky top-0 z-10 bg-pn-ink pt-[env(safe-area-inset-top,0px)] text-white">
+        {/* Lined up with the page content below, on a phone or a computer. */}
+        <div className="mx-auto flex h-14 w-full max-w-xl items-center justify-between gap-3 px-4 lg:max-w-6xl lg:px-6">
         <div className="flex items-center gap-2">
+          <Suspense fallback={null}>
+            <BackHomeButton />
+          </Suspense>
           <div className="h-3.5 w-3.5 bg-pn-accent" aria-hidden />
           <span className="text-[17px] font-extrabold tracking-[-0.01em]">Nomad</span>
         </div>
@@ -40,8 +46,9 @@ export default async function MemberLayout({ children }: { children: React.React
             </form>
           )}
         </div>
+        </div>
       </header>
-      <div className="mx-auto w-full max-w-xl">{children}</div>
+      <div className="mx-auto w-full max-w-xl lg:max-w-6xl">{children}</div>
     </div>
   );
 }

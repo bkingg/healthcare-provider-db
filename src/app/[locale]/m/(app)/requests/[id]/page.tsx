@@ -16,6 +16,8 @@ import { memberPriceView } from "@/data/orderView";
 import { OrderPrice } from "./order-price";
 import { EmergencyPanel } from "../../../_components/emergency-panel";
 import { StatusChip } from "../../../_components/status-chip";
+import { MemberSidebar } from "../../../_components/member-sidebar";
+import { MAIN_PANE, PANES } from "../../../_components/panes";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -42,7 +44,9 @@ export default async function MemberRequestPage(props: PageProps<"/[locale]/m/re
   return (
     <main className="flex flex-col">
       <EmergencyPanel countryId={member.countryId} compact />
-      <div className="flex flex-col gap-5 px-4 py-6">
+      <div className={PANES}>
+        <MemberSidebar member={member} active={{ kind: "case", id: request.id }} className="hidden lg:flex" />
+      <div className={`flex flex-col gap-5 px-4 py-6 ${MAIN_PANE}`}>
         {sent === "1" && (
           <div role="status" className="flex flex-col gap-1 border-2 border-pn-accent bg-pn-accent-soft p-4">
             <div className="flex items-center gap-2 text-[17px] font-bold text-[#08432c]">
@@ -114,9 +118,10 @@ export default async function MemberRequestPage(props: PageProps<"/[locale]/m/re
           {request.status === "CLOSED" ? <p className="m-0 text-[14px] text-pn-gray-2">{t("closedNoReply")}</p> : <ReplyForm caseId={request.id} />}
         </section>
         {request.urgency === "EMERGENCY" && <EmergencyPanel countryId={member.countryId} />}
-        <Link href="/m" className="flex h-12 items-center justify-center border-2 border-pn-ink bg-white text-[16px] font-bold text-pn-ink no-underline">
+        <Link href="/m" className="flex h-12 items-center lg:hidden justify-center border-2 border-pn-ink bg-white text-[16px] font-bold text-pn-ink no-underline">
           {t("backHome")}
         </Link>
+      </div>
       </div>
     </main>
   );

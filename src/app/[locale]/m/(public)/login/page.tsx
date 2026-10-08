@@ -9,7 +9,7 @@ export default async function MemberLoginPage() {
   if (await getCurrentMember()) redirect({ href: "/m", locale: await getLocale() });
 
   return (
-    <main className="flex flex-col gap-6 px-4 py-6">
+    <main className="mx-auto flex w-full max-w-xl flex-col gap-6 px-4 py-6">
       <div className="flex flex-col gap-2">
         <h1 className="m-0 text-[26px] leading-tight font-extrabold tracking-[-0.02em]">{t("loginTitle")}</h1>
         <p className="m-0 text-[15px] text-pn-gray-1">{t("loginIntro")}</p>
