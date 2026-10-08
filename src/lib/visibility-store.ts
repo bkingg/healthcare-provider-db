@@ -26,8 +26,10 @@ export function moveKey<K>(order: readonly K[], key: K, toIndex: number): K[] {
   return next;
 }
 
-export function createVisibilityStore<K extends string>(storageKey: string, allKeys: readonly K[]) {
-  const DEFAULT: State<K> = { order: null, hidden: [] };
+/** `defaultHidden`: keys that start unchecked until the user changes them
+ * (e.g. the case list's less-used columns). */
+export function createVisibilityStore<K extends string>(storageKey: string, allKeys: readonly K[], defaultHidden: readonly K[] = []) {
+  const DEFAULT: State<K> = { order: null, hidden: defaultHidden };
   let state: State<K> = DEFAULT;
   let hydrated = false;
   const listeners = new Set<() => void>();

@@ -1427,7 +1427,30 @@
       "stop": "Arrêter l’association"
     },
     "medicationOrder": "Commande de médicaments",
-    "priceAndPayment": "Prix et paiement"
+    "priceAndPayment": "Prix et paiement",
+    "columns": {
+      "button": "Colonnes",
+      "reset": "Réinitialiser les colonnes",
+      "sortBy": "Trier par {column}",
+      "samePerson": "Même que le patient",
+      "priority": "Priorité",
+      "caseNumber": "N° de dossier",
+      "type": "Type de demande",
+      "patient": "Patient",
+      "requestedBy": "Demandé par",
+      "memberId": "N° de membre",
+      "status": "Statut",
+      "assigned": "Assigné à",
+      "nextAction": "Prochaine action",
+      "due": "Réponse attendue",
+      "waiting": "Attente",
+      "created": "Date de création",
+      "channel": "Canal",
+      "coverage": "Couverture",
+      "urgency": "Urgence",
+      "location": "Lieu",
+      "phone": "Téléphone de rappel"
+    }
   },
   "MedicationCatalog": {
     "title": "Catalogue des médicaments",

@@ -1427,7 +1427,30 @@
       "stop": "Stop tagging"
     },
     "medicationOrder": "Medication order",
-    "priceAndPayment": "Price & payment"
+    "priceAndPayment": "Price & payment",
+    "columns": {
+      "button": "Columns",
+      "reset": "Reset columns",
+      "sortBy": "Sort by {column}",
+      "samePerson": "Same as patient",
+      "priority": "Priority",
+      "caseNumber": "Case #",
+      "type": "Request type",
+      "patient": "Patient",
+      "requestedBy": "Requested by",
+      "memberId": "Member ID",
+      "status": "Status",
+      "assigned": "Assigned to",
+      "nextAction": "Next action",
+      "due": "Response due",
+      "waiting": "Waiting",
+      "created": "Date created",
+      "channel": "Channel",
+      "coverage": "Cover",
+      "urgency": "Urgency",
+      "location": "Location",
+      "phone": "Call-back phone"
+    }
   },
   "MedicationCatalog": {
     "title": "Medication catalog",

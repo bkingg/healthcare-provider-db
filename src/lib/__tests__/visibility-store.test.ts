@@ -72,3 +72,15 @@ describe("createVisibilityStore", () => {
     expect(result.current.customOrder).toBeNull();
   });
 });
+
+describe("createVisibilityStore defaultHidden", () => {
+  it("starts with the given keys hidden, and reset brings them back hidden", () => {
+    const { result } = renderHook(createVisibilityStore("test-default-hidden", KEYS, [KEYS[1]]));
+    expect(result.current.visible.has(KEYS[1])).toBe(false);
+    expect(result.current.visible.has(KEYS[0])).toBe(true);
+    act(() => result.current.toggle(KEYS[1]));
+    expect(result.current.visible.has(KEYS[1])).toBe(true);
+    act(() => result.current.reset());
+    expect(result.current.visible.has(KEYS[1])).toBe(false);
+  });
+});

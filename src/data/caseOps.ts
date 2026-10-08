@@ -209,7 +209,7 @@ export async function caseQueue(filters: QueueFilters, staffId: string) {
     where,
     include: {
       category: true,
-      patient: { select: { id: true, firstName: true, lastName: true, dateOfBirth: true } },
+      patient: { select: { id: true, firstName: true, lastName: true, dateOfBirth: true, memberNumber: true } },
       requestedBy: { select: { id: true, firstName: true, lastName: true } },
       assignedTo: { select: { id: true, name: true, email: true, handle: true } },
       // The latest message either way: shows "member replied" when theirs is last.
