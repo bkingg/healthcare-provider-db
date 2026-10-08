@@ -1594,11 +1594,11 @@
     "originalAck": "I have the original and will hand it to the courier.",
     "delivery": "Delivery",
     "address": "Delivery address",
-    "addressPlaceholder": "Neighbourhood, street, landmark",
+    "addressPlaceholder": "e.g. Sacré-Cœur 3, villa 125, 2nd floor, behind the Total station",
     "locationShared": "Location shared",
     "locating": "Finding your location…",
-    "shareLocation": "Share my location (helps the courier)",
-    "locationDenied": "We couldn’t get your location. The address is enough.",
+    "shareLocation": "Share my location",
+    "locationDenied": "We couldn’t get your location. Just fill in the address below.",
     "deliveryNotes": "Notes for the courier (optional)",
     "deliveryNotesPlaceholder": "Floor, gate code, call on arrival…",
     "whenNeeded": "When do you need it?",
@@ -1660,7 +1660,11 @@
       "tooLong": "Too long.",
       "phone": "Enter a number we can call, e.g. 77 123 45 67."
     },
-    "withinHourHelp": "Nomad goes for the nearest open pharmacy and the fastest delivery. Not for life-threatening emergencies — call the emergency numbers at the top of the screen."
+    "withinHourHelp": "Nomad goes for the nearest open pharmacy and the fastest delivery. Not for life-threatening emergencies — call the emergency numbers at the top of the screen.",
+    "addressHelp": "Be as detailed as possible so the courier finds you: neighbourhood, street or villa number, building and floor, and a landmark nearby.",
+    "locationWhyTitle": "Share your location for a smoother delivery.",
+    "locationWhy": "The courier comes straight to your door, with fewer calls to find you and less waiting.",
+    "locationSharedDone": "Location shared — the courier will come straight to you"
   },
   "Quote": {
     "goneTitle": "This link no longer works",

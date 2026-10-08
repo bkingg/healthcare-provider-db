@@ -48,7 +48,6 @@ export default async function OrderMedicationPage() {
           isActive: r.isActive,
         }))}
         defaultPhone={member.phone ? (normalizeCallbackPhone(member.phone, member.country?.iso2?.trim() ?? "SN") ?? member.phone) : ""}
-        defaultAddress={member.city ?? ""}
       />
         </div>
       </div>

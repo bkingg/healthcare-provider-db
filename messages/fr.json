@@ -1594,11 +1594,11 @@
     "originalAck": "J’ai l’original et je le remettrai au coursier.",
     "delivery": "Livraison",
     "address": "Adresse de livraison",
-    "addressPlaceholder": "Quartier, rue, point de repère",
+    "addressPlaceholder": "ex. Sacré-Cœur 3, villa 125, 2e étage, derrière la station Total",
     "locationShared": "Position partagée",
     "locating": "Recherche de votre position…",
-    "shareLocation": "Partager ma position (aide le coursier)",
-    "locationDenied": "Nous n’avons pas pu obtenir votre position. L’adresse suffit.",
+    "shareLocation": "Partager ma position",
+    "locationDenied": "Nous n’avons pas pu obtenir votre position. Indiquez simplement l’adresse ci-dessous.",
     "deliveryNotes": "Indications pour le coursier (facultatif)",
     "deliveryNotesPlaceholder": "Étage, code du portail, appeler en arrivant…",
     "whenNeeded": "Pour quand ?",
@@ -1660,7 +1660,11 @@
       "tooLong": "Trop long.",
       "phone": "Indiquez un numéro, p. ex. 77 123 45 67."
     },
-    "withinHourHelp": "Nomad choisit la pharmacie ouverte la plus proche et la livraison la plus rapide. Pas pour une urgence vitale — appelez les numéros d'urgence en haut de l'écran."
+    "withinHourHelp": "Nomad choisit la pharmacie ouverte la plus proche et la livraison la plus rapide. Pas pour une urgence vitale — appelez les numéros d'urgence en haut de l'écran.",
+    "addressHelp": "Soyez aussi précis que possible pour que le coursier vous trouve : quartier, rue ou numéro de villa, immeuble et étage, et un point de repère proche.",
+    "locationWhyTitle": "Partagez votre position pour une livraison plus simple.",
+    "locationWhy": "Le coursier vient directement à votre porte, avec moins d'appels pour vous trouver et moins d'attente.",
+    "locationSharedDone": "Position partagée — le coursier viendra directement à vous"
   },
   "Quote": {
     "goneTitle": "Ce lien ne fonctionne plus",

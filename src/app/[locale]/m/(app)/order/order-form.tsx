@@ -62,7 +62,7 @@ const medName = (m: Med) => [m.dci, m.strength, m.form].filter(Boolean).join(" "
 /** The member's medication order: who it's for, what (from the catalog, or
  * "not in the list"), the documents those items need — photos upload as
  * soon as they're taken, shrunk on the phone — and where to deliver. */
-export function OrderForm({ people, rules, defaultPhone, defaultAddress }: { people: Person[]; rules: OrderRule[]; defaultPhone: string; defaultAddress: string }) {
+export function OrderForm({ people, rules, defaultPhone }: { people: Person[]; rules: OrderRule[]; defaultPhone: string }) {
   const t = useTranslations("MemberOrder");
   const [state, action, pending] = useActionState<ActionResult | null, FormData>(placeMedicationOrderAction, null);
   const errors = state && !state.success ? state.errors : {};
@@ -81,7 +81,8 @@ export function OrderForm({ people, rules, defaultPhone, defaultAddress }: { peo
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [acknowledged, setAcknowledged] = useState<string[]>([]);
   const [when, setWhen] = useState<(typeof WHEN)[number] | "">("");
-  const [address, setAddress] = useState(defaultAddress);
+  // Starts empty: the city on the member's record isn't enough for a courier.
+  const [address, setAddress] = useState("");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState<"idle" | "busy" | "denied">("idle");
   const [deliveryNotes, setDeliveryNotes] = useState("");
@@ -354,21 +355,35 @@ export function OrderForm({ people, rules, defaultPhone, defaultAddress }: { peo
       )}
 
       <Section n={docRules.length > 0 ? 4 : 3} title={t("delivery")}>
-        <label className="text-[14px] font-semibold" htmlFor="address">
-          {t("address")}
-        </label>
-        <textarea id="address" rows={2} maxLength={300} value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t("addressPlaceholder")} className="border-2 border-pn-border-muted bg-white p-3 text-[16px] outline-none focus:border-pn-ink" />
-        {err("deliveryAddress")}
+        {/* Location first: one tap gives the courier the exact spot; the
+         * address below adds what a pin can't (villa, floor, landmark). */}
+        {!coords && (
+          <p id="locationWhy" className="m-0 flex items-start gap-2 border-l-4 border-pn-accent bg-pn-accent-soft px-3 py-2 text-[14px] text-[#08432c]">
+            <Info size={16} className="mt-0.5 flex-none" aria-hidden />
+            <span>
+              <strong>{t("locationWhyTitle")}</strong> {t("locationWhy")}
+            </span>
+          </p>
+        )}
         <button
           type="button"
+          aria-describedby={coords ? undefined : "locationWhy"}
           onClick={useMyLocation}
           disabled={locating === "busy"}
           className={`flex min-h-12 cursor-pointer items-center justify-center gap-2 border-2 px-4 text-[15px] font-semibold ${coords ? "border-pn-accent bg-pn-accent-soft text-[#08432c]" : "border-pn-ink bg-white"}`}
         >
           {coords ? <Check size={18} /> : <LocateFixed size={18} />}
-          {coords ? t("locationShared") : locating === "busy" ? t("locating") : t("shareLocation")}
+          {coords ? t("locationSharedDone") : locating === "busy" ? t("locating") : t("shareLocation")}
         </button>
         {locating === "denied" && <p className="m-0 text-[14px] text-pn-gray-1">{t("locationDenied")}</p>}
+        <label className="mt-2 text-[14px] font-semibold" htmlFor="address">
+          {t("address")}
+        </label>
+        <p id="addressHelp" className="m-0 -mt-1 text-[13px] text-pn-gray-1">
+          {t("addressHelp")}
+        </p>
+        <textarea id="address" rows={3} maxLength={300} value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t("addressPlaceholder")} aria-describedby="addressHelp" className="border-2 border-pn-border-muted bg-white p-3 text-[16px] outline-none focus:border-pn-ink" />
+        {err("deliveryAddress")}
         <label className="text-[14px] font-semibold" htmlFor="deliveryNotes">
           {t("deliveryNotes")}
         </label>
