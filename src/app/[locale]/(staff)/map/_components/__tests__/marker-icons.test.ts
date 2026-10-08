@@ -42,9 +42,9 @@ describe("searchPointHeight", () => {
     expect(searchPointHeight(11)).toBeLessThan(searchPointHeight(15));
   });
 
-  it("stays within 20–56px at any zoom", () => {
-    expect(searchPointHeight(0)).toBe(20);
-    expect(searchPointHeight(22)).toBe(56);
+  it("stays within 34–60px at any zoom", () => {
+    expect(searchPointHeight(0)).toBe(34);
+    expect(searchPointHeight(22)).toBe(60);
   });
 });
 

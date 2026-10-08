@@ -43,23 +43,25 @@ export function getClusterIcon(count: number): L.DivIcon {
   });
 }
 
-const SEARCH_POINT_MIN_HEIGHT = 20;
-const SEARCH_POINT_MAX_HEIGHT = 56;
+const SEARCH_POINT_MIN_HEIGHT = 34;
+const SEARCH_POINT_MAX_HEIGHT = 60;
 
 /** Height (px) of the distance-search "person" marker at a given map zoom:
- * grows as the user zooms in and shrinks as they zoom out — 20px at a
- * country-wide view, ~35px at city level (zoom 11), up to 56px at street
- * level — so it reads as a figure on the ground rather than a fixed-size
- * overlay. Whole pixels, so the icon cache below stays small. */
+ * grows as the user zooms in and shrinks as they zoom out — never below
+ * 34px (smaller was easy to miss beside cluster bubbles), ~39px at city
+ * level (zoom 11), up to 60px at street level — so it reads as a figure on
+ * the ground rather than a fixed-size overlay. Whole pixels, so the icon
+ * cache below stays small. */
 export function searchPointHeight(zoom: number): number {
-  return Math.round(Math.min(SEARCH_POINT_MAX_HEIGHT, Math.max(SEARCH_POINT_MIN_HEIGHT, 4 + 2.8 * zoom)));
+  return Math.round(Math.min(SEARCH_POINT_MAX_HEIGHT, Math.max(SEARCH_POINT_MIN_HEIGHT, 6 + 3 * zoom)));
 }
 
 const searchPointIconCache = new Map<number, L.DivIcon>();
 
 /** Red standing figure (head, arms, legs) marking a distance-from-point search's
  * point of interest, anchored at its feet (bottom center) so it stands on
- * the exact search point like a map pin. White outline + shadow keep it
+ * the exact search point like a map pin, on a red ground ring that sets
+ * it apart from the black cluster bubbles. White outline + shadow keep it
  * legible over any tile colour. Cached per height. */
 export function getSearchPointIcon(height: number): L.DivIcon {
   const cached = searchPointIconCache.get(height);
@@ -69,6 +71,8 @@ export function getSearchPointIcon(height: number): L.DivIcon {
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 40" width="${width}" height="${height}" ` +
     `style="display:block;overflow:visible;filter:drop-shadow(0 1px 1.5px rgba(20,32,26,0.45))">` +
+    // Ground ring under the feet, drawn first so the figure stands on it.
+    `<ellipse cx="10" cy="38.4" rx="9.5" ry="2.8" fill="#dc2626" fill-opacity="0.28" stroke="#dc2626" stroke-width="1.2"/>` +
     `<g fill="#dc2626" stroke="#ffffff" stroke-width="1.4" stroke-linejoin="round">` +
     `<circle cx="10" cy="5.2" r="4.3"/>` +
     // Torso with both arms down, then two legs.

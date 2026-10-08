@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { DEFAULT_RADIUS_KM, LABELLED_RADIUS_STOPS_KM, RADIUS_STOPS_KM, nearestRadiusStopIndex } from "./radius-stops";
 import type { SearchFilters } from "@/lib/validation/search";
+import { formatDecimalCoordinates, parseCoordinates } from "@/lib/coordinates";
 
 type RawParams = Record<string, string | string[] | undefined>;
 type GeocodeResult = { label: string; lat: number; lng: number };
@@ -63,7 +64,10 @@ export function DistanceFilter({
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
-  const queryTooShortOrUnchanged = query.trim().length < MIN_QUERY_LENGTH || query === selected?.label;
+  // Typed decimal coordinates are used as they are — no address lookup.
+  const typedPoint = selected ? null : parseCoordinates(query);
+  const point = selected ?? (typedPoint ? { ...typedPoint, label: formatDecimalCoordinates(typedPoint) } : null);
+  const queryTooShortOrUnchanged = query.trim().length < MIN_QUERY_LENGTH || query === selected?.label || typedPoint !== null;
 
   useEffect(() => {
     if (queryTooShortOrUnchanged) return;
@@ -121,9 +125,9 @@ export function DistanceFilter({
         {/* Setting the circle filter clears any active "search this area"
          * bbox — the two spatial tools are mutually exclusive (see
          * buildProviderWhereClause's comment in src/data/search.ts). */}
-        <input type="hidden" name="lat" value={selected?.lat ?? ""} />
-        <input type="hidden" name="lng" value={selected?.lng ?? ""} />
-        <input type="hidden" name="pointLabel" value={selected?.label ?? ""} />
+        <input type="hidden" name="lat" value={point?.lat ?? ""} />
+        <input type="hidden" name="lng" value={point?.lng ?? ""} />
+        <input type="hidden" name="pointLabel" value={point?.label ?? ""} />
 
         <div ref={containerRef} className="relative">
           <input
@@ -165,6 +169,7 @@ export function DistanceFilter({
             </div>
           )}
         </div>
+        {typedPoint && <div className="text-[11px] font-semibold text-[#0a5c3c]">{t("coordinatesRecognised", { point: formatDecimalCoordinates(typedPoint) })}</div>}
 
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between text-[11px] text-pn-gray-3">

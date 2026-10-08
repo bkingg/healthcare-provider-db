@@ -335,7 +335,7 @@
     "capability": "Capacité",
     "network": "Réseau",
     "distanceFromPoint": "Distance à partir d'un point",
-    "addressSearchPlaceholder": "Rechercher une adresse ou un lieu...",
+    "addressSearchPlaceholder": "Adresse, lieu ou coordonnées (14.70, -17.46)",
     "searchingAddress": "Recherche en cours...",
     "noAddressResults": "Aucun résultat",
     "clearPoint": "Effacer",
@@ -367,7 +367,8 @@
     "isOpen24_7": "Établissement ouvert 24h/24 et 7j/7",
     "erOpen24_7": "Urgences ouvertes 24h/24 et 7j/7",
     "resizeFilters": "Faites glisser pour redimensionner le panneau Filtres (double-clic pour réinitialiser)",
-    "resizeColumn": "Faites glisser pour redimensionner la colonne {column} (double-clic pour réinitialiser)"
+    "resizeColumn": "Faites glisser pour redimensionner la colonne {column} (double-clic pour réinitialiser)",
+    "coordinatesRecognised": "✓ Coordonnées reconnues : {point} — appuyez sur Appliquer"
   },
   "Profile": {
     "sectionNetworks": "Réseaux",

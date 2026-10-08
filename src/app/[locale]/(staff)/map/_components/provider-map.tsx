@@ -46,9 +46,9 @@ export type SearchCircle = { lat: number; lng: number; radiusKm: number; label?:
  * circle tool unusable (the view would snap back as soon as the data
  * refetches).
  *
- * With a distance-from-point search active, the frame also takes in the
- * whole search circle, so the search point stays in view even when no
- * provider falls inside the radius. */
+ * With a distance-from-point search active, the frame is the search circle,
+ * centred on the search point — so the point stays in the middle even when
+ * no provider falls inside the radius. */
 function FitToMarkers({ providers, circle, area }: { providers: MapProvider[]; circle: SearchCircle | null; area: AreaBounds | null }) {
   const map = useMap();
   const idsKey = providers
@@ -73,8 +73,15 @@ function FitToMarkers({ providers, circle, area }: { providers: MapProvider[]; c
       map.fitBounds(HOME_BOUNDS);
       return;
     }
+    // Distance search: centre on the search point and frame its circle
+    // (every result is inside it). Re-measure first — the map pane can still
+    // be settling its size, which left the circle small and off to one side.
+    if (circle) {
+      map.invalidateSize();
+      map.fitBounds(circleBounds(circle, circle.radiusKm), { padding: [24, 24] });
+      return;
+    }
     const bounds = providers.map((p): [number, number] => [p.lat, p.lng]);
-    if (circle) bounds.push(...circleBounds(circle, circle.radiusKm));
     if (bounds.length === 0) return;
     if (bounds.length === 1) {
       map.setView(bounds[0], 13);
@@ -102,7 +109,11 @@ function SearchPointMarker({ circle }: { circle: SearchCircle }) {
 
   return (
     <Marker position={[circle.lat, circle.lng]} icon={getSearchPointIcon(searchPointHeight(zoom))} zIndexOffset={SEARCH_POINT_Z} keyboard={false}>
-      <Tooltip direction="top">{circle.label ? t("searchPointNamed", { label: circle.label }) : t("searchPoint")}</Tooltip>
+      {/* Always shown when the point has a name (e.g. the case number from
+       * a case's "Open on map"), so it's easy to find among the pins. */}
+      <Tooltip direction="top" permanent={Boolean(circle.label)}>
+        {circle.label ? t("searchPointNamed", { label: circle.label }) : t("searchPoint")}
+      </Tooltip>
     </Marker>
   );
 }

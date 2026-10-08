@@ -335,7 +335,7 @@
     "capability": "Capability",
     "network": "Network",
     "distanceFromPoint": "Distance from point",
-    "addressSearchPlaceholder": "Search address or venue...",
+    "addressSearchPlaceholder": "Address, place or coordinates (14.70, -17.46)",
     "searchingAddress": "Searching...",
     "noAddressResults": "No matches found",
     "clearPoint": "Clear",
@@ -367,7 +367,8 @@
     "isOpen24_7": "Facility open 24/7",
     "erOpen24_7": "Emergency room open 24/7",
     "resizeFilters": "Drag to resize the Filters panel (double-click to reset)",
-    "resizeColumn": "Drag to resize the {column} column (double-click to reset)"
+    "resizeColumn": "Drag to resize the {column} column (double-click to reset)",
+    "coordinatesRecognised": "✓ Coordinates recognised: {point} — press Apply"
   },
   "Profile": {
     "sectionNetworks": "Networks",

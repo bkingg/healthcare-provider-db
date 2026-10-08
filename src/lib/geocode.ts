@@ -1,4 +1,5 @@
 import "server-only";
+import { formatDecimalCoordinates, parseCoordinates } from "@/lib/coordinates";
 import { CoordinateStatus } from "@/lib/enums";
 
 /**
@@ -82,6 +83,10 @@ export class GeocodeUpstreamError extends Error {}
 export async function searchAddress(query: string): Promise<GeocodeResult[]> {
   const q = query.trim();
   if (q.length < MIN_QUERY_LENGTH) return [];
+  // Coordinates ("14.7033, -17.4635" or 14°42'12"N 17°27'49"W) are the place already — no
+  // lookup needed, and no Nominatim request used up.
+  const point = parseCoordinates(q);
+  if (point) return [{ label: formatDecimalCoordinates(point), ...point }];
 
   const now = Date.now();
   if (now - lastRequestAt < MIN_INTERVAL_MS) {
