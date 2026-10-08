@@ -3,7 +3,8 @@
  * thresholds into admin-editable settings and adds overdue timers; step 1.4
  * lets the copilot add signals on top.
  *
- * RED    — the member said it's life-threatening, or used urgent words.
+ * RED    — the member said it's life-threatening, needs it within the hour,
+ *          or used urgent words.
  * YELLOW — needs attention: help wanted today, urgent-care category, or no
  *          location to find providers near them.
  * GREEN  — routine request with a location.
@@ -12,7 +13,7 @@
  * review — it errs toward RED, which only means a person looks sooner. */
 
 export type RuleInput = {
-  urgency: "EMERGENCY" | "TODAY" | "THIS_WEEK" | "ROUTINE";
+  urgency: "EMERGENCY" | "WITHIN_HOUR" | "TODAY" | "THIS_WEEK" | "ROUTINE";
   categoryCode: string;
   description: string;
   hasLocation: boolean;
@@ -23,6 +24,7 @@ export type Rag = "GREEN" | "YELLOW" | "RED";
 /** Reason codes, translated for display (Cases.reason.*). */
 export type RagReason =
   | "MEMBER_SAID_EMERGENCY"
+  | "WANTED_WITHIN_HOUR"
   | "URGENT_WORDS"
   | "WANTED_TODAY"
   | "URGENT_CARE_CATEGORY"
@@ -61,6 +63,7 @@ export function findUrgentPhrases(description: string): string[] {
 export function initialRag(input: RuleInput): { rag: Rag; reasons: RagReason[] } {
   const red: RagReason[] = [];
   if (input.urgency === "EMERGENCY") red.push("MEMBER_SAID_EMERGENCY");
+  if (input.urgency === "WITHIN_HOUR") red.push("WANTED_WITHIN_HOUR");
   if (findUrgentPhrases(input.description).length > 0) red.push("URGENT_WORDS");
   if (red.length) return { rag: "RED", reasons: red };
 

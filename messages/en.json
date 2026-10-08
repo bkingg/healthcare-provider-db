@@ -987,12 +987,14 @@
     "callNowFirst": "Call now — then send this request so Nomad can follow up.",
     "urgency": {
       "EMERGENCY": "Life-threatening emergency",
+      "WITHIN_HOUR": "Urgent — within 1 hour",
       "TODAY": "Urgent — today",
       "THIS_WEEK": "Soon — this week",
       "ROUTINE": "Not urgent"
     },
     "urgencyHelp": {
       "EMERGENCY": "Call emergency services first",
+      "WITHIN_HOUR": "Needed within the hour",
       "TODAY": "Needs help within the day",
       "THIS_WEEK": "Within the next few days",
       "ROUTINE": "Whenever is convenient"
@@ -1103,6 +1105,7 @@
     },
     "reason": {
       "MEMBER_SAID_EMERGENCY": "Member said life-threatening",
+      "WANTED_WITHIN_HOUR": "Wanted within 1 hour",
       "URGENT_WORDS": "Urgent words in request",
       "WANTED_TODAY": "Wanted today",
       "URGENT_CARE_CATEGORY": "Urgent care",
@@ -1600,6 +1603,7 @@
     "deliveryNotesPlaceholder": "Floor, gate code, call on arrival…",
     "whenNeeded": "When do you need it?",
     "when": {
+      "WITHIN_HOUR": "Urgent (less than 1 hour)",
       "TODAY": "Today",
       "THIS_WEEK": "This week",
       "ROUTINE": "No rush"
@@ -1655,7 +1659,8 @@
       "location": "Location couldn’t be read — share it again.",
       "tooLong": "Too long.",
       "phone": "Enter a number we can call, e.g. 77 123 45 67."
-    }
+    },
+    "withinHourHelp": "Nomad goes for the nearest open pharmacy and the fastest delivery. Not for life-threatening emergencies — call the emergency numbers at the top of the screen."
   },
   "Quote": {
     "goneTitle": "This link no longer works",

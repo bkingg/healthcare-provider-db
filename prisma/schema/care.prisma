@@ -37,6 +37,9 @@ model MemberSession {
 enum CaseUrgency {
   /// Member said it's life-threatening — shown the emergency numbers first.
   EMERGENCY
+  /// Needed within the hour (offered when ordering medication). Red, so
+  /// staff respond at once.
+  WITHIN_HOUR
   TODAY
   THIS_WEEK
   ROUTINE

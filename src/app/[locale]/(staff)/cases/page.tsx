@@ -57,7 +57,7 @@ export default async function CasesPage(props: PageProps<"/[locale]/cases">) {
   const timed = (c: (typeof queue)[number]) => c.responseDueAt !== null && ["NEW", "IN_PROGRESS"].includes(c.status);
   const RAG_RANK = { RED: 0, YELLOW: 1, GREEN: 2 } as Record<string, number>;
   const STATUS_RANK = { NEW: 0, IN_PROGRESS: 1, WAITING_MEMBER: 2, RESOLVED: 3, CLOSED: 4 } as Record<string, number>;
-  const URGENCY_RANK = { EMERGENCY: 0, TODAY: 1, THIS_WEEK: 2, ROUTINE: 3 } as Record<string, number>;
+  const URGENCY_RANK = { EMERGENCY: 0, WITHIN_HOUR: 1, TODAY: 2, THIS_WEEK: 3, ROUTINE: 4 } as Record<string, number>;
   const sortValue: Record<CaseSortKey, (c: (typeof queue)[number]) => SortValue | SortValue[]> = {
     priority: (c) => [RAG_RANK[c.rag], c.responseDueAt?.getTime() ?? Number.MAX_SAFE_INTEGER, c.contactedAt.getTime()],
     caseNumber: (c) => c.caseNumber,

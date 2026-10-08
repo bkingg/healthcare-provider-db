@@ -14,7 +14,7 @@ export type OrderRule = { code: string; name: string; description: string | null
 type Line = { key: string; med?: Med; freeText?: string; quantity: number };
 type Upload = { key: string; requirementCode: string; name: string; status: "uploading" | "done" | "error"; fileId?: string; error?: string; preview?: string };
 
-const WHEN = ["TODAY", "THIS_WEEK", "ROUTINE"] as const;
+const WHEN = ["WITHIN_HOUR", "TODAY", "THIS_WEEK", "ROUTINE"] as const;
 const MAX_LINES = 15;
 const MAX_QTY = 20;
 
@@ -377,7 +377,10 @@ export function OrderForm({ people, rules, defaultPhone, defaultAddress }: { peo
         <p className="m-0 mt-2 text-[15px] font-semibold">{t("whenNeeded")}</p>
         {WHEN.map((w) => (
           <ChoiceCard key={w} checked={when === w} onChange={() => setWhen(w)}>
-            <span className="text-[15px] font-semibold">{t(`when.${w}`)}</span>
+            <span className="flex flex-col">
+              <span className="text-[15px] font-semibold">{t(`when.${w}`)}</span>
+              {w === "WITHIN_HOUR" && <span className="text-[13px] text-pn-gray-1">{t("withinHourHelp")}</span>}
+            </span>
           </ChoiceCard>
         ))}
         {err("when")}

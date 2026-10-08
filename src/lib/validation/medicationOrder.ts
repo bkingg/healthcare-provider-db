@@ -24,7 +24,7 @@ export const medicationOrderSchema = z
     documents: z.array(z.object({ requirementCode: z.string().min(1).max(60), fileId: uuid })).max(20, "tooManyFiles"),
     /** Codes of "original to collect" requirements the member confirmed. */
     acknowledged: z.array(z.string().min(1).max(60)).max(10),
-    when: z.enum(["TODAY", "THIS_WEEK", "ROUTINE"], "when"),
+    when: z.enum(["WITHIN_HOUR", "TODAY", "THIS_WEEK", "ROUTINE"], "when"),
     deliveryAddress: z.string().trim().min(5, "address").max(300, "address"),
     latitude: z.number().min(-90).max(90).optional(),
     longitude: z.number().min(-180).max(180).optional(),

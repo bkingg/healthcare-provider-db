@@ -20,6 +20,7 @@ describe("initialRag", () => {
 
   it("is YELLOW when help is wanted today, it's urgent care, or there's no location", () => {
     expect(initialRag({ ...routine, urgency: "TODAY" })).toEqual({ rag: "YELLOW", reasons: ["WANTED_TODAY"] });
+    expect(initialRag({ ...routine, urgency: "WITHIN_HOUR" })).toEqual({ rag: "RED", reasons: ["WANTED_WITHIN_HOUR"] });
     expect(initialRag({ ...routine, categoryCode: "URGENT_CARE" }).reasons).toEqual(["URGENT_CARE_CATEGORY"]);
     expect(initialRag({ ...routine, hasLocation: false }).reasons).toEqual(["NO_LOCATION"]);
   });

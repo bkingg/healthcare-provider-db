@@ -314,7 +314,7 @@ export async function quotesForOrder(orderId: string, now = new Date()) {
     }),
     deliverySettings(),
   ]);
-  const urgent = order.case.urgency === "TODAY" || order.case.urgency === "EMERGENCY" || order.case.rag !== "GREEN";
+  const urgent = ["EMERGENCY", "WITHIN_HOUR", "TODAY"].includes(order.case.urgency) || order.case.rag !== "GREEN";
   const comparison = compareQuotes(
     {
       lines: order.lines.map((l) => ({ id: l.id, quantity: l.quantity, label: l.freeText ?? medicationLabel({ dci: l.dci ?? "", strength: l.strength, form: l.form ?? "" }) })),

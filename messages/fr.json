@@ -987,12 +987,14 @@
     "callNowFirst": "Appelez maintenant — puis envoyez cette demande pour que Nomad fasse le suivi.",
     "urgency": {
       "EMERGENCY": "Urgence vitale",
+      "WITHIN_HOUR": "Urgent — dans l'heure",
       "TODAY": "Urgent — aujourd'hui",
       "THIS_WEEK": "Bientôt — cette semaine",
       "ROUTINE": "Pas urgent"
     },
     "urgencyHelp": {
       "EMERGENCY": "Appelez d'abord les secours",
+      "WITHIN_HOUR": "Nécessaire dans l'heure",
       "TODAY": "Besoin d'aide dans la journée",
       "THIS_WEEK": "Dans les prochains jours",
       "ROUTINE": "Quand cela vous convient"
@@ -1103,6 +1105,7 @@
     },
     "reason": {
       "MEMBER_SAID_EMERGENCY": "Urgence vitale signalée",
+      "WANTED_WITHIN_HOUR": "Voulu dans l'heure",
       "URGENT_WORDS": "Mots urgents dans la demande",
       "WANTED_TODAY": "Souhaité aujourd'hui",
       "URGENT_CARE_CATEGORY": "Soins urgents",
@@ -1600,6 +1603,7 @@
     "deliveryNotesPlaceholder": "Étage, code du portail, appeler en arrivant…",
     "whenNeeded": "Pour quand ?",
     "when": {
+      "WITHIN_HOUR": "Urgent (moins d'1 heure)",
       "TODAY": "Aujourd’hui",
       "THIS_WEEK": "Cette semaine",
       "ROUTINE": "Pas urgent"
@@ -1655,7 +1659,8 @@
       "location": "La position n’a pas pu être lue — partagez-la à nouveau.",
       "tooLong": "Trop long.",
       "phone": "Indiquez un numéro, p. ex. 77 123 45 67."
-    }
+    },
+    "withinHourHelp": "Nomad choisit la pharmacie ouverte la plus proche et la livraison la plus rapide. Pas pour une urgence vitale — appelez les numéros d'urgence en haut de l'écran."
   },
   "Quote": {
     "goneTitle": "Ce lien ne fonctionne plus",
