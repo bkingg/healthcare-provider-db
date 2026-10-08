@@ -165,6 +165,9 @@ enum EmergencyContactKind {
   PUBLIC
   /// Nomad's own line.
   NOMAD
+  /// Private ambulance / emergency doctor services open 24/7 (e.g. SOS
+  /// Médecins, Urgences et Solutions Médicales).
+  PRIVATE_EMS
 }
 
 /// Phone numbers the member app always shows. A contact with a country is

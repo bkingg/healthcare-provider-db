@@ -1056,7 +1056,9 @@
     "desktopWelcomeTitle": "Vos demandes",
     "desktopWelcomeBody": "Choisissez une demande à gauche pour voir ses détails et les messages de Nomad, ou faites-en une nouvelle.",
     "needsYou": "Demande votre attention",
-    "allCaughtUp": "Vous êtes à jour — rien ne vous attend."
+    "allCaughtUp": "Vous êtes à jour — rien ne vous attend.",
+    "privateAmbulances": "Ambulances privées · 24h/24",
+    "privateAmbulancesHelp": "Services privés d'ambulance et de médecins d'urgence. Leurs interventions peuvent être payantes."
   },
   "Cases": {
     "assigneeSearch": "Nom ou @identifiant",

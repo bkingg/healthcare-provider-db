@@ -557,7 +557,7 @@ export const REFERENCE_LIST_DEFS = {
       { key: "labelEn", labelKey: "labelEn", kind: "text", required: true },
       { key: "labelFr", labelKey: "labelFr", kind: "text" },
       { key: "phone", labelKey: "phone", kind: "text", required: true },
-      { key: "kind", labelKey: "emergencyContactKind", kind: "select", required: true, options: ["PUBLIC", "NOMAD"] },
+      { key: "kind", labelKey: "emergencyContactKind", kind: "select", required: true, options: ["PUBLIC", "PRIVATE_EMS", "NOMAD"] },
       { key: "countryId", labelKey: "country", kind: "refSelect", refListKey: "countries" },
       { key: "sortOrder", labelKey: "sortOrder", kind: "number", integer: true },
     ],

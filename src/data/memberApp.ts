@@ -68,7 +68,11 @@ export async function emergencyContactsFor(countryId: string | null | undefined)
     where: countryId === undefined ? { isActive: true } : { isActive: true, OR: [{ countryId: null }, ...(countryId ? [{ countryId }] : [])] },
     orderBy: [{ sortOrder: "asc" }],
   });
-  return { publicNumbers: contacts.filter((c) => c.kind === "PUBLIC"), nomadNumbers: contacts.filter((c) => c.kind === "NOMAD") };
+  return {
+    publicNumbers: contacts.filter((c) => c.kind === "PUBLIC"),
+    privateNumbers: contacts.filter((c) => c.kind === "PRIVATE_EMS"),
+    nomadNumbers: contacts.filter((c) => c.kind === "NOMAD"),
+  };
 }
 
 export class RequestNotAllowedError extends Error {}

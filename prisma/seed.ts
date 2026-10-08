@@ -360,7 +360,7 @@ async function main() {
   );
 
   // Numbers the member app always shows: Senegal's public emergency services
-  // (confirmed by Nomad) and Nomad's own line (shown in every country).
+  // (confirmed by Nomad), private 24/7 ambulances and Nomad's own line (shown in every country).
   // Admin-editable in Value lists > Emergency numbers.
   await Promise.all(
     [
@@ -368,6 +368,9 @@ async function main() {
       { code: "SN_SAMU", labelEn: "SAMU (ambulance)", labelFr: "SAMU (ambulance)", phone: "1515", kind: "PUBLIC" as const, countryId: senegal.id, sortOrder: 1 },
       { code: "SN_POLICE", labelEn: "Police", labelFr: "Police", phone: "17", kind: "PUBLIC" as const, countryId: senegal.id, sortOrder: 2 },
       { code: "SN_FIRE", labelEn: "Fire brigade", labelFr: "Sapeurs-pompiers", phone: "18", kind: "PUBLIC" as const, countryId: senegal.id, sortOrder: 3 },
+      // Private 24/7 ambulance services, from each provider's own website (2026-10-08).
+      { code: "SN_SOS_MEDECINS", labelEn: "SOS Médecins Sénégal", labelFr: "SOS Médecins Sénégal", phone: "+221 33 889 15 15", kind: "PRIVATE_EMS" as const, countryId: senegal.id, sortOrder: 10 },
+      { code: "SN_USM", labelEn: "Urgences et Solutions Médicales (USM)", labelFr: "Urgences et Solutions Médicales (USM)", phone: "+221 33 869 98 97", kind: "PRIVATE_EMS" as const, countryId: senegal.id, sortOrder: 11 },
     ].map((c) => prisma.emergencyContactRef.upsert({ where: { code: c.code }, update: {}, create: c })),
   );
 

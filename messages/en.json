@@ -1056,7 +1056,9 @@
     "desktopWelcomeTitle": "Your requests",
     "desktopWelcomeBody": "Choose a request on the left to see its details and messages from Nomad, or start a new one.",
     "needsYou": "Needs your attention",
-    "allCaughtUp": "You're all caught up — nothing is waiting for you."
+    "allCaughtUp": "You're all caught up — nothing is waiting for you.",
+    "privateAmbulances": "Private ambulances · 24/7",
+    "privateAmbulancesHelp": "Private ambulance and emergency doctor services. They may charge for their care."
   },
   "Cases": {
     "assigneeSearch": "Type a name or @handle",
