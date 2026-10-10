@@ -19,6 +19,7 @@ import { staffLabel } from "@/lib/handle";
 import { NotificationBell } from "@/components/notification-bell";
 import { bellFor } from "@/data/caseActions";
 import { toBellData } from "@/lib/bellData";
+import { NomadMark, NomadWordmark } from "@/components/brand";
 
 async function logoutAction() {
   "use server";
@@ -61,9 +62,10 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
       <PanelWidthsRoot className="flex h-screen flex-col overflow-hidden">
         <header className="flex h-[52px] flex-none items-stretch bg-pn-ink text-white">
           <div data-r="brand" className="flex w-[var(--pn-nav-w,248px)] flex-none items-center overflow-hidden gap-2.5 border-r-2 border-pn-gray-2 px-5 max-[1180px]:w-auto max-[1180px]:px-4">
-            <div className="h-3.5 w-3.5 flex-none bg-pn-accent" />
-            <span data-r="navtext" className="max-[1180px]:hidden text-sm font-extrabold tracking-[-0.01em] whitespace-nowrap">
-              {t("brand")}
+            <NomadMark size={30} />
+            <span data-r="navtext" className="flex flex-col gap-1 max-[1180px]:hidden">
+              <NomadWordmark height={13} />
+              <span className="text-[9.5px] leading-none font-semibold tracking-[0.14em] whitespace-nowrap text-pn-gray-4 uppercase">{t("brand")}</span>
             </span>
           </div>
           <div className="flex min-w-0 flex-1 items-center gap-3 px-4">

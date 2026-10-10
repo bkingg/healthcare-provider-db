@@ -13,8 +13,8 @@ const archivo = Archivo({
 });
 
 export const metadata: Metadata = {
-  title: "Provider Network",
-  description: "Healthcare provider database",
+  title: "Nomad · Provider Network",
+  description: "Nomad healthcare provider network and member care",
 };
 
 export function generateStaticParams() {

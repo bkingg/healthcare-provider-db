@@ -6,6 +6,7 @@ import { LocaleSwitcher } from "@/components/locale-switcher";
 import { getCurrentMember } from "@/lib/memberAuth";
 import { signOutMemberAction } from "./actions";
 import { BackHomeButton } from "./_components/back-home-button";
+import { NomadHeaderLogo } from "@/components/brand";
 
 export const metadata: Metadata = {
   title: "Nomad",
@@ -31,8 +32,7 @@ export default async function MemberLayout({ children }: { children: React.React
           <Suspense fallback={null}>
             <BackHomeButton />
           </Suspense>
-          <div className="h-3.5 w-3.5 bg-pn-accent" aria-hidden />
-          <span className="text-[17px] font-extrabold tracking-[-0.01em]">Nomad</span>
+          <NomadHeaderLogo />
         </div>
         <div className="flex items-center gap-3">
           <Suspense fallback={null}>
