@@ -63,3 +63,15 @@ export function parseYesNo(raw: string | undefined): boolean | null {
   if (["yes", "oui", "true", "1", "y", "o", "x"].includes(v)) return true;
   return null;
 }
+
+/** A pack as the regulator writes it, in words members understand:
+ * "B/30" → "boîte de 30", "FL/100ml" → "flacon de 100ml", "T/10g" →
+ * "tube de 10g". Anything else is shown as written. */
+export function formatPresentation(p: string | null | undefined): string | null {
+  const t = p?.trim();
+  if (!t) return null;
+  const m = /^(B|BTE|FL|FLC|T|TB|AMP|SACH|SAC)\s*\/\s*(.+)$/i.exec(t);
+  if (!m) return t;
+  const word = { B: "boîte", BTE: "boîte", FL: "flacon", FLC: "flacon", T: "tube", TB: "tube", AMP: "ampoules", SACH: "sachets", SAC: "sachets" }[m[1].toUpperCase()]!;
+  return word === "ampoules" || word === "sachets" ? `${m[2]} ${word}` : `${word} de ${m[2]}`;
+}

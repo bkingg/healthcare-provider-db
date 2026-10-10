@@ -19,6 +19,7 @@ const catalogSelect = {
   brandName: true,
   strength: true,
   form: true,
+  presentation: true,
   regulatoryClass: true,
   isPsychotropic: true,
   isColdChain: true,
@@ -166,7 +167,8 @@ export function orderForCase(caseId: string) {
   return prisma.medicationOrder.findUnique({
     where: { caseId },
     include: {
-      lines: { orderBy: { sortOrder: "asc" } },
+      // Today's official price from the catalog, for staff comparing quotes.
+      lines: { orderBy: { sortOrder: "asc" }, include: { medication: { select: { officialPriceXof: true } } } },
       documents: { include: { file: { select: { id: true, originalName: true, contentType: true, sizeBytes: true } } }, orderBy: { createdAt: "asc" } },
     },
   });

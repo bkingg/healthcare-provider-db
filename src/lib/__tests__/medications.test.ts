@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { medicationLabel, needsPrescription, parseRegulatoryClass, parseYesNo, requirementsFor, triggersFor } from "../medications";
+import { formatPresentation, medicationLabel, needsPrescription, parseRegulatoryClass, parseYesNo, requirementsFor, triggersFor } from "../medications";
 
 const base = { regulatoryClass: "NOT_LISTED" as const, isPsychotropic: false, isColdChain: false, prescriptionRequired: false };
 
@@ -43,5 +43,15 @@ describe("prescriptions and requirements", () => {
   });
   it("names an item from its generic, strength and form", () => {
     expect(medicationLabel({ dci: "Paracétamol", strength: "500mg", form: "comprimé" })).toBe("Paracétamol 500mg comprimé");
+  });
+});
+
+describe("formatPresentation", () => {
+  it("spells out the regulator's pack abbreviations", () => {
+    expect(formatPresentation("B/30")).toBe("boîte de 30");
+    expect(formatPresentation("FL/100ml")).toBe("flacon de 100ml");
+    expect(formatPresentation("T/10g")).toBe("tube de 10g");
+    expect(formatPresentation("Solution injectable en stylo prérempli")).toBe("Solution injectable en stylo prérempli");
+    expect(formatPresentation("")).toBeNull();
   });
 });

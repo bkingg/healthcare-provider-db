@@ -53,6 +53,19 @@ const medicationSchema = z.object({
   isColdChain: flag,
   prescriptionRequired: flag,
   source: optional(100),
+  ammNumber: optional(40),
+  officialPriceXof: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => (v ? v.replace(/[\s\u00a0\u202f]/g, "") : ""))
+    .refine((v) => v === "" || /^\d{1,9}$/.test(v), "Whole FCFA, numbers only")
+    .transform((v) => (v ? Number(v) : null)),
+  manufacturer: optional(200),
+  route: optional(100),
+  notes: optional(1000),
+  rcpUrl: optional(500).refine((v) => v === null || /^https?:\/\/\S+$/i.test(v), "A web link starting with https://"),
+  photoUrl: optional(500).refine((v) => v === null || /^https?:\/\/\S+$/i.test(v), "A web link starting with https://"),
 });
 
 export async function saveMedicationAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
@@ -86,10 +99,15 @@ export type MedicationImportPreviewRow = { rowNumber: number; code: string; name
 export type MedicationImportState =
   | { stage: "error"; fileErrors: string[] }
   | { stage: "preview"; fileName: string; rows: MedicationImportPreviewRow[]; summary: ReturnType<typeof summarizeMedications> }
-  | { stage: "done"; fileName: string; created: number; updated: number; skipped: number };
+  | { stage: "done"; fileName: string; created: number; updated: number; skipped: number; switchedOff: number };
 
 const importInput = z.object({
   intent: z.enum(["check", "import"]),
+  // Switch off every catalog item that isn't in this file.
+  replace: z
+    .string()
+    .optional()
+    .transform((v) => v === "1"),
   source: z
     .string()
     .trim()
@@ -107,20 +125,20 @@ const importInput = z.object({
  * and saves the new and changed rows in one transaction. */
 export async function medicationImportAction(_prev: MedicationImportState | null, formData: FormData): Promise<MedicationImportState> {
   const actor = await requireCatalogEditor();
-  const parsed = importInput.safeParse({ intent: formData.get("intent"), source: formData.get("source") ?? undefined, file: formData.get("file") });
+  const parsed = importInput.safeParse({ intent: formData.get("intent"), replace: formData.get("replace") ?? undefined, source: formData.get("source") ?? undefined, file: formData.get("file") });
   if (!parsed.success) return { stage: "error", fileErrors: parsed.error.issues.map((i) => i.message) };
-  const { intent, source, file } = parsed.data;
+  const { intent, replace, source, file } = parsed.data;
 
-  const { rows: raw, fileErrors } = await readMedicationFile(file);
+  const { rows: raw, fileErrors, hasPriceColumn } = await readMedicationFile(file);
   if (fileErrors.length) return { stage: "error", fileErrors };
   if (raw.length === 0) return { stage: "error", fileErrors: ["The file has no rows under the header."] };
 
-  const checked = checkMedicationRows(raw, await loadCatalogByCode(), source);
+  const checked = checkMedicationRows(raw, await loadCatalogByCode(), { defaultSource: source, hasPriceColumn });
   const summary = summarizeMedications(checked);
-  if (intent === "import" && summary.new + summary.updated > 0) {
-    const { created, updated } = await commitMedicationImport(checked, file.name, actor.id);
+  if (intent === "import" && (summary.new + summary.updated > 0 || replace)) {
+    const { created, updated, switchedOff } = await commitMedicationImport(checked, file.name, actor.id, false, replace);
     refresh();
-    return { stage: "done", fileName: file.name, created, updated, skipped: summary.withErrors };
+    return { stage: "done", fileName: file.name, created, updated, skipped: summary.withErrors, switchedOff };
   }
   return {
     stage: "preview",
@@ -128,8 +146,8 @@ export async function medicationImportAction(_prev: MedicationImportState | null
     summary,
     rows: checked.map((r) => ({
       rowNumber: r.rowNumber,
-      code: (r.raw.code ?? "").toUpperCase() || "—",
-      name: [r.raw.dci, r.raw.strength, r.raw.form].filter(Boolean).join(" ") || "—",
+      code: r.input?.code ?? ((r.raw.code ?? "").toUpperCase() || "—"),
+      name: [r.raw.brand_name, r.raw.dci, r.raw.strength, r.raw.form].filter(Boolean).join(" · ") || "—",
       regulatoryClass: r.input?.regulatoryClass ?? (r.raw.regulatory_class || "—"),
       action: r.action,
       errors: r.errors,

@@ -45,7 +45,13 @@ export async function MedicationOrderSummary({ order, viewer }: { order: Order; 
                 {l.isColdChain && <span className="ml-1.5 font-bold text-[#075985]">{t("badgeCold")}</span>}
               </span>
             </span>
-            <span className="flex-none font-bold tabular-nums">× {l.quantity}</span>
+            <span className="flex flex-none flex-col items-end">
+              <span className="font-bold tabular-nums">× {l.quantity}</span>
+              {/* Staff only: the regulator's public price per pack, to check quotes against. */}
+              {viewer === "staff" && l.medication?.officialPriceXof != null && (
+                <span className="text-[11px] whitespace-nowrap text-pn-gray-2 tabular-nums">{t("officialPricePerPack", { price: l.medication.officialPriceXof.toLocaleString("fr-FR") })}</span>
+              )}
+            </span>
           </li>
         ))}
       </ul>

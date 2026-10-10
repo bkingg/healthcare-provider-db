@@ -33,14 +33,15 @@ async function main() {
   const parsed = Papa.parse<Record<string, string>>(csv, { header: true, skipEmptyLines: "greedy", transformHeader: normalizeMedicationHeader });
   const rows = parsed.data as RawMedicationRow[];
   const existing = new Map<string, MedicationInput>(
-    (await prisma.medication.findMany()).map((m) => [m.code, { ...m }]),
+    (await prisma.medication.findMany()).map((m) => [m.code, { ...m, sourceCheckedOn: m.sourceCheckedOn?.toISOString().slice(0, 10) ?? null }]),
   );
   const checked = checkMedicationRows(rows, existing);
   const bad = checked.filter((r) => r.errors.length);
   if (bad.length) throw new Error(`Sample file has errors: ${bad.map((r) => `row ${r.rowNumber}: ${r.errors.join("; ")}`).join(" | ")}`);
   for (const r of checked) {
     if (r.action === "UNCHANGED") continue;
-    const { code, ...data } = r.input!;
+    const { code, sourceCheckedOn, ...rest } = r.input!;
+    const data = { ...rest, sourceCheckedOn: sourceCheckedOn ? new Date(`${sourceCheckedOn}T00:00:00Z`) : null };
     await prisma.medication.upsert({ where: { code }, create: { code, ...data, isSample: true }, update: { ...data, isSample: true } });
   }
   console.log("Sample medications:", summarizeMedications(checked));

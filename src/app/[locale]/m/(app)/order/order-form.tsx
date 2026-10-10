@@ -3,7 +3,7 @@
 import { startTransition, useActionState, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Camera, Check, FileText, Info, LocateFixed, Minus, Plus, Search, Snowflake, Trash2, X } from "lucide-react";
-import { requirementsFor, type RegulatoryClass } from "@/lib/medications";
+import { formatPresentation, requirementsFor, type RegulatoryClass } from "@/lib/medications";
 import { shrinkImage } from "@/lib/shrinkImage";
 import type { ActionResult } from "@/lib/validation/common";
 import { placeMedicationOrderAction, searchMedicationsAction } from "../../actions";
@@ -225,7 +225,7 @@ export function OrderForm({ people, rules, defaultPhone }: { people: Person[]; r
                 <button type="button" onClick={() => addMed(m)} className="flex min-h-12 w-full cursor-pointer items-center justify-between gap-3 px-3 py-2 text-left active:bg-pn-surface-hover">
                   <span className="flex min-w-0 flex-col gap-0.5">
                     <span className="text-[15px] font-semibold">{medName(m)}</span>
-                    {m.brandName && <span className="text-[13px] text-pn-gray-2">{m.brandName}</span>}
+                    {(m.brandName || m.presentation) && <span className="text-[13px] text-pn-gray-2">{[m.brandName, formatPresentation(m.presentation)].filter(Boolean).join(" · ")}</span>}
                     <MedBadges m={m} t={t} />
                   </span>
                   <Plus size={20} className="flex-none" aria-label={t("add")} />
@@ -243,7 +243,9 @@ export function OrderForm({ people, rules, defaultPhone }: { people: Person[]; r
                   <span className="text-[15px] font-semibold">{l.med ? medName(l.med) : l.freeText}</span>
                   {l.med ? (
                     <>
-                      {l.med.brandName && <span className="text-[13px] text-pn-gray-2">{l.med.brandName}</span>}
+                      {(l.med.brandName || l.med.presentation) && (
+                        <span className="text-[13px] text-pn-gray-2">{[l.med.brandName, formatPresentation(l.med.presentation)].filter(Boolean).join(" · ")}</span>
+                      )}
                       <MedBadges m={l.med} t={t} />
                     </>
                   ) : (

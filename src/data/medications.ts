@@ -37,13 +37,16 @@ export async function searchMedications(f: CatalogFilters) {
         { strength: { contains: w, mode: "insensitive" as const } },
         { form: { contains: w, mode: "insensitive" as const } },
         { code: { contains: w, mode: "insensitive" as const } },
+        { ammNumber: { contains: w, mode: "insensitive" as const } },
+        { manufacturer: { contains: w, mode: "insensitive" as const } },
       ],
     })),
   };
   const [items, total, samples] = await Promise.all([
     prisma.medication.findMany({ where, orderBy: [{ dci: "asc" }, { strength: "asc" }], take: PAGE }),
     prisma.medication.count({ where }),
-    prisma.medication.count({ where: { isSample: true } }),
+    // Only sample items still offered to members are worth flagging.
+    prisma.medication.count({ where: { isSample: true, isActive: true } }),
   ]);
   return { items, total, limit: PAGE, samples };
 }
@@ -61,6 +64,13 @@ export type MedicationFormInput = {
   isColdChain: boolean;
   prescriptionRequired: boolean;
   source: string | null;
+  ammNumber: string | null;
+  officialPriceXof: number | null;
+  manufacturer: string | null;
+  route: string | null;
+  notes: string | null;
+  rcpUrl: string | null;
+  photoUrl: string | null;
 };
 
 function toData(i: MedicationFormInput) {

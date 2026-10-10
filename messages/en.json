@@ -1512,8 +1512,20 @@
       "source": "Source",
       "prescriptionRequired": "Prescription required",
       "isPsychotropic": "Psychotropic",
-      "isColdChain": "Cold chain (2–8 °C)"
-    }
+      "isColdChain": "Cold chain (2–8 °C)",
+      "ammNumber": "AMM number",
+      "officialPriceXof": "Official public price (FCFA)",
+      "manufacturer": "Manufacturer / laboratory",
+      "route": "Route",
+      "notes": "Notes",
+      "rcpUrl": "RCP link (product information)",
+      "photoUrl": "Photo link"
+    },
+    "colPrice": "Official price",
+    "amm": "AMM {n}",
+    "priceToVerify": "to verify",
+    "rcpLink": "RCP",
+    "photoLink": "Photo"
   },
   "MedicationImport": {
     "breadcrumb": "Medication catalog",
@@ -1557,7 +1569,10 @@
       "UPDATE": "Update",
       "UNCHANGED": "Unchanged",
       "null": "—"
-    }
+    },
+    "replaceLabel": "Replace the catalog with this file.",
+    "replaceHelp": "Every item that isn't in the file is switched off (kept for past orders, hidden from ordering). Nothing is deleted.",
+    "doneSwitchedOff": "{count} items not in the file were switched off."
   },
   "MemberOrder": {
     "title": "Order medication",
@@ -1665,7 +1680,8 @@
     "addressHelp": "Be as detailed as possible so the courier finds you: neighbourhood, street or villa number, building and floor, and a landmark nearby.",
     "locationWhyTitle": "Share your location for a smoother delivery.",
     "locationWhy": "The courier comes straight to your door, with fewer calls to find you and less waiting.",
-    "locationSharedDone": "Location shared — the courier will come straight to you"
+    "locationSharedDone": "Location shared — the courier will come straight to you",
+    "officialPricePerPack": "Official price {price} FCFA / pack"
   },
   "Quote": {
     "goneTitle": "This link no longer works",

@@ -105,6 +105,7 @@ export default async function MedicationCatalogPage(props: PageProps<"/[locale]/
             <tr className="border-b-2 border-pn-ink bg-pn-panel text-left text-[10px] font-bold tracking-[0.07em] text-pn-gray-1 uppercase">
               <th className="px-5 py-2">{t("colMedication")}</th>
               <th className="px-3 py-2">{t("colBrand")}</th>
+              <th className="px-3 py-2 text-right">{t("colPrice")}</th>
               <th className="px-3 py-2">{t("colClass")}</th>
               <th className="px-3 py-2">{t("colFlags")}</th>
               <th className="px-3 py-2">{t("colSource")}</th>
@@ -123,7 +124,35 @@ export default async function MedicationCatalogPage(props: PageProps<"/[locale]/
                     {[m.form, m.presentation].filter(Boolean).join(" · ")} <span className="text-pn-gray-3 tabular-nums">· {m.code}</span>
                   </div>
                 </td>
-                <td className="px-3 py-2">{m.brandName ?? "—"}</td>
+                <td className="px-3 py-2">
+                  <div>{m.brandName ?? "—"}</div>
+                  {(m.manufacturer || m.ammNumber) && (
+                    <div className="text-[11.5px] text-pn-gray-2">{[m.manufacturer, m.ammNumber && t("amm", { n: m.ammNumber })].filter(Boolean).join(" · ")}</div>
+                  )}
+                  {(m.rcpUrl || m.photoUrl) && (
+                    <div className="flex gap-2 text-[11.5px] font-semibold">
+                      {m.rcpUrl && (
+                        <a href={m.rcpUrl} target="_blank" rel="noreferrer" className="text-[#0a5c3c]">
+                          {t("rcpLink")} ↗
+                        </a>
+                      )}
+                      {m.photoUrl && (
+                        <a href={m.photoUrl} target="_blank" rel="noreferrer" className="text-[#0a5c3c]">
+                          {t("photoLink")} ↗
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </td>
+                <td className="px-3 py-2 text-right whitespace-nowrap tabular-nums">
+                  {m.officialPriceXof !== null ? (
+                    `${m.officialPriceXof.toLocaleString("fr-FR")} FCFA`
+                  ) : (
+                    <span className="text-pn-gray-3" title={m.priceStatus ?? undefined}>
+                      {m.priceStatus && m.priceStatus !== "OFFICIAL_PRICE_AVAILABLE" ? t("priceToVerify") : "—"}
+                    </span>
+                  )}
+                </td>
                 <td className="px-3 py-2">
                   <RegulatoryBadge value={m.regulatoryClass} label={t(`class.${m.regulatoryClass}`)} />
                 </td>
@@ -161,6 +190,13 @@ export default async function MedicationCatalogPage(props: PageProps<"/[locale]/
                         isColdChain: m.isColdChain,
                         prescriptionRequired: m.prescriptionRequired,
                         source: m.source ?? "",
+                        ammNumber: m.ammNumber ?? "",
+                        officialPriceXof: m.officialPriceXof !== null ? String(m.officialPriceXof) : "",
+                        manufacturer: m.manufacturer ?? "",
+                        route: m.route ?? "",
+                        notes: m.notes ?? "",
+                        rcpUrl: m.rcpUrl ?? "",
+                        photoUrl: m.photoUrl ?? "",
                       }}
                     />
                     <form action={setMedicationActiveAction}>
@@ -176,7 +212,7 @@ export default async function MedicationCatalogPage(props: PageProps<"/[locale]/
             ))}
             {items.length === 0 && (
               <tr>
-                <td colSpan={7} className="p-8 text-center text-pn-gray-3">
+                <td colSpan={8} className="p-8 text-center text-pn-gray-3">
                   {filters.q || filters.regulatoryClass ? t("noResults") : t("empty")}
                 </td>
               </tr>

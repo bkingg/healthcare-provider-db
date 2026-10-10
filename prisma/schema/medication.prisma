@@ -37,6 +37,26 @@ model Medication {
   prescriptionRequired Boolean                   @default(false) @map("prescription_required")
   /// Where the row came from, e.g. "LNMPE 2025".
   source               String?
+  /// Marketing authorisation number (Numéro AMM) on the regulator's list.
+  ammNumber            String?                   @map("amm_number")
+  /// Official public price per pack in FCFA, from the regulator's list.
+  /// Empty when the list gives none (or gives 0) — see priceStatus.
+  officialPriceXof     Int?                      @map("official_price_xof")
+  /// The list's own word on the price, e.g. OFFICIAL_PRICE_AVAILABLE,
+  /// MISSING_VERIFY, ZERO_VERIFY.
+  priceStatus          String?                   @map("price_status")
+  manufacturer         String?
+  /// Route of administration, e.g. orale, injectable, cutanée.
+  route                String?
+  sourceUrl            String?                   @map("source_url")
+  /// When the source was consulted.
+  sourceCheckedOn      DateTime?                 @map("source_checked_on") @db.Date
+  /// Nomad's own notes on the item.
+  notes                String?
+  /// Link to the product information sheet (RCP / SmPC).
+  rcpUrl               String?                   @map("rcp_url")
+  /// Link to a photo of the pack.
+  photoUrl             String?                   @map("photo_url")
   /// Example rows for testing — flags are suggestions, not checked by a
   /// pharmacist. Removable in one go.
   isSample             Boolean                   @default(false) @map("is_sample")

@@ -24,11 +24,19 @@ export type MedicationValues = {
   isColdChain: boolean;
   prescriptionRequired: boolean;
   source: string;
+  ammNumber: string;
+  officialPriceXof: string;
+  manufacturer: string;
+  route: string;
+  notes: string;
+  rcpUrl: string;
+  photoUrl: string;
 };
 
 const EMPTY: MedicationValues = {
   code: "", dci: "", brandName: "", strength: "", form: "", presentation: "", therapeuticClass: "",
   regulatoryClass: "NOT_LISTED", isPsychotropic: false, isColdChain: false, prescriptionRequired: false, source: "",
+  ammNumber: "", officialPriceXof: "", manufacturer: "", route: "", notes: "", rcpUrl: "", photoUrl: "",
 };
 
 /** Add or edit one catalog item. Controlled fields, so a failed save keeps
@@ -85,6 +93,10 @@ export function MedicationDialog({ mode, values = EMPTY }: { mode: "create" | "e
           {field("presentation")}
           {field("code", true)}
           {field("therapeuticClass", false, "sm:col-span-2")}
+          {field("manufacturer")}
+          {field("route")}
+          {field("ammNumber")}
+          {field("officialPriceXof")}
           <label className="flex flex-col gap-1 text-[11px] font-semibold text-pn-gray-1">
             {t("regulatoryClass")}
             <select name="regulatoryClass" value={v.regulatoryClass} onChange={(e) => setV((p) => ({ ...p, regulatoryClass: e.target.value as RegulatoryClass }))} className={input}>
@@ -96,6 +108,9 @@ export function MedicationDialog({ mode, values = EMPTY }: { mode: "create" | "e
             </select>
           </label>
           {field("source")}
+          {field("rcpUrl")}
+          {field("photoUrl")}
+          {field("notes", false, "sm:col-span-2")}
           <div className="flex flex-wrap gap-4 sm:col-span-2">
             {(["prescriptionRequired", "isPsychotropic", "isColdChain"] as const).map((k) => (
               <label key={k} className="flex cursor-pointer items-center gap-1.5 text-[13px]">

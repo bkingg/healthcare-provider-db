@@ -6,34 +6,33 @@ import {
   MAX_MEDICATION_ROWS,
   MEDICATION_IMPORT_COLUMNS,
   REQUIRED_MEDICATION_COLUMNS,
-  normalizeMedicationHeader,
+  medicationColumnFor,
   type CheckedMedicationRow,
   type MedicationInput,
   type RawMedicationRow,
 } from "@/lib/import/medicationImport";
 import { readSheetFile } from "./sheetFile";
-import { writeAudit } from "./audit";
 
-const KNOWN = new Set<string>(MEDICATION_IMPORT_COLUMNS);
 const SHEET = "Medications";
 
-export async function readMedicationFile(file: File): Promise<{ rows: RawMedicationRow[]; fileErrors: string[] }> {
+export async function readMedicationFile(file: File): Promise<{ rows: RawMedicationRow[]; fileErrors: string[]; hasPriceColumn: boolean }> {
   const { headers, records, fileErrors } = await readSheetFile(file, SHEET);
-  if (fileErrors.length) return { rows: [], fileErrors };
-  const normalized = headers.map(normalizeMedicationHeader);
-  const missing = REQUIRED_MEDICATION_COLUMNS.filter((c) => !normalized.includes(c));
-  if (missing.length) return { rows: [], fileErrors: [`Missing required column(s): ${missing.join(", ")}. Start from the template so the headers match.`] };
+  if (fileErrors.length) return { rows: [], fileErrors, hasPriceColumn: false };
+  // English template headers, or the French ones of Nomad's ARP list export.
+  const columns = headers.map(medicationColumnFor);
+  const missing = REQUIRED_MEDICATION_COLUMNS.filter((c) => !columns.includes(c));
+  if (missing.length) return { rows: [], hasPriceColumn: false, fileErrors: [`Missing required column(s): ${missing.join(", ")}. Start from the template so the headers match.`] };
   const rows = records.map((record) => {
     const row: RawMedicationRow = {};
     for (const [header, value] of Object.entries(record)) {
-      const key = normalizeMedicationHeader(header);
+      const key = medicationColumnFor(header);
       const v = value?.trim();
-      if (KNOWN.has(key) && v) row[key as keyof RawMedicationRow] = v;
+      if (key && v) row[key] = v;
     }
     return row;
   });
-  if (rows.length > MAX_MEDICATION_ROWS) return { rows: [], fileErrors: [`The file has ${rows.length} rows; the limit is ${MAX_MEDICATION_ROWS} per upload. Split it into smaller files.`] };
-  return { rows, fileErrors: [] };
+  if (rows.length > MAX_MEDICATION_ROWS) return { rows: [], hasPriceColumn: false, fileErrors: [`The file has ${rows.length} rows; the limit is ${MAX_MEDICATION_ROWS} per upload. Split it into smaller files.`] };
+  return { rows, fileErrors: [], hasPriceColumn: columns.includes("official_price_xof") };
 }
 
 /** The catalog keyed by code, in the import's shape — to tell new items
@@ -57,41 +56,84 @@ export async function loadCatalogByCode(): Promise<Map<string, MedicationInput>>
         prescriptionRequired: m.prescriptionRequired,
         source: m.source,
         isActive: m.isActive,
+        ammNumber: m.ammNumber,
+        officialPriceXof: m.officialPriceXof,
+        priceStatus: m.priceStatus,
+        manufacturer: m.manufacturer,
+        route: m.route,
+        sourceUrl: m.sourceUrl,
+        sourceCheckedOn: m.sourceCheckedOn ? m.sourceCheckedOn.toISOString().slice(0, 10) : null,
+        notes: m.notes,
+        rcpUrl: m.rcpUrl,
+        photoUrl: m.photoUrl,
       },
     ]),
   );
 }
 
 /** Saves the new and changed rows (never ones with errors) in one
- * transaction, with an audit row each naming the file. `isSample` marks
- * example data so it can be told apart and removed. */
-export async function commitMedicationImport(rows: CheckedMedicationRow[], fileName: string, actorId: string | null, isSample = false) {
-  const ready = rows.filter((r) => r.input && (r.action === "NEW" || r.action === "UPDATE"));
+ * transaction, with an audit row each naming the file — new items in
+ * batches, so a full national list (7,000+ rows) saves in seconds.
+ * `isSample` marks example data so it can be told apart and removed. With
+ * `replace`, every other active item (one not in this file) is switched off
+ * — kept for past orders, hidden from ordering. */
+export async function commitMedicationImport(rows: CheckedMedicationRow[], fileName: string, actorId: string | null, isSample = false, replace = false) {
+  const valid = rows.filter((r) => r.input);
+  const toData = (input: MedicationInput) => {
+    const { code, sourceCheckedOn, ...rest } = input;
+    return { code, data: { ...rest, sourceCheckedOn: sourceCheckedOn ? new Date(`${sourceCheckedOn}T00:00:00Z`) : null } };
+  };
   const reason = `Medication import: ${fileName}`;
-  const saved = await prisma.$transaction(
+  const result = await prisma.$transaction(
     async (tx) => {
-      const out: { id: string; action: "NEW" | "UPDATE" }[] = [];
-      for (const r of ready) {
-        const { code, ...data } = r.input!;
-        const m = await tx.medication.upsert({
-          where: { code },
-          create: { code, ...data, isSample, createdBy: actorId, updatedBy: actorId },
-          update: { ...data, updatedBy: actorId },
+      const created: string[] = [];
+      const updated: string[] = [];
+      const fresh = valid.filter((r) => r.action === "NEW").map((r) => toData(r.input!));
+      for (let i = 0; i < fresh.length; i += 500) {
+        const batch = await tx.medication.createManyAndReturn({
+          data: fresh.slice(i, i + 500).map(({ code, data }) => ({ code, ...data, isSample, createdBy: actorId, updatedBy: actorId })),
+          select: { id: true },
         });
-        out.push({ id: m.id, action: r.action as "NEW" | "UPDATE" });
+        created.push(...batch.map((b) => b.id));
       }
-      return out;
+      for (const r of valid.filter((x) => x.action === "UPDATE")) {
+        const { code, data } = toData(r.input!);
+        const m = await tx.medication.update({ where: { code }, data: { ...data, updatedBy: actorId }, select: { id: true } });
+        updated.push(m.id);
+      }
+      let switchedOff: string[] = [];
+      if (replace) {
+        const keep = valid.map((r) => r.input!.code);
+        const others = await tx.medication.findMany({ where: { isActive: true, code: { notIn: keep } }, select: { id: true } });
+        switchedOff = others.map((o) => o.id);
+        if (switchedOff.length) await tx.medication.updateMany({ where: { id: { in: switchedOff } }, data: { isActive: false, updatedBy: actorId } });
+      }
+      return { created, updated, switchedOff };
     },
-    { timeout: 60_000 },
+    { timeout: 120_000 },
   );
   if (actorId) {
-    for (const s of saved) await writeAudit({ entityType: "Medication", entityId: s.id, action: s.action === "NEW" ? AuditAction.CREATE : AuditAction.UPDATE, actorId, reason });
+    const audit = [
+      ...result.created.map((id) => ({ entityType: "Medication", entityId: id, action: AuditAction.CREATE, changedById: actorId, reason })),
+      ...result.updated.map((id) => ({ entityType: "Medication", entityId: id, action: AuditAction.UPDATE, changedById: actorId, reason })),
+      ...result.switchedOff.map((id) => ({
+        entityType: "Medication",
+        entityId: id,
+        action: AuditAction.UPDATE,
+        changedById: actorId,
+        fieldName: "isActive",
+        previousValue: "true",
+        newValue: "false",
+        reason: `${reason} (not in the file — replaced)`,
+      })),
+    ];
+    for (let i = 0; i < audit.length; i += 1000) await prisma.auditLog.createMany({ data: audit.slice(i, i + 1000) });
   }
-  return { created: saved.filter((s) => s.action === "NEW").length, updated: saved.filter((s) => s.action === "UPDATE").length };
+  return { created: result.created.length, updated: result.updated.length, switchedOff: result.switchedOff.length };
 }
 
 const INSTRUCTIONS: [string, string, string, string][] = [
-  ["code", "Yes", "Stable ID for the item, unique. Re-importing a row with the same code updates it. Letters, numbers, dots, dashes, underscores.", "LNMPE-195"],
+  ["code", "No", "Stable ID for the item, unique. Leave the column out and codes are made from each row's name, AMM number, dosage, pack and form. Re-importing a row with the same code updates it. Letters, numbers, dots, dashes, underscores.", "LNMPE-195"],
   ["dci", "Yes", "Generic name (DCI / INN).", "Paracétamol"],
   ["brand_name", "No", "Usual brand (the LNMPE's \"Référence\").", "Doliprane"],
   ["strength", "No", "Dosage as written in the source.", "500mg"],
@@ -104,6 +146,16 @@ const INSTRUCTIONS: [string, string, string, string][] = [
   ["prescription_required", "No", "yes to require a prescription for an unlisted item. Always yes for listed classes.", "no"],
   ["source", "No", "Where the row comes from.", "LNMPE 2025"],
   ["active", "No", "no to hide the item from ordering. Empty = yes.", "yes"],
+  ["amm_number", "No", "Marketing authorisation number (Numéro AMM).", "9189"],
+  ["official_price_xof", "No", "Official public price per pack, FCFA. Empty or 0 = no official price.", "512"],
+  ["price_status", "No", "The source's word on the price.", "OFFICIAL_PRICE_AVAILABLE"],
+  ["manufacturer", "No", "Manufacturer / laboratory.", "SANOFI"],
+  ["route", "No", "Route of administration.", "orale"],
+  ["source_url", "No", "Link to the source list.", "https://arp.sn/liste-des-amms/"],
+  ["source_date", "No", "When the source was consulted: YYYY-MM-DD or DD/MM/YYYY.", "2026-10-06"],
+  ["notes", "No", "Nomad's own notes.", ""],
+  ["rcp_url", "No", "Link to the product information sheet (RCP).", "https://…"],
+  ["photo_url", "No", "Link to a photo of the pack.", "https://…"],
 ];
 
 export async function buildMedicationTemplate(format: "xlsx" | "csv"): Promise<Buffer> {

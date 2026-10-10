@@ -11,6 +11,7 @@ export function MedicationImportForm() {
   const tc = useTranslations("MedicationCatalog");
   const [file, setFile] = useState<File | null>(null);
   const [source, setSource] = useState("");
+  const [replace, setReplace] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const [state, dispatch, pending] = useActionState<MedicationImportState | null, FormData>(medicationImportAction, null);
 
@@ -22,6 +23,7 @@ export function MedicationImportForm() {
     fd.set("intent", intent);
     fd.set("file", file);
     fd.set("source", source);
+    if (replace) fd.set("replace", "1");
     startTransition(() => dispatch(fd));
   }
 
@@ -34,6 +36,7 @@ export function MedicationImportForm() {
         <p className="m-0 text-[12.5px] text-pn-gray-2">
           {t("doneDetail", { file: state.fileName })}
           {state.skipped > 0 && ` ${t("doneSkipped", { skipped: state.skipped })}`}
+          {state.switchedOff > 0 && ` ${t("doneSwitchedOff", { count: state.switchedOff })}`}
         </p>
         <div className="flex flex-wrap gap-2">
           <Link href="/admin/medications" className="flex h-8 items-center bg-pn-accent px-3 text-xs font-semibold text-white no-underline hover:bg-pn-accent-hover">
@@ -77,6 +80,12 @@ export function MedicationImportForm() {
         </button>
       </div>
       <p className="m-0 -mt-2 text-[11.5px] text-pn-gray-3">{t("sourceHelp")}</p>
+      <label className="flex max-w-2xl cursor-pointer items-start gap-2 text-[12.5px]">
+        <input type="checkbox" checked={replace} onChange={(e) => setReplace(e.target.checked)} className="mt-0.5 h-4 w-4 flex-none accent-pn-ink" />
+        <span>
+          <strong>{t("replaceLabel")}</strong> <span className="text-pn-gray-2">{t("replaceHelp")}</span>
+        </span>
+      </label>
 
       {state?.stage === "error" && (
         <div role="alert" className="border-l-4 border-[#dc2626] bg-white p-3 text-[12.5px]">
