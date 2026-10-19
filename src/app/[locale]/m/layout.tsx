@@ -1,11 +1,10 @@
 import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
-import { getTranslations } from "next-intl/server";
-import { LogOut } from "lucide-react";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { getCurrentMember } from "@/lib/memberAuth";
-import { signOutMemberAction } from "./actions";
 import { BackHomeButton } from "./_components/back-home-button";
+import { MemberMenu } from "./_components/member-menu";
+import { formatMemberNumber } from "@/lib/memberNumber";
 import { NomadHeaderLogo } from "@/components/brand";
 
 export const metadata: Metadata = {
@@ -20,7 +19,6 @@ export const viewport: Viewport = { themeColor: "#14201a", width: "device-width"
  * layout. Sign-in is checked by the (app) group's layout; the (public)
  * pages (login, link confirmation) render here without it. */
 export default async function MemberLayout({ children }: { children: React.ReactNode }) {
-  const t = await getTranslations("MemberApp");
   const member = await getCurrentMember();
 
   return (
@@ -38,13 +36,7 @@ export default async function MemberLayout({ children }: { children: React.React
           <Suspense fallback={null}>
             <LocaleSwitcher />
           </Suspense>
-          {member && (
-            <form action={signOutMemberAction}>
-              <button type="submit" aria-label={t("signOut")} title={t("signOut")} className="flex h-10 w-10 cursor-pointer items-center justify-center text-pn-gray-4 hover:text-white">
-                <LogOut size={18} />
-              </button>
-            </form>
-          )}
+          {member && <MemberMenu name={`${member.firstName} ${member.lastName}`} memberId={formatMemberNumber(member.memberNumber)} covered={member.isCovered} />}
         </div>
         </div>
       </header>

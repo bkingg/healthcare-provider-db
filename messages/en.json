@@ -1991,5 +1991,33 @@
     },
     "addressLabel": "Address",
     "introOrdersOnly": "Your primary address is offered first when you order medication, so you don't type it every time. You can change it whenever you like."
+  },
+  "MemberProfile": {
+    "menuLabel": "Account menu for {name}",
+    "covered": "Covered",
+    "notCovered": "Without cover",
+    "myProfile": "My profile",
+    "primaryAddress": "Primary address",
+    "signOut": "Sign out",
+    "details": "My details",
+    "dateOfBirth": "Date of birth",
+    "phone": "Mobile number",
+    "email": "Email",
+    "language": "Language",
+    "location": "City / country",
+    "cover": "My cover",
+    "organization": "Through",
+    "individual": "Individual member",
+    "plan": "Plan",
+    "policyNumber": "Policy number",
+    "coverDates": "Cover dates",
+    "notCoveredBody": "You don't have cover with Nomad yet. You can still use Nomad's services and you'll be told any cost first. Covered by your employer or insurer? Call Nomad and we'll link your cover.",
+    "household": "Household",
+    "onMembershipOf": "You're on {name}'s membership.",
+    "ageYears": "{age} yrs",
+    "noAddress": "No primary address yet",
+    "change": "Change",
+    "add": "Add",
+    "changesNote": "To correct your details or add a family member, contact Nomad."
   }
 }

@@ -108,3 +108,19 @@ export async function createMemberCase(member: CurrentMember, input: MemberReque
       coverage: member.isCovered ? "COVERED" : "SPECIAL_PAID",
   });
 }
+
+/** The member's own details for their profile page: cover, household (a
+ * primary member sees their dependents; a dependent sees who they're on). */
+export async function getMemberProfile(member: CurrentMember) {
+  const full = await prisma.member.findUniqueOrThrow({
+    where: { id: member.id },
+    include: {
+      organization: true,
+      country: true,
+      relationship: true,
+      primaryMember: { select: { firstName: true, lastName: true } },
+      dependents: { where: { status: "ACTIVE" }, include: { relationship: true }, orderBy: { dateOfBirth: "asc" } },
+    },
+  });
+  return full;
+}

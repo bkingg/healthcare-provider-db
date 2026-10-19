@@ -1991,5 +1991,33 @@
     },
     "addressLabel": "Adresse",
     "introOrdersOnly": "Votre adresse principale est proposée en premier quand vous commandez des médicaments : plus besoin de la saisir à chaque fois. Vous pouvez la changer quand vous voulez."
+  },
+  "MemberProfile": {
+    "menuLabel": "Menu du compte de {name}",
+    "covered": "Couvert",
+    "notCovered": "Sans couverture",
+    "myProfile": "Mon profil",
+    "primaryAddress": "Adresse principale",
+    "signOut": "Se déconnecter",
+    "details": "Mes informations",
+    "dateOfBirth": "Date de naissance",
+    "phone": "Numéro de mobile",
+    "email": "E-mail",
+    "language": "Langue",
+    "location": "Ville / pays",
+    "cover": "Ma couverture",
+    "organization": "Via",
+    "individual": "Membre individuel",
+    "plan": "Formule",
+    "policyNumber": "Numéro de police",
+    "coverDates": "Dates de couverture",
+    "notCoveredBody": "Vous n'avez pas encore de couverture Nomad. Vous pouvez quand même utiliser les services de Nomad et tout coût vous sera indiqué d'abord. Couvert par votre employeur ou votre assureur ? Appelez Nomad et nous relierons votre couverture.",
+    "household": "Foyer",
+    "onMembershipOf": "Vous êtes rattaché(e) à l'adhésion de {name}.",
+    "ageYears": "{age} ans",
+    "noAddress": "Pas encore d'adresse principale",
+    "change": "Modifier",
+    "add": "Ajouter",
+    "changesNote": "Pour corriger vos informations ou ajouter un membre de votre famille, contactez Nomad."
   }
 }

@@ -11,7 +11,7 @@ import { memberFeatures } from "@/data/memberAppFeatures";
 import { EmergencyPanel } from "./emergency-panel";
 import { StatusChip } from "./status-chip";
 
-export type SidebarActive = { kind: "home" } | { kind: "request" } | { kind: "order" } | { kind: "address" } | { kind: "case"; id: string };
+export type SidebarActive = { kind: "home" } | { kind: "request" } | { kind: "order" } | { kind: "address" } | { kind: "profile" } | { kind: "case"; id: string };
 
 /** The member's home content — greeting, "Request help" / "Order
  * medication", their requests and the emergency numbers. On a phone it is
