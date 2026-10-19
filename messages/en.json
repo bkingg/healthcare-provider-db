@@ -163,7 +163,8 @@
       "noteTemplates": "Note templates",
       "medicationRequirements": "Medication requirements",
       "medicationSettings": "Medication delivery settings",
-      "paymentLinks": "Payment links"
+      "paymentLinks": "Payment links",
+      "memberAppFeatures": "Member app features"
     },
     "fields": {
       "paymentCategory": "Payment category",
@@ -222,7 +223,9 @@
       "instructionsFr": "Instructions (French)",
       "settingValue": "Value",
       "paymentMethod": "Payment method",
-      "paymentUrl": "Link (https://…)"
+      "paymentUrl": "Link (https://…)",
+      "featureEnabled": "Covered members",
+      "featureEnabledNotCovered": "Members without cover (special requests)"
     },
     "marker": {
       "default": "Default",
@@ -900,7 +903,7 @@
     "household": "Household ({count})",
     "deactivate": "Deactivate",
     "reactivate": "Reactivate",
-    "noEmailNoSignIn": "No email: this member can't sign in to the member app, but the primary member can request help for them.",
+    "noEmailNoSignIn": "No email or mobile number: this member can't sign in to the member app, but the primary member can request help for them.",
     "importMembers": "Import members",
     "applyFilters": "Apply",
     "resultsFor": "for “{q}”",
@@ -909,7 +912,34 @@
     "covered": "Covered",
     "notCovered": "Not covered",
     "notCoveredHint": "Nomad helps this person only as special requests (free or at a set cost). They can't ask for help in the member app.",
-    "coverageALL": "All"
+    "coverageALL": "All",
+    "joined": "Joined",
+    "signupSource": {
+      "SELF": "Signed up in the app (quick start)",
+      "STAFF": "Added by staff",
+      "IMPORT": "Bulk import"
+    },
+    "consent": "Privacy consent",
+    "consentGiven": "Accepted {when} (notice {version})",
+    "primaryAddress": "Primary address",
+    "addressText": "Address (neighbourhood, street / villa, building, floor)",
+    "addressDirections": "Directions for the courier",
+    "addressCoordinates": "Location (coordinates, optional)",
+    "cancel": "Cancel",
+    "openMap": "Open on map",
+    "noAddress": "No primary address yet.",
+    "addAddress": "Add address",
+    "editAddress": "Edit address",
+    "removeAddress": "Remove",
+    "addressUpdatedMember": "Saved by the member · {when}",
+    "addressUpdatedStaff": "Changed by staff · {when}",
+    "addressError": {
+      "address": "Enter the address (at least 5 characters).",
+      "coordinates": "Couldn't read those coordinates — e.g. 14.70330, -17.46350.",
+      "location": "Couldn't read those coordinates.",
+      "tooLong": "Too long.",
+      "invalid": "Check what was entered."
+    }
   },
   "MemberImport": {
     "breadcrumb": "Members",
@@ -951,7 +981,7 @@
   "MemberApp": {
     "signOut": "Sign out",
     "loginTitle": "Sign in to Nomad",
-    "loginIntro": "Enter the email address Nomad has for you. We'll send you a link to sign in — no password needed.",
+    "loginIntro": "Sign in or create your account with your mobile number — no password needed.",
     "emailLabel": "Your email",
     "sendLink": "Send me a sign-in link",
     "sending": "Sending…",
@@ -1048,8 +1078,8 @@
       "notFound": "This request can't be found.",
       "closed": "This request is closed. Send a new request instead."
     },
-    "notCoveredTitle": "Need help? Call Nomad",
-    "notCoveredBody": "Your requests are handled by phone. Call us and we'll take it from there.",
+    "notCoveredTitle": "You don't have cover with Nomad yet",
+    "notCoveredBody": "You can still request help and order medication: Nomad tells you any cost before doing anything. Covered by your employer or insurer? Call us and we'll link your cover.",
     "callNomad": "Call Nomad · {phone}",
     "orderMedication": "Order medication",
     "orderMedicationSub": "Delivered from a pharmacy near you",
@@ -1061,7 +1091,19 @@
     "needsYou": "Needs your attention",
     "allCaughtUp": "You're all caught up — nothing is waiting for you.",
     "privateAmbulances": "Private ambulances · 24/7",
-    "privateAmbulancesHelp": "Private ambulance and emergency doctor services. They may charge for their care."
+    "privateAmbulancesHelp": "Private ambulance and emergency doctor services. They may charge for their care.",
+    "welcomeTitle": "Your account is ready",
+    "welcomeBody": "You can now request help or order medication. Nomad will contact you on WhatsApp or by phone.",
+    "notCoveredRequestNote": "You don't have cover: this is a special request. Nomad tells you the cost before going ahead.",
+    "primaryAddress": "Primary address",
+    "locationSaved": "Location saved",
+    "change": "Change",
+    "addPrimaryAddress": "Add your primary address",
+    "addPrimaryAddressWhy": "Saves time on every order and request",
+    "addressSaved": "Your primary address is saved.",
+    "fromPrimaryAddress": "Filled in from your primary address — change it if you're somewhere else.",
+    "notCoveredBodyOrdersOnly": "You can still order medication: Nomad tells you the total before you pay. Covered by your employer or insurer? Call us and we'll link your cover.",
+    "welcomeBodyOrdersOnly": "You can now order medication. Nomad will contact you on WhatsApp or by phone."
   },
   "Cases": {
     "assigneeSearch": "Type a name or @handle",
@@ -1659,7 +1701,7 @@
     "error": {
       "invalid": "Something went wrong — please try again.",
       "patient": "Choose who it’s for.",
-      "unavailable": "Ordering isn’t available right now. Please call Nomad.",
+      "unavailable": "Medication orders aren't available in the app right now. Please call Nomad.",
       "duplicate": "An item is listed twice.",
       "itemUnavailable": "An item is no longer available — remove it and search again.",
       "missingDocument": "This document is needed for your order.",
@@ -1681,7 +1723,13 @@
     "locationWhyTitle": "Share your location for a smoother delivery.",
     "locationWhy": "The courier comes straight to your door, with fewer calls to find you and less waiting.",
     "locationSharedDone": "Location shared — the courier will come straight to you",
-    "officialPricePerPack": "Official price {price} FCFA / pack"
+    "officialPricePerPack": "Official price {price} FCFA / pack",
+    "deliverToPrimary": "Deliver to my primary address",
+    "locationSaved": "Location saved",
+    "deliverElsewhere": "Deliver somewhere else",
+    "backToPrimary": "← Use my primary address",
+    "saveAsPrimary": "Save this as my primary address",
+    "replacePrimary": "Make this my new primary address"
   },
   "Quote": {
     "goneTitle": "This link no longer works",
@@ -1886,5 +1934,62 @@
       "invalid": "Check the values entered.",
       "other": "Something went wrong."
     }
+  },
+  "MemberSignIn": {
+    "phoneLabel": "Your mobile number",
+    "country": "Country",
+    "phoneHelp": "We'll send a 6-digit code on WhatsApp. New to Nomad? The same code creates your account.",
+    "sendCode": "Send me a code on WhatsApp",
+    "sending": "Sending…",
+    "codeSent": "We sent a 6-digit code on WhatsApp to {phone}.",
+    "codeLabel": "Code",
+    "confirm": "Confirm",
+    "checking": "Checking…",
+    "resend": "Send a new code",
+    "changeNumber": "Change number",
+    "devCodeTitle": "Test mode:",
+    "devCodeBody": "WhatsApp isn't connected yet, so here is the code:",
+    "whoIsSigningIn": "Who is signing in?",
+    "mainMember": "Main member",
+    "quickStartTitle": "Welcome to Nomad",
+    "quickStartIntro": "{phone} isn't linked to a Nomad account yet. Tell us your name to get started.",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "notCoveredNote": "You'll start as a member without cover: you can request help and order medication, and Nomad tells you any cost before anything is done. If your employer or insurer covers you, Nomad will link your cover.",
+    "consent": "I agree that Nomad keeps my name, phone number, address and location, and the health information I share, to arrange my care, and shares them only with the doctors, pharmacies, couriers and services involved.",
+    "createAccount": "Create my account",
+    "creating": "Creating…",
+    "useEmail": "Sign in with email instead",
+    "error": {
+      "invalidPhone": "Enter a valid mobile number.",
+      "tooManyCodes": "Too many codes for this number. Wait an hour and try again, or call Nomad.",
+      "sendFailed": "We couldn't send the code on WhatsApp. Try again in a moment, or sign in with email.",
+      "codeExpired": "This code has expired. Send a new one.",
+      "wrongCode": "That code isn't right. Check the WhatsApp message and try again.",
+      "tooManyAttempts": "Too many wrong codes. Send a new one.",
+      "startAgain": "Please start again: enter your number.",
+      "firstName": "Enter your first name.",
+      "lastName": "Enter your last name.",
+      "consent": "Tick the box to continue.",
+      "other": "Something went wrong. Please try again."
+    },
+    "notCoveredNoteOrdersOnly": "You'll start as a member without cover: you can order medication, and Nomad tells you the total before you pay. If your employer or insurer covers you, Nomad will link your cover."
+  },
+  "MemberAddress": {
+    "title": "Primary address",
+    "welcomeTitle": "Where should we find you?",
+    "intro": "Your primary address is offered first when you order medication or ask for help, so you don't type it every time. You can change it whenever you like.",
+    "save": "Save my primary address",
+    "saving": "Saving…",
+    "skip": "Skip for now",
+    "remove": "Remove my primary address",
+    "error": {
+      "address": "Enter your address (at least 5 characters).",
+      "location": "We couldn't read your location. Try sharing it again.",
+      "tooLong": "Too long.",
+      "other": "Something went wrong. Please try again."
+    },
+    "addressLabel": "Address",
+    "introOrdersOnly": "Your primary address is offered first when you order medication, so you don't type it every time. You can change it whenever you like."
   }
 }

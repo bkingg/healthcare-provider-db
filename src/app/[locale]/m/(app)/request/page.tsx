@@ -1,10 +1,12 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { getCurrentMember } from "@/lib/memberAuth";
-import { redirect } from "@/i18n/navigation";
 import { localizedText } from "@/lib/localizedText";
 import { ageFromDateOfBirth } from "@/lib/memberNumber";
 import { normalizeCallbackPhone } from "@/lib/phone";
 import { listActiveCaseCategories, requestablePeople } from "@/data/memberApp";
+import { getPrimaryAddress } from "@/data/memberAddresses";
+import { memberFeatures } from "@/data/memberAppFeatures";
+import { redirect } from "@/i18n/navigation";
 import { EmergencyPanel } from "../../_components/emergency-panel";
 import { RequestForm } from "./request-form";
 import { MemberSidebar } from "../../_components/member-sidebar";
@@ -14,9 +16,9 @@ export default async function RequestHelpPage() {
   const t = await getTranslations("MemberApp");
   const locale = await getLocale();
   const member = (await getCurrentMember())!;
-  // Someone not covered asks Nomad by phone (see the home page).
-  if (!member.isCovered) redirect({ href: "/m", locale });
-  const [people, categories] = await Promise.all([requestablePeople(member), listActiveCaseCategories()]);
+  // Held back for now (Admin > Value lists > Member app features).
+  if (!(await memberFeatures(member)).REQUEST_HELP) redirect({ href: "/m", locale });
+  const [people, categories, primary] = await Promise.all([requestablePeople(member), listActiveCaseCategories(), getPrimaryAddress(member.id)]);
 
   return (
     <main className="flex flex-col">
@@ -26,6 +28,7 @@ export default async function RequestHelpPage() {
         <div className={MAIN_PANE}>
       <div className="flex flex-col gap-2 px-4 pt-6">
         <h1 className="m-0 text-[24px] font-extrabold tracking-[-0.02em]">{t("requestHelp")}</h1>
+        {!member.isCovered && <p className="m-0 border-l-4 border-[#b45309] bg-white px-3 py-2 text-[14px]">{t("notCoveredRequestNote")}</p>}
       </div>
       <RequestForm
         people={people.map((p) => {
@@ -35,6 +38,7 @@ export default async function RequestHelpPage() {
         })}
         categories={categories.map((c) => ({ id: c.id, code: c.code, label: localizedText(c.nameEn, c.nameFr, locale) ?? c.nameEn }))}
         emergencyPanel={<EmergencyPanel countryId={member.countryId} />}
+        primaryAddress={primary && { addressText: primary.addressText, latitude: primary.latitude, longitude: primary.longitude }}
         // Pre-filled with the number on the member's record, formatted, so
         // they usually just confirm it.
         defaultPhone={member.phone ? (normalizeCallbackPhone(member.phone, member.country?.iso2?.trim() ?? "SN") ?? member.phone) : ""}

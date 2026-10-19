@@ -18,6 +18,33 @@ model MemberLoginToken {
   @@map("member_login_token")
 }
 
+/// A sign-in code sent to a phone (WhatsApp first). Not tied to a member:
+/// the phone may belong to no one yet (quick start) or to several people in
+/// a household. Only hashes are stored. Once the right code is entered the
+/// row carries a short-lived ticket (a cookie) for the next step — picking
+/// a profile or creating one.
+model MemberPhoneCode {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// E.164, e.g. +221771234567.
+  phone           String
+  codeHash        String    @map("code_hash")
+  channel         String    @default("WHATSAPP")
+  expiresAt       DateTime  @map("expires_at")
+  attempts        Int       @default(0)
+  verifiedAt      DateTime? @map("verified_at")
+  ticketHash      String?   @unique @map("ticket_hash")
+  ticketExpiresAt DateTime? @map("ticket_expires_at")
+  /// Set when the ticket has been used to sign in or create an account.
+  consumedAt      DateTime? @map("consumed_at")
+  /// Hash of the requester's IP, for rate limiting only.
+  ipHash          String?   @map("ip_hash")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@index([phone, createdAt])
+  @@index([ipHash, createdAt])
+  @@map("member_phone_code")
+}
+
 /// A signed-in member's session. The cookie holds a random token; only its
 /// hash is stored, so a database leak doesn't expose live sessions. Signing
 /// out deletes the row.
@@ -171,6 +198,27 @@ enum EmergencyContactKind {
   /// Private ambulance / emergency doctor services open 24/7 (e.g. SOS
   /// Médecins, Urgences et Solutions Médicales).
   PRIVATE_EMS
+}
+
+/// Member app services that can be switched on or off, separately for
+/// covered members and for members without cover (fixed rows looked up by
+/// code; admins change the switches, not the rows) — e.g. Request help
+/// held back while only medication orders are offered.
+model MemberAppFeature {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  labelEn   String   @map("label_en")
+  labelFr   String?  @map("label_fr")
+  /// Offered to covered members.
+  enabled   Boolean  @default(true)
+  /// Offered to members without cover (special requests, e.g. quick start).
+  enabledForNotCovered Boolean @default(true) @map("enabled_not_covered")
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("member_app_feature")
 }
 
 /// Phone numbers the member app always shows. A contact with a country is

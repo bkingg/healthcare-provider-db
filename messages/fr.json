@@ -163,7 +163,8 @@
       "noteTemplates": "Modèles de note",
       "medicationRequirements": "Exigences médicaments",
       "medicationSettings": "Réglages livraison de médicaments",
-      "paymentLinks": "Liens de paiement"
+      "paymentLinks": "Liens de paiement",
+      "memberAppFeatures": "Services de l'application membre"
     },
     "fields": {
       "paymentCategory": "Catégorie de paiement",
@@ -222,7 +223,9 @@
       "instructionsFr": "Instructions (français)",
       "settingValue": "Valeur",
       "paymentMethod": "Moyen de paiement",
-      "paymentUrl": "Lien (https://…)"
+      "paymentUrl": "Lien (https://…)",
+      "featureEnabled": "Membres couverts",
+      "featureEnabledNotCovered": "Membres sans couverture (demandes spéciales)"
     },
     "marker": {
       "default": "Défaut",
@@ -900,7 +903,7 @@
     "household": "Foyer ({count})",
     "deactivate": "Désactiver",
     "reactivate": "Réactiver",
-    "noEmailNoSignIn": "Pas d'e-mail : ce membre ne peut pas se connecter à l'application, mais le membre principal peut demander de l'aide pour lui.",
+    "noEmailNoSignIn": "Ni e-mail ni mobile : ce membre ne peut pas se connecter à l'application, mais le membre principal peut demander de l'aide pour lui.",
     "importMembers": "Importer des membres",
     "applyFilters": "Appliquer",
     "resultsFor": "pour « {q} »",
@@ -909,7 +912,34 @@
     "covered": "Couvert",
     "notCovered": "Non couvert",
     "notCoveredHint": "Nomad aide cette personne uniquement en demandes spéciales (gratuites ou à coût fixé). Elle ne peut pas demander d’aide dans l’appli.",
-    "coverageALL": "Toutes"
+    "coverageALL": "Toutes",
+    "joined": "Inscription",
+    "signupSource": {
+      "SELF": "Inscrit dans l'appli (démarrage rapide)",
+      "STAFF": "Ajouté par l'équipe",
+      "IMPORT": "Import groupé"
+    },
+    "consent": "Consentement",
+    "consentGiven": "Accepté le {when} (notice {version})",
+    "primaryAddress": "Adresse principale",
+    "addressText": "Adresse (quartier, rue / villa, immeuble, étage)",
+    "addressDirections": "Indications pour le coursier",
+    "addressCoordinates": "Position (coordonnées, facultatif)",
+    "cancel": "Annuler",
+    "openMap": "Voir sur la carte",
+    "noAddress": "Pas encore d'adresse principale.",
+    "addAddress": "Ajouter une adresse",
+    "editAddress": "Modifier l'adresse",
+    "removeAddress": "Supprimer",
+    "addressUpdatedMember": "Enregistrée par le membre · {when}",
+    "addressUpdatedStaff": "Modifiée par l'équipe · {when}",
+    "addressError": {
+      "address": "Indiquez l'adresse (au moins 5 caractères).",
+      "coordinates": "Coordonnées illisibles — ex. 14.70330, -17.46350.",
+      "location": "Coordonnées illisibles.",
+      "tooLong": "Trop long.",
+      "invalid": "Vérifiez la saisie."
+    }
   },
   "MemberImport": {
     "breadcrumb": "Membres",
@@ -951,7 +981,7 @@
   "MemberApp": {
     "signOut": "Se déconnecter",
     "loginTitle": "Se connecter à Nomad",
-    "loginIntro": "Saisissez l'adresse e-mail que Nomad a pour vous. Nous vous enverrons un lien de connexion — pas de mot de passe.",
+    "loginIntro": "Connectez-vous ou créez votre compte avec votre numéro de mobile — sans mot de passe.",
     "emailLabel": "Votre e-mail",
     "sendLink": "M'envoyer un lien de connexion",
     "sending": "Envoi…",
@@ -1048,8 +1078,8 @@
       "notFound": "Cette demande est introuvable.",
       "closed": "Cette demande est clôturée. Envoyez plutôt une nouvelle demande."
     },
-    "notCoveredTitle": "Besoin d’aide ? Appelez Nomad",
-    "notCoveredBody": "Vos demandes sont traitées par téléphone. Appelez-nous et nous nous en occupons.",
+    "notCoveredTitle": "Vous n'avez pas encore de couverture Nomad",
+    "notCoveredBody": "Vous pouvez quand même demander de l'aide et commander des médicaments : Nomad vous indique tout coût avant d'agir. Couvert par votre employeur ou votre assureur ? Appelez-nous et nous relierons votre couverture.",
     "callNomad": "Appeler Nomad · {phone}",
     "orderMedication": "Commander des médicaments",
     "orderMedicationSub": "Livrés depuis une pharmacie proche",
@@ -1061,7 +1091,19 @@
     "needsYou": "Demande votre attention",
     "allCaughtUp": "Vous êtes à jour — rien ne vous attend.",
     "privateAmbulances": "Ambulances privées · 24h/24",
-    "privateAmbulancesHelp": "Services privés d'ambulance et de médecins d'urgence. Leurs interventions peuvent être payantes."
+    "privateAmbulancesHelp": "Services privés d'ambulance et de médecins d'urgence. Leurs interventions peuvent être payantes.",
+    "welcomeTitle": "Votre compte est prêt",
+    "welcomeBody": "Vous pouvez maintenant demander de l'aide ou commander des médicaments. Nomad vous contactera sur WhatsApp ou par téléphone.",
+    "notCoveredRequestNote": "Vous n'avez pas de couverture : c'est une demande spéciale. Nomad vous indique le coût avant d'agir.",
+    "primaryAddress": "Adresse principale",
+    "locationSaved": "Position enregistrée",
+    "change": "Modifier",
+    "addPrimaryAddress": "Ajoutez votre adresse principale",
+    "addPrimaryAddressWhy": "Gagnez du temps à chaque commande et demande",
+    "addressSaved": "Votre adresse principale est enregistrée.",
+    "fromPrimaryAddress": "Reprise de votre adresse principale — changez-la si vous êtes ailleurs.",
+    "notCoveredBodyOrdersOnly": "Vous pouvez quand même commander des médicaments : Nomad vous indique le total avant tout paiement. Couvert par votre employeur ou votre assureur ? Appelez-nous et nous relierons votre couverture.",
+    "welcomeBodyOrdersOnly": "Vous pouvez maintenant commander des médicaments. Nomad vous contactera sur WhatsApp ou par téléphone."
   },
   "Cases": {
     "assigneeSearch": "Nom ou @identifiant",
@@ -1659,7 +1701,7 @@
     "error": {
       "invalid": "Un problème est survenu — réessayez.",
       "patient": "Choisissez pour qui.",
-      "unavailable": "La commande n’est pas disponible pour le moment. Appelez Nomad.",
+      "unavailable": "Les commandes de médicaments ne sont pas disponibles dans l'application pour le moment. Appelez Nomad.",
       "duplicate": "Un article apparaît deux fois.",
       "itemUnavailable": "Un article n’est plus disponible — retirez-le et recherchez à nouveau.",
       "missingDocument": "Ce document est nécessaire pour votre commande.",
@@ -1681,7 +1723,13 @@
     "locationWhyTitle": "Partagez votre position pour une livraison plus simple.",
     "locationWhy": "Le coursier vient directement à votre porte, avec moins d'appels pour vous trouver et moins d'attente.",
     "locationSharedDone": "Position partagée — le coursier viendra directement à vous",
-    "officialPricePerPack": "Prix officiel {price} FCFA / boîte"
+    "officialPricePerPack": "Prix officiel {price} FCFA / boîte",
+    "deliverToPrimary": "Livrer à mon adresse principale",
+    "locationSaved": "Position enregistrée",
+    "deliverElsewhere": "Livrer ailleurs",
+    "backToPrimary": "← Utiliser mon adresse principale",
+    "saveAsPrimary": "Enregistrer comme adresse principale",
+    "replacePrimary": "En faire ma nouvelle adresse principale"
   },
   "Quote": {
     "goneTitle": "Ce lien ne fonctionne plus",
@@ -1886,5 +1934,62 @@
       "invalid": "Vérifiez les valeurs saisies.",
       "other": "Une erreur s'est produite."
     }
+  },
+  "MemberSignIn": {
+    "phoneLabel": "Votre numéro de mobile",
+    "country": "Pays",
+    "phoneHelp": "Nous vous envoyons un code à 6 chiffres sur WhatsApp. Nouveau chez Nomad ? Le même code crée votre compte.",
+    "sendCode": "Recevoir un code sur WhatsApp",
+    "sending": "Envoi…",
+    "codeSent": "Nous avons envoyé un code à 6 chiffres sur WhatsApp au {phone}.",
+    "codeLabel": "Code",
+    "confirm": "Valider",
+    "checking": "Vérification…",
+    "resend": "Recevoir un nouveau code",
+    "changeNumber": "Changer de numéro",
+    "devCodeTitle": "Mode test :",
+    "devCodeBody": "WhatsApp n'est pas encore connecté, voici le code :",
+    "whoIsSigningIn": "Qui se connecte ?",
+    "mainMember": "Membre principal",
+    "quickStartTitle": "Bienvenue chez Nomad",
+    "quickStartIntro": "Le {phone} n'est pas encore lié à un compte Nomad. Indiquez votre nom pour commencer.",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "notCoveredNote": "Vous commencez comme membre sans couverture : vous pouvez demander de l'aide et commander des médicaments, et Nomad vous indique tout coût avant d'agir. Si votre employeur ou votre assureur vous couvre, Nomad reliera votre couverture.",
+    "consent": "J'accepte que Nomad conserve mon nom, mon numéro, mon adresse et ma position, ainsi que les informations de santé que je partage, pour organiser mes soins, et ne les partage qu'avec les médecins, pharmacies, coursiers et services concernés.",
+    "createAccount": "Créer mon compte",
+    "creating": "Création…",
+    "useEmail": "Se connecter par e-mail",
+    "error": {
+      "invalidPhone": "Saisissez un numéro de mobile valide.",
+      "tooManyCodes": "Trop de codes pour ce numéro. Réessayez dans une heure, ou appelez Nomad.",
+      "sendFailed": "Nous n'avons pas pu envoyer le code sur WhatsApp. Réessayez dans un instant, ou connectez-vous par e-mail.",
+      "codeExpired": "Ce code a expiré. Demandez-en un nouveau.",
+      "wrongCode": "Ce code n'est pas bon. Vérifiez le message WhatsApp et réessayez.",
+      "tooManyAttempts": "Trop de codes erronés. Demandez-en un nouveau.",
+      "startAgain": "Merci de recommencer : saisissez votre numéro.",
+      "firstName": "Indiquez votre prénom.",
+      "lastName": "Indiquez votre nom.",
+      "consent": "Cochez la case pour continuer.",
+      "other": "Une erreur s'est produite. Veuillez réessayer."
+    },
+    "notCoveredNoteOrdersOnly": "Vous commencez comme membre sans couverture : vous pouvez commander des médicaments, et Nomad vous indique le total avant tout paiement. Si votre employeur ou votre assureur vous couvre, Nomad reliera votre couverture."
+  },
+  "MemberAddress": {
+    "title": "Adresse principale",
+    "welcomeTitle": "Où vous trouver ?",
+    "intro": "Votre adresse principale est proposée en premier quand vous commandez des médicaments ou demandez de l'aide : plus besoin de la saisir à chaque fois. Vous pouvez la changer quand vous voulez.",
+    "save": "Enregistrer mon adresse principale",
+    "saving": "Enregistrement…",
+    "skip": "Plus tard",
+    "remove": "Supprimer mon adresse principale",
+    "error": {
+      "address": "Indiquez votre adresse (au moins 5 caractères).",
+      "location": "Votre position n'a pas pu être lue. Partagez-la à nouveau.",
+      "tooLong": "Trop long.",
+      "other": "Une erreur s'est produite. Veuillez réessayer."
+    },
+    "addressLabel": "Adresse",
+    "introOrdersOnly": "Votre adresse principale est proposée en premier quand vous commandez des médicaments : plus besoin de la saisir à chaque fois. Vous pouvez la changer quand vous voulez."
   }
 }

@@ -127,6 +127,7 @@ export async function commitMemberImport(rows: CheckedRow[], fileName: string, a
         if (!row.isPrimary && !primaryMemberId) throw new Error(`Row ${row.rowNumber}: its primary member wasn't imported.`);
         const member = await tx.member.create({
           data: {
+            signupSource: "IMPORT",
             firstName: input.firstName,
             lastName: input.lastName,
             dateOfBirth: input.dateOfBirth ?? null,

@@ -6,7 +6,10 @@ import { getCurrentActor } from "@/lib/actor";
 import { requireManageMembers } from "@/lib/rbac";
 import { formatMemberNumber, ageFromDateOfBirth } from "@/lib/memberNumber";
 import { localizedText } from "@/lib/localizedText";
+import { formatDakarDateTime } from "@/lib/formatDate";
 import { getMemberWithHousehold } from "@/data/members";
+import { getPrimaryAddress } from "@/data/memberAddresses";
+import { MemberAddressPanel } from "../_components/member-address";
 import { PnTag } from "@/components/pn-tag";
 import { MemberFormDialog, type MemberFormValues } from "../_components/member-form-dialog";
 import { NotCoveredTag } from "../_components/not-covered-tag";
@@ -31,7 +34,7 @@ export default async function MemberPage(props: PageProps<"/[locale]/members/[id
   requireManageMembers(actor);
 
   const { id } = await props.params;
-  const [data, formOptions] = await Promise.all([getMemberWithHousehold(id), loadMemberFormOptions()]);
+  const [data, formOptions, primaryAddress] = await Promise.all([getMemberWithHousehold(id), loadMemberFormOptions(), getPrimaryAddress(id)]);
   if (!data) notFound();
   const { member, household } = data;
   const age = ageFromDateOfBirth(member.dateOfBirth);
@@ -134,8 +137,26 @@ export default async function MemberPage(props: PageProps<"/[locale]/members/[id
             <Row label={t("coverage")}>
               {member.coverageStart || member.coverageEnd ? `${isoDate(member.coverageStart) ?? "…"} → ${isoDate(member.coverageEnd) ?? "…"}` : null}
             </Row>
+            <Row label={t("joined")}>{member.signupSource ? t(`signupSource.${member.signupSource}`) : null}</Row>
+            <Row label={t("consent")}>{member.consentAt ? t("consentGiven", { when: formatDakarDateTime(member.consentAt, locale), version: member.consentVersion ?? "—" }) : null}</Row>
           </dl>
-          {member.primaryMemberId && !member.email && <p className="m-0 text-[12px] text-pn-gray-3">{t("noEmailNoSignIn")}</p>}
+          {member.primaryMemberId && !member.email && !member.phone && <p className="m-0 text-[12px] text-pn-gray-3">{t("noEmailNoSignIn")}</p>}
+          <h3 className="m-0 mt-3 text-[11px] font-bold tracking-[0.08em] text-pn-gray-1 uppercase">{t("primaryAddress")}</h3>
+          <MemberAddressPanel
+            memberId={member.id}
+            mapLabel={`${member.firstName} ${member.lastName}`}
+            address={
+              primaryAddress && {
+                addressText: primaryAddress.addressText,
+                directions: primaryAddress.directions,
+                latitude: primaryAddress.latitude,
+                longitude: primaryAddress.longitude,
+                updatedAt: formatDakarDateTime(primaryAddress.updatedAt, locale),
+                // Staff (rather than the member) last changed it.
+                updatedByStaff: Boolean(primaryAddress.updatedBy),
+              }
+            }
+          />
         </section>
 
         <section className="flex flex-col gap-2">

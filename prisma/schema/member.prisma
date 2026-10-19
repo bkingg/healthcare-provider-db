@@ -39,7 +39,14 @@ model Member {
   /// for them is a special request (free or at a set cost). Left out of
   /// covered-member counts.
   isCovered      Boolean          @default(true) @map("is_covered")
+  /// How the record was created: STAFF (by hand), IMPORT, or SELF (quick
+  /// start in the member app). Empty for records from before this was kept.
+  signupSource   String?          @map("signup_source")
+  /// When the member accepted the privacy notice, and which version.
+  consentAt      DateTime?        @map("consent_at")
+  consentVersion String?          @map("consent_version")
 
+  addresses      MemberAddress[]
   loginTokens    MemberLoginToken[]
   sessions       MemberSession[]
   casesRequested CareCase[]         @relation("CasesRequested")
@@ -109,4 +116,27 @@ model MemberRelationshipRef {
   members Member[]
 
   @@map("member_relationship_ref")
+}
+
+/// A member's saved addresses, reused when they order or ask for help.
+/// Only the PRIMARY address is offered for now; the list leaves room for
+/// "work" or a relative's home later. One of each kind per member.
+model MemberAddress {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  memberId    String    @map("member_id") @db.Uuid
+  member      Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  kind        String    @default("PRIMARY")
+  /// Neighbourhood, street or villa, building, floor.
+  addressText String    @map("address_text")
+  /// Landmark / directions for the courier.
+  directions  String?
+  latitude    Float?
+  longitude   Float?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  /// Staff user who last changed it; empty when the member did.
+  updatedBy   String?   @map("updated_by") @db.Uuid
+
+  @@unique([memberId, kind])
+  @@map("member_address")
 }

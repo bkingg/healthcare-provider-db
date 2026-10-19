@@ -374,6 +374,15 @@ async function main() {
     ].map((c) => prisma.emergencyContactRef.upsert({ where: { code: c.code }, update: {}, create: c })),
   );
 
+  // Member app services (Admin > Value lists > Member app features): only
+  // medication orders at launch; Request help switched on later.
+  await Promise.all(
+    [
+      { code: "ORDER_MEDICATION", labelEn: "Order medication", labelFr: "Commander des médicaments", enabled: true, enabledForNotCovered: true, sortOrder: 1 },
+      { code: "REQUEST_HELP", labelEn: "Request help (doctors, appointments, urgent care…)", labelFr: "Demander de l'aide (médecins, rendez-vous, soins urgents…)", enabled: false, enabledForNotCovered: false, sortOrder: 2 },
+    ].map((f) => prisma.memberAppFeature.upsert({ where: { code: f.code }, update: {}, create: f })),
+  );
+
   // Response time per colour (step 1.3). Red runs 24/7 (on-call); yellow and
   // green count office hours only. Editable in Value lists > Response times.
   await Promise.all(

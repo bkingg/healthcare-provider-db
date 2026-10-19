@@ -43,11 +43,14 @@ export function RequestForm({
   categories,
   emergencyPanel,
   defaultPhone,
+  primaryAddress,
 }: {
   people: Person[];
   categories: Category[];
   emergencyPanel: React.ReactNode;
   defaultPhone: string;
+  /** Pre-fills where the member is; they can change it. */
+  primaryAddress: { addressText: string; latitude: number | null; longitude: number | null } | null;
 }) {
   const t = useTranslations("MemberApp");
   const [state, action, pending] = useActionState<ActionResult | null, FormData>(createRequestAction, null);
@@ -56,13 +59,15 @@ export function RequestForm({
   const [patientId, setPatientId] = useState(people.length === 1 ? people[0].id : "");
   const [categoryId, setCategoryId] = useState("");
   const [urgency, setUrgency] = useState<string>("");
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
+    primaryAddress?.latitude != null && primaryAddress.longitude != null ? { lat: primaryAddress.latitude, lng: primaryAddress.longitude } : null,
+  );
   const [locating, setLocating] = useState<"idle" | "busy" | "denied">("idle");
   // Text fields are controlled too, not just the choices above: React resets
   // a form's uncontrolled fields after every submission, which would wipe
   // what the member typed whenever the server sends back an error.
   const [description, setDescription] = useState("");
-  const [locationLabel, setLocationLabel] = useState("");
+  const [locationLabel, setLocationLabel] = useState(primaryAddress?.addressText ?? "");
   const [contactPhone, setContactPhone] = useState(defaultPhone);
   const [hasWhatsapp, setHasWhatsapp] = useState(false);
 
@@ -156,6 +161,7 @@ export function RequestForm({
           {coords ? t("locationShared") : locating === "busy" ? t("locating") : t("useMyLocation")}
         </button>
         {locating === "denied" && <p className="m-0 text-[14px] text-pn-gray-1">{t("locationDenied")}</p>}
+        {primaryAddress && <p className="m-0 text-[13px] text-pn-gray-2">{t("fromPrimaryAddress")}</p>}
         {coords && (
           <>
             <input type="hidden" name="latitude" value={coords.lat} />

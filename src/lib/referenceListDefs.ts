@@ -60,6 +60,7 @@ export const REFERENCE_LIST_KEYS = [
   "noteTemplates",
   "medicationRequirements",
   "medicationSettings",
+  "memberAppFeatures",
   "paymentLinks",
 ] as const;
 
@@ -70,7 +71,7 @@ export type ReferenceListKey = (typeof REFERENCE_LIST_KEYS)[number];
  * group — a unit test fails if a new list is added without one.
  * (ratingScales sits in Locations: it's shown nested under Countries.) */
 export const REFERENCE_LIST_GROUPS = [
-  { key: "memberApp", lists: ["caseCategories", "emergencyContacts"] },
+  { key: "memberApp", lists: ["memberAppFeatures", "caseCategories", "emergencyContacts"] },
   { key: "memberEnrollment", lists: ["organizations", "memberRelationships"] },
   { key: "caseManagement", lists: ["responseTargets", "noteTemplates"] },
   { key: "medicationDelivery", lists: ["medicationRequirements", "medicationSettings", "paymentLinks"] },
@@ -137,6 +138,10 @@ export type ReferenceListDef = {
    * Quality/Access rating criteria): admins can edit a row's text but not add
    * rows, deactivate them, or change their code. */
   editOnly?: boolean;
+  /** Form fields shown as table columns until the admin changes the
+   * Columns chooser — for a value admins need at a glance (e.g. whether a
+   * member app feature is on). */
+  defaultColumns?: string[];
   defaultOrderBy: Record<string, OrderDirection> | Record<string, OrderDirection>[];
 };
 
@@ -173,6 +178,24 @@ export const REFERENCE_LIST_DEFS = {
       { key: "labelFr", labelKey: "labelFr", kind: "text" },
       { key: "value", labelKey: "settingValue", kind: "number", integer: true, required: true },
     ],
+    defaultOrderBy: [{ sortOrder: "asc" }] as Record<string, "asc" | "desc">[],
+  },
+  // Member app services switched on or off — for covered members and for
+  // members without cover (special requests) separately.
+  memberAppFeatures: {
+    key: "memberAppFeatures",
+    labelKey: "memberAppFeatures",
+    model: "MemberAppFeature",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "labelEn",
+    editOnly: true,
+    fields: [
+      { key: "labelEn", labelKey: "labelEn", kind: "text", required: true },
+      { key: "labelFr", labelKey: "labelFr", kind: "text" },
+      { key: "enabled", labelKey: "featureEnabled", kind: "checkbox" },
+      { key: "enabledForNotCovered", labelKey: "featureEnabledNotCovered", kind: "checkbox" },
+    ],
+    defaultColumns: ["enabled", "enabledForNotCovered"],
     defaultOrderBy: [{ sortOrder: "asc" }] as Record<string, "asc" | "desc">[],
   },
   // Documents and handling a medication order needs, by what's in it (see

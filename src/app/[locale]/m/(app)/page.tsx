@@ -1,5 +1,5 @@
 import { getLocale, getTranslations } from "next-intl/server";
-import { ChevronRight } from "lucide-react";
+import { CheckCircle2, ChevronRight } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { getCurrentMember } from "@/lib/memberAuth";
 import { formatCaseNumber } from "@/lib/caseNumber";
@@ -7,16 +7,34 @@ import { localizedText } from "@/lib/localizedText";
 import { EmergencyPanel } from "../_components/emergency-panel";
 import { MemberSidebar, requestsNeedingMember } from "../_components/member-sidebar";
 import { PANES } from "../_components/panes";
+import { memberFeatures } from "@/data/memberAppFeatures";
 
-export default async function MemberHomePage() {
+export default async function MemberHomePage(props: PageProps<"/[locale]/m">) {
   const t = await getTranslations("MemberApp");
   const locale = await getLocale();
   const member = (await getCurrentMember())!;
-  const attention = await requestsNeedingMember(member);
+  const [attention, features] = await Promise.all([requestsNeedingMember(member), memberFeatures(member)]);
+  // Just created with quick start.
+  const params = await props.searchParams;
+  const welcome = params.welcome === "1";
+  const addressSaved = params.addressSaved === "1";
 
   return (
     <main className="flex flex-col">
       <EmergencyPanel countryId={member.countryId} compact />
+      {welcome && (
+        <div role="status" className="mx-4 mt-4 flex flex-col gap-1 border-2 border-pn-accent bg-pn-accent-soft p-4 lg:mx-6">
+          <div className="flex items-center gap-2 text-[17px] font-bold text-[#08432c]">
+            <CheckCircle2 size={20} aria-hidden /> {t("welcomeTitle")}
+          </div>
+          <p className="m-0 text-[15px]">{t(features.REQUEST_HELP ? "welcomeBody" : "welcomeBodyOrdersOnly")}</p>
+        </div>
+      )}
+      {addressSaved && (
+        <p role="status" className="mx-4 mt-4 flex items-center gap-2 border-l-4 border-pn-accent bg-pn-accent-soft px-3 py-2 text-[15px] font-semibold text-[#08432c] lg:mx-6">
+          <CheckCircle2 size={18} aria-hidden /> {t("addressSaved")}
+        </p>
+      )}
       <div className={PANES}>
         <MemberSidebar member={member} active={{ kind: "home" }} />
         {/* Computer only: the right-hand pane before a request is opened. */}

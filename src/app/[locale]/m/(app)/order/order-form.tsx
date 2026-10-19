@@ -2,8 +2,9 @@
 
 import { startTransition, useActionState, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Camera, Check, FileText, Info, LocateFixed, Minus, Plus, Search, Snowflake, Trash2, X } from "lucide-react";
+import { Camera, Check, FileText, Info, MapPin, Minus, Plus, Search, Snowflake, Trash2, X } from "lucide-react";
 import { formatPresentation, requirementsFor, type RegulatoryClass } from "@/lib/medications";
+import { AddressFields, type AddressValue } from "../../_components/address-fields";
 import { shrinkImage } from "@/lib/shrinkImage";
 import type { ActionResult } from "@/lib/validation/common";
 import { placeMedicationOrderAction, searchMedicationsAction } from "../../actions";
@@ -62,7 +63,9 @@ const medName = (m: Med) => [m.dci, m.strength, m.form].filter(Boolean).join(" "
 /** The member's medication order: who it's for, what (from the catalog, or
  * "not in the list"), the documents those items need — photos upload as
  * soon as they're taken, shrunk on the phone — and where to deliver. */
-export function OrderForm({ people, rules, defaultPhone }: { people: Person[]; rules: OrderRule[]; defaultPhone: string }) {
+export type PrimaryAddress = { addressText: string; directions: string | null; latitude: number | null; longitude: number | null };
+
+export function OrderForm({ people, rules, defaultPhone, primaryAddress }: { people: Person[]; rules: OrderRule[]; defaultPhone: string; primaryAddress: PrimaryAddress | null }) {
   const t = useTranslations("MemberOrder");
   const [state, action, pending] = useActionState<ActionResult | null, FormData>(placeMedicationOrderAction, null);
   const errors = state && !state.success ? state.errors : {};
@@ -81,11 +84,12 @@ export function OrderForm({ people, rules, defaultPhone }: { people: Person[]; r
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [acknowledged, setAcknowledged] = useState<string[]>([]);
   const [when, setWhen] = useState<(typeof WHEN)[number] | "">("");
-  // Starts empty: the city on the member's record isn't enough for a courier.
-  const [address, setAddress] = useState("");
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [locating, setLocating] = useState<"idle" | "busy" | "denied">("idle");
-  const [deliveryNotes, setDeliveryNotes] = useState("");
+  // The saved primary address is offered first; "somewhere else" starts
+  // empty (a city alone isn't enough for a courier) and can be saved as the
+  // new primary address.
+  const [deliverTo, setDeliverTo] = useState<"primary" | "other">(primaryAddress ? "primary" : "other");
+  const [other, setOther] = useState<AddressValue>({ addressText: "", directions: "", coords: null });
+  const [saveAsPrimary, setSaveAsPrimary] = useState(!primaryAddress);
   const [phone, setPhone] = useState(defaultPhone);
   const [whatsapp, setWhatsapp] = useState(false);
   const [note, setNote] = useState("");
@@ -152,20 +156,15 @@ export function OrderForm({ people, rules, defaultPhone }: { people: Person[]; r
     }
   }
 
-  function useMyLocation() {
-    if (!("geolocation" in navigator)) return setLocating("denied");
-    setLocating("busy");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setLocating("idle");
-      },
-      () => setLocating("denied"),
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
-    );
-  }
-
   const stillUploading = uploads.some((u) => u.status === "uploading");
+  const deliver: AddressValue =
+    deliverTo === "primary" && primaryAddress
+      ? {
+          addressText: primaryAddress.addressText,
+          directions: primaryAddress.directions ?? "",
+          coords: primaryAddress.latitude !== null && primaryAddress.longitude !== null ? { lat: primaryAddress.latitude, lng: primaryAddress.longitude } : null,
+        }
+      : other;
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const order = {
@@ -174,9 +173,10 @@ export function OrderForm({ people, rules, defaultPhone }: { people: Person[]; r
       documents: uploads.filter((u) => u.status === "done" && docRules.some((r) => r.code === u.requirementCode)).map((u) => ({ requirementCode: u.requirementCode, fileId: u.fileId! })),
       acknowledged: acknowledged.filter((c) => docRules.some((r) => r.code === c)),
       when: when || undefined,
-      deliveryAddress: address,
-      ...(coords && { latitude: coords.lat, longitude: coords.lng }),
-      deliveryNotes: deliveryNotes || undefined,
+      deliveryAddress: deliver.addressText,
+      ...(deliver.coords && { latitude: deliver.coords.lat, longitude: deliver.coords.lng }),
+      deliveryNotes: deliver.directions || undefined,
+      saveAsPrimary: deliverTo === "other" && saveAsPrimary,
       contactPhone: phone,
       contactHasWhatsapp: whatsapp,
       note: note || undefined,
@@ -357,39 +357,37 @@ export function OrderForm({ people, rules, defaultPhone }: { people: Person[]; r
       )}
 
       <Section n={docRules.length > 0 ? 4 : 3} title={t("delivery")}>
-        {/* Location first: one tap gives the courier the exact spot; the
-         * address below adds what a pin can't (villa, floor, landmark). */}
-        {!coords && (
-          <p id="locationWhy" className="m-0 flex items-start gap-2 border-l-4 border-pn-accent bg-pn-accent-soft px-3 py-2 text-[14px] text-[#08432c]">
-            <Info size={16} className="mt-0.5 flex-none" aria-hidden />
-            <span>
-              <strong>{t("locationWhyTitle")}</strong> {t("locationWhy")}
+        {deliverTo === "primary" && primaryAddress ? (
+          <div className="flex flex-col gap-2 border-2 border-pn-ink bg-white p-3">
+            <span className="flex items-center gap-2 text-[12px] font-bold tracking-[0.06em] text-pn-gray-2 uppercase">
+              <MapPin size={14} aria-hidden /> {t("deliverToPrimary")}
             </span>
-          </p>
+            <span className="text-[15px] font-semibold whitespace-pre-line">{primaryAddress.addressText}</span>
+            {primaryAddress.directions && <span className="text-[14px] text-pn-gray-1">{primaryAddress.directions}</span>}
+            {deliver.coords && (
+              <span className="flex items-center gap-1 text-[13px] font-semibold text-[#0a5c3c]">
+                <Check size={14} aria-hidden /> {t("locationSaved")}
+              </span>
+            )}
+            <button type="button" onClick={() => setDeliverTo("other")} className="cursor-pointer self-start text-[14px] font-semibold text-[#0a5c3c] underline">
+              {t("deliverElsewhere")}
+            </button>
+          </div>
+        ) : (
+          <>
+            {primaryAddress && (
+              <button type="button" onClick={() => setDeliverTo("primary")} className="cursor-pointer self-start text-[14px] font-semibold text-[#0a5c3c] underline">
+                {t("backToPrimary")}
+              </button>
+            )}
+            <AddressFields value={other} onChange={setOther} addressError={err("deliveryAddress")} />
+            <label className="flex cursor-pointer items-start gap-2 text-[14px]">
+              <input type="checkbox" checked={saveAsPrimary} onChange={(e) => setSaveAsPrimary(e.target.checked)} className="mt-0.5 h-5 w-5 flex-none accent-pn-ink" />
+              {primaryAddress ? t("replacePrimary") : t("saveAsPrimary")}
+            </label>
+          </>
         )}
-        <button
-          type="button"
-          aria-describedby={coords ? undefined : "locationWhy"}
-          onClick={useMyLocation}
-          disabled={locating === "busy"}
-          className={`flex min-h-12 cursor-pointer items-center justify-center gap-2 border-2 px-4 text-[15px] font-semibold ${coords ? "border-pn-accent bg-pn-accent-soft text-[#08432c]" : "border-pn-ink bg-white"}`}
-        >
-          {coords ? <Check size={18} /> : <LocateFixed size={18} />}
-          {coords ? t("locationSharedDone") : locating === "busy" ? t("locating") : t("shareLocation")}
-        </button>
-        {locating === "denied" && <p className="m-0 text-[14px] text-pn-gray-1">{t("locationDenied")}</p>}
-        <label className="mt-2 text-[14px] font-semibold" htmlFor="address">
-          {t("address")}
-        </label>
-        <p id="addressHelp" className="m-0 -mt-1 text-[13px] text-pn-gray-1">
-          {t("addressHelp")}
-        </p>
-        <textarea id="address" rows={3} maxLength={300} value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t("addressPlaceholder")} aria-describedby="addressHelp" className="border-2 border-pn-border-muted bg-white p-3 text-[16px] outline-none focus:border-pn-ink" />
-        {err("deliveryAddress")}
-        <label className="text-[14px] font-semibold" htmlFor="deliveryNotes">
-          {t("deliveryNotes")}
-        </label>
-        <input id="deliveryNotes" maxLength={300} value={deliveryNotes} onChange={(e) => setDeliveryNotes(e.target.value)} placeholder={t("deliveryNotesPlaceholder")} className={input} />
+        {deliverTo === "primary" && err("deliveryAddress")}
 
         <p className="m-0 mt-2 text-[15px] font-semibold">{t("whenNeeded")}</p>
         {WHEN.map((w) => (

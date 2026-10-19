@@ -72,6 +72,7 @@ async function addPersonTx(tx: Tx, p: NonNullable<StaffCaseInput["newPerson"]>, 
   }
   return tx.member.create({
     data: {
+      signupSource: "STAFF",
       firstName: p.firstName,
       lastName: p.lastName,
       dateOfBirth: p.dateOfBirth ?? null,

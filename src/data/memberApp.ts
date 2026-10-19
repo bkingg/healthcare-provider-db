@@ -10,10 +10,10 @@ import type { MemberRequestInput } from "@/lib/validation/memberRequest";
 
 /** Who this member can ask for help for: a primary member for anyone active
  * and covered in their household; a dependent (e.g. an adult spouse with
- * their own sign-in) only for themselves. Someone not covered can't ask in
- * the app — Nomad takes those on as special requests, by phone. */
+ * their own sign-in) only for themselves. Someone not covered (e.g. a quick
+ * start account) asks only for themselves — as a special request. */
 export async function requestablePeople(member: CurrentMember) {
-  if (!member.isCovered) return [];
+  if (!member.isCovered) return [member];
   if (member.primaryMemberId) return [member];
   const dependents = await prisma.member.findMany({
     where: { primaryMemberId: member.id, status: "ACTIVE", isCovered: true },
@@ -104,5 +104,7 @@ export async function createMemberCase(member: CurrentMember, input: MemberReque
       rag,
       ragReasons: reasons,
       channel: "MEMBER_APP",
+      // Not covered: a special request, priced by staff before anything is done.
+      coverage: member.isCovered ? "COVERED" : "SPECIAL_PAID",
   });
 }

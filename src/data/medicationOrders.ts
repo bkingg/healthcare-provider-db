@@ -119,6 +119,7 @@ export async function createMemberMedicationOrder(member: CurrentMember, input: 
         rag,
         ragReasons: reasons,
         channel: "MEMBER_APP",
+        coverage: member.isCovered ? "COVERED" : "SPECIAL_PAID",
       },
       { actorType: "MEMBER", memberId: member.id },
     );

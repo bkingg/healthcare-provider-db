@@ -136,7 +136,7 @@ function auditValue(v: unknown): string | null {
 
 export async function createMember(input: MemberInput, actorId: string) {
   await assertHouseholdRules(null, input.primaryMemberId);
-  const member = await prisma.member.create({ data: { ...toData(input), createdBy: actorId, updatedBy: actorId } });
+  const member = await prisma.member.create({ data: { ...toData(input), signupSource: "STAFF", createdBy: actorId, updatedBy: actorId } });
   await writeAudit({ entityType: "Member", entityId: member.id, action: AuditAction.CREATE, actorId });
   return member;
 }

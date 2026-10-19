@@ -13,6 +13,11 @@ import { fail, type ActionResult } from "@/lib/validation/common";
 import { medicationOrderSchema } from "@/lib/validation/medicationOrder";
 import { createMemberMedicationOrder, OrderRejectedError, prepareQuotesForCase, searchCatalogForMember } from "@/data/medicationOrders";
 import { approvePrice, declinePrice, OrderStepError, reportPayment } from "@/data/orderPayments";
+import { PhoneSignInError, quickStartMember, requestPhoneCode, signInWithPhone, verifyPhoneCode, type PhoneProfile } from "@/lib/memberPhoneAuth";
+import { maskPhone } from "@/lib/phoneSignIn";
+import { savePrimaryAddress, removePrimaryAddress } from "@/data/memberAddresses";
+import { memberAddressSchema } from "@/lib/validation/memberAddress";
+import { memberFeatures } from "@/data/memberAppFeatures";
 
 export type LoginLinkState = { sent: true; devLink?: string } | { sent: false; error: string } | null;
 
@@ -35,6 +40,132 @@ export async function redeemLoginLinkAction(_prev: { failed: boolean } | null, f
   return redirect({ href: "/m", locale: result.language === "en" ? "en" : "fr" });
 }
 
+// ------------------------------------------------------------ phone sign-in
+
+export type PhoneSignInState =
+  | { stage: "code"; phone: string; masked: string; devCode?: string; error?: string }
+  | { stage: "choose"; profiles: PhoneProfile[] }
+  | { stage: "quickStart"; masked: string; error?: string }
+  | { stage: "phone"; error: string }
+  | null;
+
+const signInError = (err: unknown) => {
+  if (err instanceof PhoneSignInError) return err.message;
+  throw err;
+};
+
+/** Step 1: send a WhatsApp code to the number. */
+export async function requestPhoneCodeAction(_prev: PhoneSignInState, formData: FormData): Promise<PhoneSignInState> {
+  const locale = await getLocale();
+  try {
+    const { phone, devCode } = await requestPhoneCode(String(formData.get("phone") ?? ""), String(formData.get("country") ?? "SN"), locale === "en" ? "en" : "fr");
+    return { stage: "code", phone: phone.e164, masked: maskPhone(phone.international), devCode };
+  } catch (err) {
+    return { stage: "phone", error: signInError(err) };
+  }
+}
+
+/** Step 2: the code. One profile on the number signs straight in; several
+ * (a household sharing a phone) are offered; none starts a new account. */
+export async function verifyPhoneCodeAction(prev: PhoneSignInState, formData: FormData): Promise<PhoneSignInState> {
+  const phone = String(formData.get("phone") ?? "");
+  const masked = prev?.stage === "code" ? prev.masked : "";
+  let result: Awaited<ReturnType<typeof verifyPhoneCode>>;
+  try {
+    result = await verifyPhoneCode(phone, String(formData.get("code") ?? ""));
+  } catch (err) {
+    const error = signInError(err);
+    return error === "startAgain" || error === "invalidPhone" ? { stage: "phone", error } : { stage: "code", phone, masked, error };
+  }
+  if (result.profiles.length === 1) return chooseProfile(result.profiles[0].id);
+  if (result.profiles.length > 1) return { stage: "choose", profiles: result.profiles };
+  return { stage: "quickStart", masked: maskPhone(result.phone.international) };
+}
+
+async function chooseProfile(memberId: string): Promise<PhoneSignInState> {
+  let language: string;
+  try {
+    ({ language } = await signInWithPhone(memberId));
+  } catch (err) {
+    return { stage: "phone", error: signInError(err) };
+  }
+  return redirect({ href: "/m", locale: language === "en" ? "en" : "fr" });
+}
+
+/** Step 3a: which household member is signing in. */
+export async function choosePhoneProfileAction(_prev: PhoneSignInState, formData: FormData): Promise<PhoneSignInState> {
+  return chooseProfile(String(formData.get("memberId") ?? ""));
+}
+
+const quickStartSchema = z.object({
+  firstName: z.string().trim().min(1, "firstName").max(100),
+  lastName: z.string().trim().min(1, "lastName").max(100),
+  consent: z.literal("1", "consent"),
+});
+
+/** Step 3b: a number Nomad doesn't know — name and consent, and the
+ * member is in, not covered. */
+export async function quickStartAction(prev: PhoneSignInState, formData: FormData): Promise<PhoneSignInState> {
+  const masked = prev?.stage === "quickStart" ? prev.masked : "";
+  const parsed = quickStartSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { stage: "quickStart", masked, error: parsed.error.issues[0]?.message ?? "invalid" };
+  const locale = (await getLocale()) === "en" ? "en" : "fr";
+  try {
+    await quickStartMember({ firstName: parsed.data.firstName, lastName: parsed.data.lastName, language: locale });
+  } catch (err) {
+    return { stage: "phone", error: signInError(err) };
+  }
+  // Next: the primary address (skippable), then home with a welcome.
+  return redirect({ href: "/m/address?welcome=1", locale });
+}
+
+/** One entry point for the sign-in screen, which keeps a single state
+ * through the steps: the form says which step it is. */
+export async function phoneSignInAction(prev: PhoneSignInState, formData: FormData): Promise<PhoneSignInState> {
+  switch (formData.get("step")) {
+    case "send":
+      return requestPhoneCodeAction(prev, formData);
+    case "verify":
+      return verifyPhoneCodeAction(prev, formData);
+    case "choose":
+      return choosePhoneProfileAction(prev, formData);
+    case "quickStart":
+      return quickStartAction(prev, formData);
+    default:
+      return { stage: "phone", error: "startAgain" };
+  }
+}
+
+// ---------------------------------------------------------- primary address
+
+export type AddressState = { ok: false; error: string } | null;
+
+/** Saves the member's primary address, then goes on — to the home page
+ * (with the welcome message after quick start). */
+export async function savePrimaryAddressAction(_prev: AddressState, formData: FormData): Promise<AddressState> {
+  const locale = await getLocale();
+  const member = await getCurrentMember();
+  if (!member) return redirect({ href: "/m/login", locale });
+  const blank = (k: string) => {
+    const v = String(formData.get(k) ?? "").trim();
+    return v ? v : undefined;
+  };
+  const parsed = memberAddressSchema.safeParse({ addressText: blank("addressText") ?? "", directions: blank("directions"), latitude: blank("latitude"), longitude: blank("longitude") });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "invalid" };
+  await savePrimaryAddress(member.id, parsed.data);
+  revalidatePath("/[locale]/m", "layout");
+  return redirect({ href: formData.get("welcome") === "1" ? "/m?welcome=1" : "/m?addressSaved=1", locale });
+}
+
+export async function removePrimaryAddressAction(): Promise<void> {
+  const locale = await getLocale();
+  const member = await getCurrentMember();
+  if (!member) return redirect({ href: "/m/login", locale });
+  await removePrimaryAddress(member.id);
+  revalidatePath("/[locale]/m", "layout");
+  redirect({ href: "/m/address", locale });
+}
+
 export async function signOutMemberAction(): Promise<void> {
   await signOutMember();
   redirect({ href: "/m/login", locale: await getLocale() });
@@ -44,6 +175,8 @@ export async function createRequestAction(_prev: ActionResult | null, formData: 
   const member = await getCurrentMember();
   const locale = await getLocale();
   if (!member) return redirect({ href: "/m/login", locale });
+  // Held back for now (Admin > Value lists > Member app features).
+  if (!(await memberFeatures(member)).REQUEST_HELP) return fail({ form: ["This service isn't available in the app yet. Please call Nomad."] });
 
   const parsed = memberRequestSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return fail(parsed.error.flatten().fieldErrors);
@@ -85,7 +218,7 @@ export async function memberReplyAction(_prev: ActionResult | null, formData: Fo
 /** The order screen's medication search (signed-in members only). */
 export async function searchMedicationsAction(q: string) {
   const member = await getCurrentMember();
-  if (!member || !member.isCovered) return [];
+  if (!member) return [];
   return searchCatalogForMember(String(q ?? "").slice(0, 80));
 }
 
@@ -95,6 +228,7 @@ export async function placeMedicationOrderAction(_prev: ActionResult | null, for
   const member = await getCurrentMember();
   const locale = await getLocale();
   if (!member) return redirect({ href: "/m/login", locale });
+  if (!(await memberFeatures(member)).ORDER_MEDICATION) return fail({ form: ["unavailable"] });
   let raw: unknown;
   try {
     raw = JSON.parse(String(formData.get("order") ?? ""));
@@ -112,6 +246,14 @@ export async function placeMedicationOrderAction(_prev: ActionResult | null, for
   let caseId: string;
   try {
     caseId = (await createMemberMedicationOrder(member, parsed.data, contactPhone)).id;
+    if (parsed.data.saveAsPrimary) {
+      await savePrimaryAddress(member.id, {
+        addressText: parsed.data.deliveryAddress,
+        directions: parsed.data.deliveryNotes ?? null,
+        latitude: parsed.data.latitude,
+        longitude: parsed.data.longitude,
+      });
+    }
     // Pick the pharmacies to ask straight away (staff then send). Never
     // blocks the order if it fails — staff can add pharmacies by hand.
     await prepareQuotesForCase(caseId).catch((e) => console.error("prepareQuotes failed", e));

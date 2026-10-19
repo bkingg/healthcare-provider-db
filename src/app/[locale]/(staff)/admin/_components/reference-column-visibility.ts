@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useSyncExternalStore } from "react";
-import type { ReferenceListKey } from "@/lib/referenceListDefs";
+import { REFERENCE_LIST_DEFS, type ReferenceListKey } from "@/lib/referenceListDefs";
 
 const STORAGE_PREFIX = "pn-admin-columns-";
 const EMPTY: string[] = [];
@@ -18,10 +18,23 @@ type Store = { visible: string[]; hydrated: boolean };
 const stores = new Map<ReferenceListKey, Store>();
 const listeners = new Map<ReferenceListKey, Set<() => void>>();
 
+// The list's own default columns (most lists: none), one stable array per
+// list so the server snapshot never changes identity.
+const defaultsCache = new Map<ReferenceListKey, string[]>();
+function defaultsFor(listKey: ReferenceListKey): string[] {
+  let d = defaultsCache.get(listKey);
+  if (!d) {
+    const def = REFERENCE_LIST_DEFS[listKey] as { defaultColumns?: string[] };
+    d = def.defaultColumns ?? EMPTY;
+    defaultsCache.set(listKey, d);
+  }
+  return d;
+}
+
 function getStore(listKey: ReferenceListKey): Store {
   let store = stores.get(listKey);
   if (!store) {
-    store = { visible: [], hydrated: false };
+    store = { visible: defaultsFor(listKey), hydrated: false };
     stores.set(listKey, store);
   }
   return store;
@@ -38,7 +51,7 @@ function ensureHydrated(listKey: ReferenceListKey) {
       if (Array.isArray(saved)) store.visible = saved.filter((v): v is string => typeof v === "string");
     }
   } catch {
-    // Corrupt or blocked storage — just keep the default (no extra columns).
+    // Corrupt or blocked storage — just keep the list's default columns.
   }
 }
 
@@ -78,7 +91,7 @@ export function useExtraColumns(listKey: ReferenceListKey) {
       ensureHydrated(listKey);
       return getStore(listKey).visible;
     },
-    () => EMPTY,
+    () => defaultsFor(listKey),
   );
   const visibleColumns = new Set(current);
 

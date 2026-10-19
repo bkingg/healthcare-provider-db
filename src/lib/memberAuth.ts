@@ -5,8 +5,8 @@ import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { sendEmail, showDevEmailLinks } from "@/lib/email";
 
-/** Member sign-in (MVP step 1.2): one-time links by email, then a session
- * cookie. Entirely separate from staff auth (src/lib/auth.ts): a member
+/** Member sign-in (MVP step 1.2): one-time links by email — or a code by
+ * WhatsApp, see memberPhoneAuth.ts — then a session cookie. Entirely separate from staff auth (src/lib/auth.ts): a member
  * session can't reach staff pages — proxy.ts sends every non-member route
  * through the staff login — and staff sessions don't reach member data. */
 
@@ -15,11 +15,11 @@ const LINK_MINUTES = 15;
 const SESSION_DAYS = 30;
 const MAX_LINKS_PER_HOUR = 5;
 
-function hash(token: string): string {
+export function hash(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
-function newToken(): string {
+export function newToken(): string {
   return crypto.randomBytes(32).toString("base64url");
 }
 
@@ -73,10 +73,16 @@ export async function redeemLoginLink(token: string): Promise<{ language: string
   });
   if (used.count !== 1) return null;
   const { member } = await prisma.memberLoginToken.findUniqueOrThrow({ where: { tokenHash }, include: { member: true } });
+  await startMemberSession(member.id);
+  return { language: member.preferredLanguage };
+}
 
+/** Signs the member in on this device: a new session and its cookie. Used
+ * by email links and phone codes alike. */
+export async function startMemberSession(memberId: string): Promise<void> {
   const sessionToken = newToken();
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
-  await prisma.memberSession.create({ data: { memberId: member.id, tokenHash: hash(sessionToken), expiresAt } });
+  await prisma.memberSession.create({ data: { memberId, tokenHash: hash(sessionToken), expiresAt } });
   (await cookies()).set(MEMBER_COOKIE, sessionToken, {
     httpOnly: true,
     sameSite: "lax",
@@ -84,7 +90,6 @@ export async function redeemLoginLink(token: string): Promise<{ language: string
     path: "/",
     expires: expiresAt,
   });
-  return { language: member.preferredLanguage };
 }
 
 /** The signed-in member, or null. Cached per request. An inactive member or

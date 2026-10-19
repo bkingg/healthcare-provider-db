@@ -1,11 +1,13 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { getCurrentMember } from "@/lib/memberAuth";
-import { redirect } from "@/i18n/navigation";
 import { localizedText } from "@/lib/localizedText";
 import { ageFromDateOfBirth } from "@/lib/memberNumber";
 import { normalizeCallbackPhone } from "@/lib/phone";
 import { requestablePeople } from "@/data/memberApp";
 import { activeRequirementRules } from "@/data/medicationOrders";
+import { getPrimaryAddress } from "@/data/memberAddresses";
+import { memberFeatures } from "@/data/memberAppFeatures";
+import { redirect } from "@/i18n/navigation";
 import { EmergencyPanel } from "../../_components/emergency-panel";
 import { OrderForm } from "./order-form";
 import { MemberSidebar } from "../../_components/member-sidebar";
@@ -18,9 +20,8 @@ export default async function OrderMedicationPage() {
   const tm = await getTranslations("MemberApp");
   const locale = await getLocale();
   const member = (await getCurrentMember())!;
-  // Someone not covered asks Nomad by phone (see the home page).
-  if (!member.isCovered) redirect({ href: "/m", locale });
-  const [people, rules] = await Promise.all([requestablePeople(member), activeRequirementRules()]);
+  if (!(await memberFeatures(member)).ORDER_MEDICATION) redirect({ href: "/m", locale });
+  const [people, rules, primaryAddress] = await Promise.all([requestablePeople(member), activeRequirementRules(), getPrimaryAddress(member.id)]);
 
   return (
     <main className="flex flex-col">
@@ -31,6 +32,7 @@ export default async function OrderMedicationPage() {
       <div className="flex flex-col gap-2 px-4 pt-6">
         <h1 className="m-0 text-[24px] font-extrabold tracking-[-0.02em]">{t("title")}</h1>
         <p className="m-0 text-[15px] text-pn-gray-1">{t("intro")}</p>
+        {!member.isCovered && <p className="m-0 border-l-4 border-[#b45309] bg-white px-3 py-2 text-[14px]">{tm("notCoveredRequestNote")}</p>}
       </div>
       <OrderForm
         people={people.map((p) => {
@@ -48,6 +50,7 @@ export default async function OrderMedicationPage() {
           isActive: r.isActive,
         }))}
         defaultPhone={member.phone ? (normalizeCallbackPhone(member.phone, member.country?.iso2?.trim() ?? "SN") ?? member.phone) : ""}
+        primaryAddress={primaryAddress && { addressText: primaryAddress.addressText, directions: primaryAddress.directions, latitude: primaryAddress.latitude, longitude: primaryAddress.longitude }}
       />
         </div>
       </div>

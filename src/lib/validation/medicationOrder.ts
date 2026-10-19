@@ -29,6 +29,8 @@ export const medicationOrderSchema = z
     latitude: z.number().min(-90).max(90).optional(),
     longitude: z.number().min(-180).max(180).optional(),
     deliveryNotes: z.string().trim().max(300, "tooLong").optional(),
+    /** Also keep this delivery address as the member's primary address. */
+    saveAsPrimary: z.boolean().optional(),
     contactPhone: z.string().trim().min(1, "phone"),
     contactHasWhatsapp: z.boolean(),
     note: z.string().trim().max(1000, "tooLong").optional(),
