@@ -164,7 +164,8 @@
       "medicationRequirements": "Exigences médicaments",
       "medicationSettings": "Réglages livraison de médicaments",
       "paymentLinks": "Liens de paiement",
-      "memberAppFeatures": "Services de l'application membre"
+      "memberAppFeatures": "Services de l'application membre",
+      "medicationTimeframes": "Délais de livraison"
     },
     "fields": {
       "paymentCategory": "Catégorie de paiement",
@@ -225,7 +226,10 @@
       "paymentMethod": "Moyen de paiement",
       "paymentUrl": "Lien (https://…)",
       "featureEnabled": "Membres couverts",
-      "featureEnabledNotCovered": "Membres sans couverture (demandes spéciales)"
+      "featureEnabledNotCovered": "Membres sans couverture (demandes spéciales)",
+      "timeframeHelpEn": "Texte d'aide sous le choix (anglais)",
+      "timeframeHelpFr": "Texte d'aide sous le choix (français)",
+      "timeframeOffered": "Proposé aux membres"
     },
     "marker": {
       "default": "Défaut",
@@ -1660,16 +1664,10 @@
     "deliveryNotes": "Indications pour le coursier (facultatif)",
     "deliveryNotesPlaceholder": "Étage, code du portail, appeler en arrivant…",
     "whenNeeded": "Pour quand ?",
-    "when": {
-      "WITHIN_HOUR": "Urgent (moins d'1 heure)",
-      "TODAY": "Aujourd’hui",
-      "THIS_WEEK": "Cette semaine",
-      "ROUTINE": "Pas urgent"
-    },
     "phone": "Numéro où vous joindre",
     "hasWhatsapp": "Ce numéro a WhatsApp",
     "anythingElse": "Autre chose ? (facultatif)",
-    "notePlaceholder": "Allergies, pharmacie préférée, questions…",
+    "notePlaceholder": "Allergies, questions…",
     "fixErrors": "Vérifiez les éléments signalés ci-dessus.",
     "sending": "Envoi…",
     "waitUploads": "Envoi des photos en cours…",
@@ -1718,7 +1716,6 @@
       "tooLong": "Trop long.",
       "phone": "Indiquez un numéro, p. ex. 77 123 45 67."
     },
-    "withinHourHelp": "Nomad choisit la pharmacie ouverte la plus proche et la livraison la plus rapide. Pas pour une urgence vitale — appelez les numéros d'urgence en haut de l'écran.",
     "addressHelp": "Soyez aussi précis que possible pour que le coursier vous trouve : quartier, rue ou numéro de villa, immeuble et étage, et un point de repère proche.",
     "locationWhyTitle": "Partagez votre position pour une livraison plus simple.",
     "locationWhy": "Le coursier vient directement à votre porte, avec moins d'appels pour vous trouver et moins d'attente.",
@@ -1729,7 +1726,8 @@
     "deliverElsewhere": "Livrer ailleurs",
     "backToPrimary": "← Utiliser mon adresse principale",
     "saveAsPrimary": "Enregistrer comme adresse principale",
-    "replacePrimary": "En faire ma nouvelle adresse principale"
+    "replacePrimary": "En faire ma nouvelle adresse principale",
+    "whenFromPayment": "Les délais de livraison comptent à partir de la réception de votre paiement."
   },
   "Quote": {
     "goneTitle": "Ce lien ne fonctionne plus",

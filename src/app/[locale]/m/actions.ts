@@ -18,6 +18,7 @@ import { maskPhone } from "@/lib/phoneSignIn";
 import { savePrimaryAddress, removePrimaryAddress } from "@/data/memberAddresses";
 import { memberAddressSchema } from "@/lib/validation/memberAddress";
 import { memberFeatures } from "@/data/memberAppFeatures";
+import { offeredTimeframes } from "@/data/medicationTimeframes";
 
 export type LoginLinkState = { sent: true; devLink?: string } | { sent: false; error: string } | null;
 
@@ -241,6 +242,8 @@ export async function placeMedicationOrderAction(_prev: ActionResult | null, for
     for (const issue of parsed.error.issues) errors[String(issue.path[0] ?? "form")] ??= [issue.message];
     return fail(errors);
   }
+  // Only a timeframe the admin currently offers.
+  if (!(await offeredTimeframes(locale)).some((tf) => tf.code === parsed.data.when)) return fail({ when: ["when"] });
   const contactPhone = normalizeCallbackPhone(parsed.data.contactPhone, member.country?.iso2?.trim() ?? "SN");
   if (!contactPhone) return fail({ contactPhone: ["phone"] });
   let caseId: string;

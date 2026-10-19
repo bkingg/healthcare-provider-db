@@ -367,6 +367,28 @@ model MedicationPriceObservation {
   @@map("medication_price_observation")
 }
 
+/// The "When do you need it?" choices on the member's medication order —
+/// fixed rows (code = the case urgency each one sets, which drives its
+/// colour, response time and pharmacy choice); admins edit the wording,
+/// order and whether it's offered, in Admin > Value lists > Medication
+/// delivery > Delivery timeframes.
+model MedicationTimeframeRef {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  labelEn   String   @map("label_en")
+  labelFr   String?  @map("label_fr")
+  /// Shown under the choice, e.g. "Not for life-threatening emergencies…".
+  helpEn    String?  @map("help_en")
+  helpFr    String?  @map("help_fr")
+  isOffered Boolean  @default(true) @map("is_offered")
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("medication_timeframe_ref")
+}
+
 /// Medication delivery settings — fixed rows looked up by code, numbers
 /// only, edited in Admin > Value lists > Medication delivery (admins change
 /// the value, not the rows).

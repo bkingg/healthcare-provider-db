@@ -15,7 +15,8 @@ export type OrderRule = { code: string; name: string; description: string | null
 type Line = { key: string; med?: Med; freeText?: string; quantity: number };
 type Upload = { key: string; requirementCode: string; name: string; status: "uploading" | "done" | "error"; fileId?: string; error?: string; preview?: string };
 
-const WHEN = ["WITHIN_HOUR", "TODAY", "THIS_WEEK", "ROUTINE"] as const;
+/** A "When do you need it?" choice, as set in Admin (Delivery timeframes). */
+export type TimeframeChoice = { code: "WITHIN_HOUR" | "TODAY" | "THIS_WEEK" | "ROUTINE"; label: string; help: string | null };
 const MAX_LINES = 15;
 const MAX_QTY = 20;
 
@@ -65,7 +66,19 @@ const medName = (m: Med) => [m.dci, m.strength, m.form].filter(Boolean).join(" "
  * soon as they're taken, shrunk on the phone — and where to deliver. */
 export type PrimaryAddress = { addressText: string; directions: string | null; latitude: number | null; longitude: number | null };
 
-export function OrderForm({ people, rules, defaultPhone, primaryAddress }: { people: Person[]; rules: OrderRule[]; defaultPhone: string; primaryAddress: PrimaryAddress | null }) {
+export function OrderForm({
+  people,
+  rules,
+  defaultPhone,
+  primaryAddress,
+  timeframes,
+}: {
+  people: Person[];
+  rules: OrderRule[];
+  defaultPhone: string;
+  primaryAddress: PrimaryAddress | null;
+  timeframes: TimeframeChoice[];
+}) {
   const t = useTranslations("MemberOrder");
   const [state, action, pending] = useActionState<ActionResult | null, FormData>(placeMedicationOrderAction, null);
   const errors = state && !state.success ? state.errors : {};
@@ -83,7 +96,7 @@ export function OrderForm({ people, rules, defaultPhone, primaryAddress }: { peo
   const [showFree, setShowFree] = useState(false);
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [acknowledged, setAcknowledged] = useState<string[]>([]);
-  const [when, setWhen] = useState<(typeof WHEN)[number] | "">("");
+  const [when, setWhen] = useState<TimeframeChoice["code"] | "">("");
   // The saved primary address is offered first; "somewhere else" starts
   // empty (a city alone isn't enough for a courier) and can be saved as the
   // new primary address.
@@ -390,11 +403,12 @@ export function OrderForm({ people, rules, defaultPhone, primaryAddress }: { peo
         {deliverTo === "primary" && err("deliveryAddress")}
 
         <p className="m-0 mt-2 text-[15px] font-semibold">{t("whenNeeded")}</p>
-        {WHEN.map((w) => (
+        <p className="m-0 -mt-1 text-[13px] text-pn-gray-1">{t("whenFromPayment")}</p>
+        {timeframes.map(({ code: w, label, help }) => (
           <ChoiceCard key={w} checked={when === w} onChange={() => setWhen(w)}>
             <span className="flex flex-col">
-              <span className="text-[15px] font-semibold">{t(`when.${w}`)}</span>
-              {w === "WITHIN_HOUR" && <span className="text-[13px] text-pn-gray-1">{t("withinHourHelp")}</span>}
+              <span className="text-[15px] font-semibold">{label}</span>
+              {help && <span className="text-[13px] text-pn-gray-1">{help}</span>}
             </span>
           </ChoiceCard>
         ))}

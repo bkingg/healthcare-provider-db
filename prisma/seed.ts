@@ -383,6 +383,32 @@ async function main() {
     ].map((f) => prisma.memberAppFeature.upsert({ where: { code: f.code }, update: {}, create: f })),
   );
 
+  // Medication order "When do you need it?" choices (Admin > Value lists >
+  // Medication delivery > Delivery timeframes): wording, order and whether
+  // each is offered are admin-editable; the codes are case urgencies.
+  await Promise.all(
+    [
+      {
+        code: "WITHIN_HOUR",
+        labelEn: "Urgent (less than 1 hour)",
+        labelFr: "Urgent (moins d'1 heure)",
+        helpEn: "Not for life-threatening emergencies — call the emergency numbers at the top of the screen or go to the nearest emergency room.",
+        helpFr: "Pas pour une urgence vitale — appelez les numéros d'urgence en haut de l'écran ou rendez-vous aux urgences les plus proches.",
+        sortOrder: 1,
+      },
+      {
+        code: "TODAY",
+        labelEn: "Today",
+        labelFr: "Aujourd’hui",
+        helpEn: "Paid before 8 pm: delivered the same day. Paid after 8 pm: delivered the next day by 11 am.",
+        helpFr: "Payée avant 20 h : livrée le jour même. Payée après 20 h : livrée le lendemain avant 11 h.",
+        sortOrder: 2,
+      },
+      { code: "THIS_WEEK", labelEn: "This week", labelFr: "Cette semaine", sortOrder: 3 },
+      { code: "ROUTINE", labelEn: "No rush", labelFr: "Pas urgent", sortOrder: 4 },
+    ].map((tf) => prisma.medicationTimeframeRef.upsert({ where: { code: tf.code }, update: {}, create: tf })),
+  );
+
   // Response time per colour (step 1.3). Red runs 24/7 (on-call); yellow and
   // green count office hours only. Editable in Value lists > Response times.
   await Promise.all(

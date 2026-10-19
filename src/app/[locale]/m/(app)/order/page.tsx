@@ -7,6 +7,7 @@ import { requestablePeople } from "@/data/memberApp";
 import { activeRequirementRules } from "@/data/medicationOrders";
 import { getPrimaryAddress } from "@/data/memberAddresses";
 import { memberFeatures } from "@/data/memberAppFeatures";
+import { offeredTimeframes } from "@/data/medicationTimeframes";
 import { redirect } from "@/i18n/navigation";
 import { EmergencyPanel } from "../../_components/emergency-panel";
 import { OrderForm } from "./order-form";
@@ -21,7 +22,7 @@ export default async function OrderMedicationPage() {
   const locale = await getLocale();
   const member = (await getCurrentMember())!;
   if (!(await memberFeatures(member)).ORDER_MEDICATION) redirect({ href: "/m", locale });
-  const [people, rules, primaryAddress] = await Promise.all([requestablePeople(member), activeRequirementRules(), getPrimaryAddress(member.id)]);
+  const [people, rules, primaryAddress, timeframes] = await Promise.all([requestablePeople(member), activeRequirementRules(), getPrimaryAddress(member.id), offeredTimeframes(locale)]);
 
   return (
     <main className="flex flex-col">
@@ -50,6 +51,7 @@ export default async function OrderMedicationPage() {
           isActive: r.isActive,
         }))}
         defaultPhone={member.phone ? (normalizeCallbackPhone(member.phone, member.country?.iso2?.trim() ?? "SN") ?? member.phone) : ""}
+        timeframes={timeframes}
         primaryAddress={primaryAddress && { addressText: primaryAddress.addressText, directions: primaryAddress.directions, latitude: primaryAddress.latitude, longitude: primaryAddress.longitude }}
       />
         </div>

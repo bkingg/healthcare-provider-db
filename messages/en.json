@@ -164,7 +164,8 @@
       "medicationRequirements": "Medication requirements",
       "medicationSettings": "Medication delivery settings",
       "paymentLinks": "Payment links",
-      "memberAppFeatures": "Member app features"
+      "memberAppFeatures": "Member app features",
+      "medicationTimeframes": "Delivery timeframes"
     },
     "fields": {
       "paymentCategory": "Payment category",
@@ -225,7 +226,10 @@
       "paymentMethod": "Payment method",
       "paymentUrl": "Link (https://…)",
       "featureEnabled": "Covered members",
-      "featureEnabledNotCovered": "Members without cover (special requests)"
+      "featureEnabledNotCovered": "Members without cover (special requests)",
+      "timeframeHelpEn": "Help text under the choice (English)",
+      "timeframeHelpFr": "Help text under the choice (French)",
+      "timeframeOffered": "Offered to members"
     },
     "marker": {
       "default": "Default",
@@ -1660,16 +1664,10 @@
     "deliveryNotes": "Notes for the courier (optional)",
     "deliveryNotesPlaceholder": "Floor, gate code, call on arrival…",
     "whenNeeded": "When do you need it?",
-    "when": {
-      "WITHIN_HOUR": "Urgent (less than 1 hour)",
-      "TODAY": "Today",
-      "THIS_WEEK": "This week",
-      "ROUTINE": "No rush"
-    },
     "phone": "Number we can call",
     "hasWhatsapp": "This number has WhatsApp",
     "anythingElse": "Anything else? (optional)",
-    "notePlaceholder": "Allergies, a preferred pharmacy, questions…",
+    "notePlaceholder": "Allergies, questions…",
     "fixErrors": "Please check the highlighted items above.",
     "sending": "Sending…",
     "waitUploads": "Waiting for photos to finish…",
@@ -1718,7 +1716,6 @@
       "tooLong": "Too long.",
       "phone": "Enter a number we can call, e.g. 77 123 45 67."
     },
-    "withinHourHelp": "Nomad goes for the nearest open pharmacy and the fastest delivery. Not for life-threatening emergencies — call the emergency numbers at the top of the screen.",
     "addressHelp": "Be as detailed as possible so the courier finds you: neighbourhood, street or villa number, building and floor, and a landmark nearby.",
     "locationWhyTitle": "Share your location for a smoother delivery.",
     "locationWhy": "The courier comes straight to your door, with fewer calls to find you and less waiting.",
@@ -1729,7 +1726,8 @@
     "deliverElsewhere": "Deliver somewhere else",
     "backToPrimary": "← Use my primary address",
     "saveAsPrimary": "Save this as my primary address",
-    "replacePrimary": "Make this my new primary address"
+    "replacePrimary": "Make this my new primary address",
+    "whenFromPayment": "Delivery times count from when your payment is received."
   },
   "Quote": {
     "goneTitle": "This link no longer works",

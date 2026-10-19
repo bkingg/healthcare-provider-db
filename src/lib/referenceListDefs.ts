@@ -61,6 +61,7 @@ export const REFERENCE_LIST_KEYS = [
   "medicationRequirements",
   "medicationSettings",
   "memberAppFeatures",
+  "medicationTimeframes",
   "paymentLinks",
 ] as const;
 
@@ -74,7 +75,7 @@ export const REFERENCE_LIST_GROUPS = [
   { key: "memberApp", lists: ["memberAppFeatures", "caseCategories", "emergencyContacts"] },
   { key: "memberEnrollment", lists: ["organizations", "memberRelationships"] },
   { key: "caseManagement", lists: ["responseTargets", "noteTemplates"] },
-  { key: "medicationDelivery", lists: ["medicationRequirements", "medicationSettings", "paymentLinks"] },
+  { key: "medicationDelivery", lists: ["medicationTimeframes", "medicationRequirements", "medicationSettings", "paymentLinks"] },
   // Everything about provider records, ordered by theme: details, contacts,
   // networks, payments and bank details, credentials and ratings, documents
   // and data quality.
@@ -178,6 +179,28 @@ export const REFERENCE_LIST_DEFS = {
       { key: "labelFr", labelKey: "labelFr", kind: "text" },
       { key: "value", labelKey: "settingValue", kind: "number", integer: true, required: true },
     ],
+    defaultOrderBy: [{ sortOrder: "asc" }] as Record<string, "asc" | "desc">[],
+  },
+  // The member's "When do you need it?" choices on a medication order. A
+  // fixed set — each code sets the case urgency (colour, response time,
+  // fastest vs cheapest pharmacy) — so admins change the wording, order and
+  // whether it's offered, not the rows.
+  medicationTimeframes: {
+    key: "medicationTimeframes",
+    labelKey: "medicationTimeframes",
+    model: "MedicationTimeframeRef",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "labelEn",
+    editOnly: true,
+    fields: [
+      { key: "labelEn", labelKey: "labelEn", kind: "text", required: true },
+      { key: "labelFr", labelKey: "labelFr", kind: "text" },
+      { key: "helpEn", labelKey: "timeframeHelpEn", kind: "textarea", rows: 2 },
+      { key: "helpFr", labelKey: "timeframeHelpFr", kind: "textarea", rows: 2 },
+      { key: "isOffered", labelKey: "timeframeOffered", kind: "checkbox" },
+      { key: "sortOrder", labelKey: "sortOrder", kind: "number", integer: true },
+    ],
+    defaultColumns: ["labelFr", "isOffered"],
     defaultOrderBy: [{ sortOrder: "asc" }] as Record<string, "asc" | "desc">[],
   },
   // Member app services switched on or off — for covered members and for
