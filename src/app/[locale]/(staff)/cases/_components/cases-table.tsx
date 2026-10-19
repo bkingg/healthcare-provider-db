@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { ArrowDown, ArrowUp, ArrowUpDown, Columns3, MessageSquareReply } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { CHECKLIST_FOOTER_BUTTON, ChecklistMenu } from "@/components/checklist-menu";
-import { nextSort, type CaseSort } from "@/lib/caseListSort";
+import { isDefaultSort, nextSort, type CaseSort } from "@/lib/caseListSort";
 import { COLOUR_STYLE, ColourPill, type Colour } from "./colour";
 import { ChannelIcon, CoverageTag } from "./channel-icon";
 import { CASE_COLUMN_WIDTH, isLockedCaseColumn, useCaseColumns, type CaseColumnKey } from "./case-columns";
@@ -57,7 +57,7 @@ export function CasesTable({ rows, sort }: { rows: CaseRow[]; sort: CaseSort }) 
   const sortHref = (key: CaseColumnKey) => {
     const next = nextSort(sort, key);
     const p = new URLSearchParams(params.toString());
-    if (next.key === "priority" && next.dir === "asc") {
+    if (isDefaultSort(next)) {
       p.delete("sort");
       p.delete("dir");
     } else {

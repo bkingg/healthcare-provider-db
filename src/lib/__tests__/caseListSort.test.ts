@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import { nextSort, parseCaseSort, sortByValue } from "@/lib/caseListSort";
 
 describe("parseCaseSort", () => {
-  it("falls back to priority, and to each column's natural direction", () => {
-    expect(parseCaseSort(undefined, undefined)).toEqual({ key: "priority", dir: "asc" });
-    expect(parseCaseSort("nonsense", "up")).toEqual({ key: "priority", dir: "asc" });
+  it("falls back to newest first, and to each column's natural direction", () => {
+    expect(parseCaseSort(undefined, undefined)).toEqual({ key: "created", dir: "desc" });
+    expect(parseCaseSort("nonsense", "up")).toEqual({ key: "created", dir: "desc" });
+    expect(parseCaseSort("priority", undefined)).toEqual({ key: "priority", dir: "asc" });
     expect(parseCaseSort("created", undefined)).toEqual({ key: "created", dir: "desc" });
     expect(parseCaseSort("patient", "desc")).toEqual({ key: "patient", dir: "desc" });
   });

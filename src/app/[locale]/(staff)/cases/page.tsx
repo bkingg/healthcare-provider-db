@@ -12,7 +12,7 @@ import { caseQueue, queueCounts, refreshOverdueCases, type QueueFilters } from "
 import { COLOUR_STYLE, type Colour } from "./_components/colour";
 import { CasesTabs } from "./_components/cases-tabs";
 import { CasesTable, type CaseRow } from "./_components/cases-table";
-import { parseCaseSort, sortByValue, type CaseSortKey, type SortValue } from "@/lib/caseListSort";
+import { isDefaultSort, parseCaseSort, sortByValue, type CaseSortKey, type SortValue } from "@/lib/caseListSort";
 import { Plus } from "lucide-react";
 import { staffLabel } from "@/lib/handle";
 import { formatDakarDateTime } from "@/lib/formatDate";
@@ -124,7 +124,7 @@ export default async function CasesPage(props: PageProps<"/[locale]/cases">) {
     const params = new URLSearchParams();
     if (filters.q) params.set("q", filters.q);
     if (extra.colour) params.set("colour", extra.colour);
-    if (sort.key !== "priority" || sort.dir !== "asc") {
+    if (!isDefaultSort(sort)) {
       params.set("sort", sort.key);
       params.set("dir", sort.dir);
     }
@@ -197,7 +197,7 @@ export default async function CasesPage(props: PageProps<"/[locale]/cases">) {
       <form method="get" className="flex flex-none flex-wrap items-end gap-2 px-5 py-3">
         {filters.colour && <input type="hidden" name="colour" value={filters.colour} />}
         {filters.q && <input type="hidden" name="q" value={filters.q} />}
-        {(sort.key !== "priority" || sort.dir !== "asc") && (
+        {!isDefaultSort(sort) && (
           <>
             <input type="hidden" name="sort" value={sort.key} />
             <input type="hidden" name="dir" value={sort.dir} />

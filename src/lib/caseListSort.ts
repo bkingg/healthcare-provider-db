@@ -1,6 +1,6 @@
-/** Sorting the staff case list by any column. The default, "priority", is
- * the triage order: red → yellow → green, then the nearest response
- * deadline, then the longest-waiting. */
+/** Sorting the staff case list by any column. The default is date created,
+ * newest first. "priority" is the triage order: red → yellow → green, then
+ * the nearest response deadline, then the longest-waiting. */
 export const CASE_SORT_KEYS = [
   "priority",
   "caseNumber",
@@ -24,6 +24,14 @@ export type CaseSortKey = (typeof CASE_SORT_KEYS)[number];
 export type SortDir = "asc" | "desc";
 export type CaseSort = { key: CaseSortKey; dir: SortDir };
 
+/** The list's order when no sort is chosen: newest case first. */
+export const DEFAULT_CASE_SORT: CaseSort = { key: "created", dir: "desc" };
+
+/** True for the default order — then the sort is left out of the URL. */
+export function isDefaultSort(s: CaseSort): boolean {
+  return s.key === DEFAULT_CASE_SORT.key && s.dir === DEFAULT_CASE_SORT.dir;
+}
+
 /** First click on a header: newest first for "created", longest-waiting
  * first for "waiting"; A→Z / lowest first for the rest. */
 export function defaultDir(key: CaseSortKey): SortDir {
@@ -31,7 +39,8 @@ export function defaultDir(key: CaseSortKey): SortDir {
 }
 
 export function parseCaseSort(sort: unknown, dir: unknown): CaseSort {
-  const key = CASE_SORT_KEYS.includes(sort as CaseSortKey) ? (sort as CaseSortKey) : "priority";
+  if (!CASE_SORT_KEYS.includes(sort as CaseSortKey)) return DEFAULT_CASE_SORT;
+  const key = sort as CaseSortKey;
   return { key, dir: dir === "asc" || dir === "desc" ? dir : defaultDir(key) };
 }
 
