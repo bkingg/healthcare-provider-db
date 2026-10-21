@@ -59,7 +59,12 @@
       "PRICE_APPROVED": "{who} a accepté le prix des médicaments",
       "PRICE_DECLINED": "{who} a refusé le prix des médicaments",
       "PAYMENT_REPORTED": "{who} indique avoir payé — à vérifier",
-      "other": "Mise à jour de commande"
+      "other": "Mise à jour de commande",
+      "PHARMACY_PAYMENT_CONFIRMED": "La pharmacie a confirmé le paiement — réservez le coursier",
+      "DELIVERY_RECEIVED": "{who} a reçu la commande",
+      "ALERT_BOOK_COURIER": "Commande prête — aucun coursier réservé",
+      "ALERT_PHARMACY_UNCONFIRMED": "La pharmacie n'a pas confirmé le paiement de Nomad",
+      "ALERT_DELIVERY_LATE": "Livraison en retard"
     }
   },
   "Admin": {
@@ -165,7 +170,8 @@
       "medicationSettings": "Réglages livraison de médicaments",
       "paymentLinks": "Liens de paiement",
       "memberAppFeatures": "Services de l'application membre",
-      "medicationTimeframes": "Délais de livraison"
+      "medicationTimeframes": "Délais de livraison",
+      "memberMessageTemplates": "Messages automatiques"
     },
     "fields": {
       "paymentCategory": "Catégorie de paiement",
@@ -216,8 +222,8 @@
       "canWorkCases": "Peut traiter les dossiers",
       "responseMinutes": "Délai de réponse (minutes)",
       "businessHoursOnly": "Heures de bureau uniquement (lun–ven 09:00–17:00)",
-      "templateBodyEn": "Modèle (anglais) — « ## » pour les titres, « - » pour les puces",
-      "templateBodyFr": "Modèle (français) — « ## » pour les titres, « - » pour les puces",
+      "templateBodyEn": "Message (anglais)",
+      "templateBodyFr": "Message (français)",
       "requirementAppliesTo": "S’applique à",
       "requirementKind": "Type",
       "instructionsEn": "Instructions (anglais)",
@@ -229,7 +235,8 @@
       "featureEnabledNotCovered": "Membres sans couverture (demandes spéciales)",
       "timeframeHelpEn": "Texte d'aide sous le choix (anglais)",
       "timeframeHelpFr": "Texte d'aide sous le choix (français)",
-      "timeframeOffered": "Proposé aux membres"
+      "timeframeOffered": "Proposé aux membres",
+      "templateEnabled": "Envoyé"
     },
     "marker": {
       "default": "Défaut",
@@ -1107,7 +1114,8 @@
     "addressSaved": "Votre adresse principale est enregistrée.",
     "fromPrimaryAddress": "Reprise de votre adresse principale — changez-la si vous êtes ailleurs.",
     "notCoveredBodyOrdersOnly": "Vous pouvez quand même commander des médicaments : Nomad vous indique le total avant tout paiement. Couvert par votre employeur ou votre assureur ? Appelez-nous et nous relierons votre couverture.",
-    "welcomeBodyOrdersOnly": "Vous pouvez maintenant commander des médicaments. Nomad vous contactera sur WhatsApp ou par téléphone."
+    "welcomeBodyOrdersOnly": "Vous pouvez maintenant commander des médicaments. Nomad vous contactera sur WhatsApp ou par téléphone.",
+    "delivery": "Livraison"
   },
   "Cases": {
     "assigneeSearch": "Nom ou @identifiant",
@@ -1249,7 +1257,18 @@
       "PRICE_DECLINED": "Prix refusé : {ref}",
       "PAYMENT_REPORTED": "Le membre signale avoir payé {amount} FCFA (transaction {ref})",
       "PAYMENT_CONFIRMED": "Paiement confirmé : {amount} FCFA (transaction {ref})",
-      "PHARMACY_PAID": "Pharmacie payée : {amount} FCFA (transaction {ref})"
+      "PHARMACY_PAID": "Pharmacie payée : {amount} FCFA (transaction {ref})",
+      "PHARMACY_PAYMENT_CONFIRMED": "la pharmacie a confirmé le paiement de Nomad — prête à récupérer",
+      "PHARMACY_PAYMENT_CONFIRMED_STAFF": "a enregistré la confirmation de la pharmacie (par téléphone) — prête à récupérer",
+      "COURIER_BOOKED": "a enregistré la réservation du coursier",
+      "DELIVERY_FAILED": "livraison échouée ({reason}) — frais de nouvelle livraison {fee} FCFA",
+      "REDELIVERY_FEE_WAIVED": "a annulé les frais de nouvelle livraison ({reason})",
+      "REDELIVERY_FEE_PAID": "a confirmé les frais de nouvelle livraison ({fee} FCFA)",
+      "DELIVERY_RECEIVED_MEMBER": "a confirmé avoir reçu la commande",
+      "DELIVERY_RECEIVED_STAFF": "a marqué la commande livrée ({note})",
+      "ALERT_BOOK_COURIER": "rappel : la commande est prête mais aucun coursier n'est réservé",
+      "ALERT_PHARMACY_UNCONFIRMED": "rappel : la pharmacie n'a pas confirmé le paiement de Nomad",
+      "ALERT_DELIVERY_LATE": "alerte : l'heure de livraison promise est dépassée"
     },
     "statusLabel": "Statut",
     "conversationWith": "Conversation avec {name}",
@@ -1500,7 +1519,8 @@
       "urgency": "Urgence",
       "location": "Lieu",
       "phone": "Téléphone de rappel"
-    }
+    },
+    "delivery": "Livraison"
   },
   "MedicationCatalog": {
     "title": "Catalogue des médicaments",
@@ -1694,7 +1714,9 @@
       "IN_TRANSIT": "En route",
       "DELIVERED": "Livrée",
       "CANCELLED": "Annulée",
-      "UNAVAILABLE": "Indisponible"
+      "UNAVAILABLE": "Indisponible",
+      "READY_FOR_PICKUP": "Prête à la pharmacie",
+      "DELIVERY_FAILED": "Livraison échouée"
     },
     "error": {
       "invalid": "Un problème est survenu — réessayez.",
@@ -1778,12 +1800,21 @@
       "invalid": "Un problème est survenu — réessayez.",
       "linkGone": "Ce lien ne fonctionne plus.",
       "decided": "Cette commande a déjà été confiée à une pharmacie.",
-      "locked": "Cette réponse est figée : le membre a déjà un prix basé dessus. Retenez une autre pharmacie pour la changer."
+      "locked": "Cette réponse est figée : le membre a déjà un prix basé dessus. Retenez une autre pharmacie pour la changer.",
+      "notPreparing": "Cette commande n'attend pas votre confirmation.",
+      "notChosen": "Cette commande a été confiée à une autre pharmacie."
     },
     "saved": "Enregistré.",
     "sending": "Envoi…",
     "send": "Envoyer ma réponse",
-    "decline": "Nous ne pouvons pas honorer cette commande"
+    "decline": "Nous ne pouvons pas honorer cette commande",
+    "nomadPaidTitle": "Nomad vous a payé",
+    "nomadPaidBody": "Nomad vous a envoyé {amount} par {method} (transaction {ref}). Dès réception, confirmez ci-dessous : la commande est alors prête et Nomad envoie un coursier.",
+    "courierBringsOriginal": "Médicament contrôlé : le coursier récupère d'abord l'ordonnance originale chez le patient et vous l'apporte.",
+    "coldChainPack": "Contient un produit de la chaîne du froid : merci de l'emballer dans un sac isotherme.",
+    "confirmPaymentReceived": "J'ai reçu le paiement — commande prête",
+    "paymentConfirmedThanks": "Merci ! Nomad réserve un coursier.",
+    "paymentAlreadyConfirmed": "Paiement confirmé — un coursier est en route."
   },
   "Pharmacies": {
     "title": "Pharmacies interrogées",
@@ -2017,5 +2048,130 @@
     "change": "Modifier",
     "add": "Ajouter",
     "changesNote": "Pour corriger vos informations ou ajouter un membre de votre famille, contactez Nomad."
+  },
+  "Delivery": {
+    "status": {
+      "PREPARING": "En attente de la pharmacie",
+      "READY_FOR_PICKUP": "Prête — réserver le coursier",
+      "COURIER_REQUESTED": "Coursier réservé",
+      "ORIGINAL_COLLECTED": "Ordonnance récupérée",
+      "PICKED_UP": "En route",
+      "DELIVERED": "Livrée",
+      "DELIVERY_FAILED": "Livraison échouée"
+    },
+    "controlled": "Médicament contrôlé",
+    "coldChain": "Garder au froid",
+    "coldChainHelp": "Chaîne du froid : la pharmacie l'emballe dans un sac isotherme ; réservez un coursier direct et livrez dans l'heure.",
+    "promisedBy": "À livrer avant {when}",
+    "lateSince": "En retard — prévue le {when}",
+    "waitingPharmacy": "Nomad a payé {pharmacy} le {when}. En attente de la confirmation du paiement par la pharmacie sur son lien — la commande est alors prête.",
+    "pharmacyConfirmedByPhone": "Pharmacie confirmée par téléphone — marquer prête",
+    "stops": "Arrêts du coursier",
+    "stopsControlled": "Arrêts du coursier (une réservation, trois arrêts)",
+    "collectOriginalStop": "récupérer l'ordonnance originale",
+    "map": "Carte",
+    "readyBook": "Prête depuis {when}. Réservez le coursier sur Yango, puis enregistrez-le ici.",
+    "trackingUrl": "Lien de suivi (Yango)",
+    "bookingRef": "Référence de réservation",
+    "cost": "Prix Yango (FCFA)",
+    "eta": "Arrivée prévue",
+    "courierName": "Nom du coursier (facultatif)",
+    "courierPhone": "Téléphone du coursier (facultatif)",
+    "bookingHelp": "Le membre reçoit un message et un bouton « Suivre ma livraison » avec ce lien.",
+    "recordBooking": "Coursier réservé — prévenir le membre",
+    "saveBooking": "Enregistrer",
+    "cancel": "Annuler",
+    "tracking": "Lien de suivi",
+    "refShort": "Réf. {ref}",
+    "etaShort": "Arrivée ~{when}",
+    "bookedBy": "Réservé le {when} par {who}",
+    "originalCollected": "Ordonnance récupérée",
+    "pickedUp": "Récupérée à la pharmacie",
+    "markDelivered": "Livrée",
+    "markFailed": "Livraison échouée",
+    "editBooking": "Modifier la réservation",
+    "deliveredNote": "Comment savez-vous qu'elle est livrée ? (le membre confirme normalement dans l'appli)",
+    "confirmDelivered": "Confirmer la livraison",
+    "failReason": "Que s'est-il passé ?",
+    "failReasonPlaceholder": "Membre injoignable, mauvaise adresse…",
+    "redeliveryFee": "Frais de nouvelle livraison (FCFA)",
+    "confirmFailed": "Enregistrer l'échec",
+    "feeHelp": "Le membre doit régler ces frais avant qu'un nouveau coursier soit réservé. Saisissez 0 pour aucun frais.",
+    "feeDue": "Livraison échouée ({reason}). Frais de nouvelle livraison dus : {fee}.",
+    "memberSaysFeePaid": "Le membre dit avoir payé par {method}, transaction {ref} ({when}).",
+    "methodLabel": "Moyen",
+    "transactionId": "ID de transaction",
+    "feeReceived": "Frais reçus — réserver à nouveau",
+    "waiveReason": "Pourquoi annuler les frais ?",
+    "waiveFee": "Annuler les frais",
+    "deliveredDone": "Livrée.",
+    "history": "Livraisons",
+    "attempt": "Course {n}",
+    "outcome": {
+      "DELIVERED_MEMBER": "livrée (confirmé par le membre)",
+      "DELIVERED_STAFF": "livrée (confirmé par l'équipe)",
+      "FAILED": "échouée"
+    },
+    "method": {
+      "WAVE": "Wave",
+      "ORANGE_MONEY": "Orange Money",
+      "CASH": "Espèces",
+      "OTHER": "Autre"
+    },
+    "error": {
+      "notPreparing": "La commande n'attend pas la pharmacie.",
+      "notReady": "La commande n'est pas prête pour un coursier.",
+      "noCourier": "Aucun coursier n'est réservé.",
+      "wrongStep": "Cette étape ne correspond pas à l'état de la livraison.",
+      "noCharge": "Aucun frais n'est dû.",
+      "trackingUrl": "Le lien de suivi doit commencer par https://",
+      "linkOrRef": "Indiquez le lien de suivi ou la référence de réservation.",
+      "costXof": "Le prix doit être un nombre entier de FCFA.",
+      "etaAt": "Vérifiez l'heure d'arrivée.",
+      "reason": "Indiquez un motif (au moins 3 caractères).",
+      "fee": "Indiquez les frais en FCFA (0 pour aucun).",
+      "reference": "Saisissez l'ID de transaction.",
+      "invalid": "Vérifiez la saisie.",
+      "other": "Une erreur s'est produite."
+    }
+  },
+  "MemberDelivery": {
+    "promisedBy": "Livraison prévue : au plus tard le {when}",
+    "step": {
+      "PAID": "Paiement reçu",
+      "PREPARING": "En préparation à la pharmacie",
+      "READY_FOR_PICKUP": "Prête à la pharmacie",
+      "COURIER_REQUESTED": "Coursier réservé",
+      "ORIGINAL_COLLECTED": "Ordonnance originale récupérée",
+      "PICKED_UP": "En route vers vous",
+      "DELIVERED": "Livrée"
+    },
+    "haveOriginalReady": "Le coursier passe d'abord chez vous récupérer l'ordonnance originale — merci de la préparer.",
+    "follow": "Suivre ma livraison",
+    "eta": "Arrivée prévue : vers {when}",
+    "callCourier": "Appeler {name}",
+    "courier": "le coursier",
+    "received": "J'ai reçu ma commande",
+    "thanks": "Merci ! Bon rétablissement.",
+    "failed": "Nous n'avons pas pu livrer votre commande. Une nouvelle livraison coûte {fee}.",
+    "checkingFee": "Merci. Nous vérifions votre paiement, puis nous réservons un nouveau coursier.",
+    "noLinks": "Nomad vous appellera pour organiser le paiement.",
+    "afterPaying": "Après avoir payé, dites-le-nous ici :",
+    "paidWith": "Payé avec",
+    "transactionId": "ID de transaction (dans votre SMS de confirmation)",
+    "iHavePaid": "J'ai payé",
+    "delivered": "Livrée le {when}.",
+    "error": {
+      "wrongStep": "Cette étape est déjà faite.",
+      "noCharge": "Il n'y a pas de frais à payer.",
+      "reference": "Saisissez l'ID de transaction.",
+      "notFound": "Cette commande est introuvable.",
+      "other": "Une erreur s'est produite. Veuillez réessayer."
+    },
+    "late": "Votre livraison a un peu de retard — nous nous en occupons et vous tenons informé ici."
+  },
+  "OrderAuto": {
+    "deliverBy": "Livraison prévue : au plus tard le {when}.",
+    "eta": " (arrivée vers {when})"
   }
 }

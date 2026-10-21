@@ -7,6 +7,7 @@ import { medicationLabel } from "@/lib/medications";
 import { quoteByToken } from "@/data/pharmacyQuotes";
 import { QuoteAnswerForm } from "@/components/quote-answer-form";
 import { submitQuoteAction } from "../actions";
+import { PaymentConfirm } from "./payment-confirm";
 
 /** A pharmacy's private quote page — no login; the link is the key. Shows
  * only what's needed to quote: the items, the prescription when the order
@@ -31,18 +32,43 @@ export default async function QuotePage(props: PageProps<"/[locale]/q/[token]">)
   const o = q.order;
   const age = ageFromDateOfBirth(o.patient.dateOfBirth);
   const answered = q.status === "ANSWERED" || q.status === "DECLINED";
+  // Chosen and paid by Nomad: the pharmacy confirms the payment instead of
+  // quoting (its answer is locked by now).
+  const payout = o.chosenQuoteId === q.id ? o.payments[0] : undefined;
+  const paidStage = Boolean(payout) && ["PREPARING", "READY_FOR_PICKUP", "COURIER_REQUESTED", "ORIGINAL_COLLECTED", "PICKED_UP", "DELIVERED", "DELIVERY_FAILED"].includes(o.status);
   return (
     <main className="flex flex-col gap-5 px-4 py-6">
       <div className="flex flex-col gap-1">
         <p className="m-0 text-[13px] font-bold tracking-[0.06em] text-pn-gray-2 uppercase">{t("request")}</p>
         <h1 className="m-0 text-[22px] font-extrabold tracking-[-0.02em]">{q.provider.names[0]?.fullNameText}</h1>
         <p className="m-0 text-[14px] text-pn-gray-1">
-          {t("reference", { ref: formatCaseNumber(o.case.caseNumber) })} · {t("validUntil", { when: formatDakarDateTime(q.expiresAt!, locale) })}
+          {t("reference", { ref: formatCaseNumber(o.case.caseNumber) })}
+          {/* Once Nomad has paid, there's nothing left to answer by a deadline. */}
+          {!paidStage && ` · ${t("validUntil", { when: formatDakarDateTime(q.expiresAt!, locale) })}`}
         </p>
         {q.distanceKm !== null && <p className="m-0 text-[14px] text-pn-gray-1">{t("distance", { km: q.distanceKm })}</p>}
       </div>
 
-      {answered && <p className="m-0 border-l-4 border-pn-accent bg-pn-accent-soft px-3 py-2 text-[14px]">{t("alreadyAnswered")}</p>}
+      {paidStage && payout && (
+        <section className="flex flex-col gap-2 border-2 border-pn-ink bg-white p-3">
+          <h2 className="m-0 text-[16px] font-bold">{t("nomadPaidTitle")}</h2>
+          <p className="m-0 text-[15px]">
+            {t("nomadPaidBody", { amount: `${payout.amountXof.toLocaleString("fr-FR")} FCFA`, method: payout.method === "ORANGE_MONEY" ? "Orange Money" : payout.method === "WAVE" ? "Wave" : payout.method, ref: payout.reference ?? "—" })}
+          </p>
+          {o.hasNarcotic && <p className="m-0 text-[14px] font-semibold text-[#991b1b]">{t("courierBringsOriginal")}</p>}
+          {o.hasColdChain && <p className="m-0 text-[14px] font-semibold text-[#075985]">{t("coldChainPack")}</p>}
+          {o.status === "PREPARING" ? <PaymentConfirm token={token} /> : <p className="m-0 font-semibold text-[#0a5c3c]">{t("paymentAlreadyConfirmed")}</p>}
+          <ul className="m-0 flex list-none flex-col gap-1 border-t border-pn-rule p-0 pt-2 text-[14px]">
+            {o.lines.map((l) => (
+              <li key={l.id}>
+                {l.freeText ?? medicationLabel({ dci: l.dci ?? "", strength: l.strength, form: l.form ?? "" })} × {l.quantity}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {answered && !paidStage && <p className="m-0 border-l-4 border-pn-accent bg-pn-accent-soft px-3 py-2 text-[14px]">{t("alreadyAnswered")}</p>}
 
       {o.needsPrescription && (
         <section className="flex flex-col gap-2 border-2 border-pn-ink bg-white p-3">
@@ -62,6 +88,7 @@ export default async function QuotePage(props: PageProps<"/[locale]/q/[token]">)
         </section>
       )}
 
+      {!paidStage && (
       <QuoteAnswerForm
         items={o.lines.map((l) => ({
           id: l.id,
@@ -97,7 +124,8 @@ export default async function QuotePage(props: PageProps<"/[locale]/q/[token]">)
         action={submitQuoteAction}
         hidden={{ token }}
       />
-      <p className="m-0 text-[13px] text-pn-gray-2">{t("footer")}</p>
+      )}
+      {!paidStage && <p className="m-0 text-[13px] text-pn-gray-2">{t("footer")}</p>}
     </main>
   );
 }

@@ -128,11 +128,15 @@ enum MedicationOrderStatus {
   AWAITING_PAYMENT
   PAID
   PREPARING
+  /// The pharmacy confirmed it received Nomad's payment: book the courier.
+  READY_FOR_PICKUP
   COURIER_REQUESTED
   ORIGINAL_COLLECTED
   PICKED_UP
   IN_TRANSIT
   DELIVERED
+  /// The courier couldn't hand it over; a re-delivery fee is due (or waived).
+  DELIVERY_FAILED
   CANCELLED
   UNAVAILABLE
 }
@@ -185,6 +189,17 @@ model MedicationOrder {
   /// standard links from Admin).
   paymentLinkUrl  String?   @map("payment_link_url")
   payments        MedicationOrderPayment[]
+  /// Delivery (step 5). Deliver-by deadline, set when the member's payment
+  /// is confirmed, from the timeframe they chose.
+  promisedBy      DateTime? @map("promised_by")
+  /// When the pharmacy confirmed Nomad's payment (the order is then ready).
+  readyAt         DateTime? @map("ready_at")
+  /// Staff nudges already sent (each once).
+  alertBookCourierAt  DateTime? @map("alert_book_courier_at")
+  alertPharmacyAt     DateTime? @map("alert_pharmacy_at")
+  alertLateAt         DateTime? @map("alert_late_at")
+  deliveries      MedicationDelivery[]
+  charges         MedicationOrderCharge[]
   documents MedicationOrderDocument[]
 
   @@index([status])
@@ -478,3 +493,91 @@ model PaymentLinkRef {
   @@map("payment_link_ref")
 }
 
+/// A courier trip, booked by staff in Yango (or another service) and
+/// recorded here. A controlled medicine is one trip with three stops:
+/// the member (paper prescription) → the pharmacy → back to the member.
+/// A failed trip stays on record; the next attempt is a new row.
+model MedicationDelivery {
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId        String          @map("order_id") @db.Uuid
+  order          MedicationOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  attempt        Int             @default(1)
+  courierService String          @default("YANGO") @map("courier_service")
+  trackingUrl    String?         @map("tracking_url")
+  bookingRef     String?         @map("booking_ref")
+  /// What Nomad paid the courier service, FCFA (for the delivery margin).
+  costXof        Int?            @map("cost_xof")
+  etaAt          DateTime?       @map("eta_at")
+  courierName    String?         @map("courier_name")
+  courierPhone   String?         @map("courier_phone")
+  /// Three stops (collect the paper prescription first).
+  collectOriginal Boolean        @default(false) @map("collect_original")
+  bookedAt       DateTime        @default(now()) @map("booked_at")
+  bookedById     String?         @map("booked_by_id") @db.Uuid
+  originalCollectedAt DateTime?  @map("original_collected_at")
+  pickedUpAt     DateTime?       @map("picked_up_at")
+  deliveredAt    DateTime?       @map("delivered_at")
+  /// MEMBER (tapped "I've received it") or STAFF (with a reason).
+  deliveredConfirmedBy String?   @map("delivered_confirmed_by")
+  deliveredNote  String?         @map("delivered_note")
+  failedAt       DateTime?       @map("failed_at")
+  failReason     String?         @map("fail_reason")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+
+  @@index([orderId])
+  @@map("medication_delivery")
+}
+
+enum OrderChargeStatus {
+  DUE
+  PAID
+  WAIVED
+}
+
+/// An extra charge on an order — for now the re-delivery fee after a failed
+/// delivery. Staff can waive it (with a reason).
+model MedicationOrderCharge {
+  id           String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId      String            @map("order_id") @db.Uuid
+  order        MedicationOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  kind         String            @default("REDELIVERY")
+  amountXof    Int               @map("amount_xof")
+  status       OrderChargeStatus @default(DUE)
+  reason       String?
+  waivedReason String?           @map("waived_reason")
+  waivedById   String?           @map("waived_by_id") @db.Uuid
+  waivedAt     DateTime?         @map("waived_at")
+  /// The member's payment (method + transaction id), once reported/confirmed.
+  paymentMethod    PaymentMethod? @map("payment_method")
+  paymentReference String?        @map("payment_reference")
+  reportedAt   DateTime?         @map("reported_at")
+  paidAt       DateTime?         @map("paid_at")
+  confirmedById String?          @map("confirmed_by_id") @db.Uuid
+  createdById  String?           @map("created_by_id") @db.Uuid
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  @@index([orderId])
+  @@map("medication_order_charge")
+}
+
+/// Automatic messages posted in the member's request chat at each step of
+/// a medication order — fixed codes, wording editable in Admin > Value
+/// lists > Medication delivery > Automatic messages. Placeholders such as
+/// {reference}, {total}, {eta}, {fee} are filled in when sent.
+model MemberMessageTemplate {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique
+  labelEn   String   @map("label_en")
+  bodyEn    String   @map("body_en")
+  bodyFr    String?  @map("body_fr")
+  /// Off: this step sends nothing.
+  enabled   Boolean  @default(true)
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("member_message_template")
+}

@@ -42,6 +42,7 @@ const DELEGATES: Record<ReferenceListKey, AnyDelegate> = {
   medicationSettings: prisma.medicationDeliverySetting,
   memberAppFeatures: prisma.memberAppFeature,
   medicationTimeframes: prisma.medicationTimeframeRef,
+  memberMessageTemplates: prisma.memberMessageTemplate,
   paymentLinks: prisma.paymentLinkRef,
   userRoles: prisma.userRole,
   uiHints: prisma.uiHintRef,

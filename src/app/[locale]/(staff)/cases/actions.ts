@@ -18,6 +18,17 @@ import { parseProviderNumber } from "@/lib/providerNumber";
 import { addPharmacyToOrder, chooseQuote, QuoteAnswerError, saveQuoteAnswer, sendQuote } from "@/data/pharmacyQuotes";
 import { approvePrice, confirmPayment, OrderStepError, payPharmacy, rejectPayment, resendPrice, sendPrice, setOrderPaymentLink } from "@/data/orderPayments";
 import { quoteAnswerSchema } from "@/lib/validation/quoteAnswer";
+import {
+  bookCourier,
+  confirmFeePaid,
+  DeliveryStepError,
+  markFailed,
+  markOriginalCollected,
+  markPickedUp,
+  staffMarksDelivered,
+  staffMarksReady,
+  waiveCharge,
+} from "@/data/orderDelivery";
 import type { QuoteFormState } from "@/app/[locale]/q/actions";
 import { prisma } from "@/lib/prisma";
 
@@ -429,6 +440,170 @@ export async function setPaymentLinkAction(_prev: StaffOrderState, formData: For
   const raw = String(formData.get("url") ?? "").trim();
   if (raw && !/^https:\/\/[^\s]{4,500}$/.test(raw)) return { ok: false, error: "url" };
   await setOrderPaymentLink(orderId, raw || null);
+  refresh();
+  return { ok: true };
+}
+
+// -------------------------------------------------------- delivery (step 5)
+
+function deliveryError(err: unknown): StaffOrderState {
+  if (err instanceof DeliveryStepError) return { ok: false, error: err.message };
+  throw err;
+}
+
+const orderIdField = z.uuid();
+const reasonField = z.string().trim().min(3, "reason").max(300, "reason");
+
+/** The pharmacy confirmed Nomad's payment by phone. */
+export async function markReadyAction(_prev: StaffOrderState, formData: FormData): Promise<StaffOrderState> {
+  const actor = await requireCaseWorker();
+  try {
+    await staffMarksReady(orderIdField.parse(formData.get("orderId")), actor.id);
+  } catch (err) {
+    return deliveryError(err);
+  }
+  refresh();
+  return { ok: true };
+}
+
+/** "Courier booked" (in Yango): tracking link, booking reference, what
+ * Nomad paid, expected arrival (Dakar time = UTC), courier's name/phone.
+ * Also used to update the booking. */
+export async function bookCourierAction(_prev: StaffOrderState, formData: FormData): Promise<StaffOrderState> {
+  const actor = await requireCaseWorker();
+  const text = (max: number) =>
+    z
+      .string()
+      .trim()
+      .max(max)
+      .optional()
+      .transform((v) => (v ? v : null));
+  const parsed = z
+    .object({
+      orderId: orderIdField,
+      trackingUrl: z
+        .string()
+        .trim()
+        .max(500)
+        .optional()
+        .transform((v) => (v ? v : null))
+        .refine((v) => v === null || /^https:\/\/\S+$/i.test(v), "trackingUrl"),
+      bookingRef: text(80),
+      costXof: z
+        .string()
+        .trim()
+        .optional()
+        .transform((v) => (v ? v.replace(/[\s  ]/g, "") : ""))
+        .refine((v) => v === "" || /^\d{1,7}$/.test(v), "costXof")
+        .transform((v) => (v ? Number(v) : null)),
+      etaAt: z
+        .string()
+        .trim()
+        .optional()
+        .transform((v) => (v ? new Date(`${v}:00Z`) : null))
+        .refine((d) => d === null || !Number.isNaN(d.getTime()), "etaAt"),
+      courierName: text(80),
+      courierPhone: text(40),
+    })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "invalid" };
+  if (!parsed.data.trackingUrl && !parsed.data.bookingRef) return { ok: false, error: "linkOrRef" };
+  const { orderId, ...input } = parsed.data;
+  try {
+    await bookCourier(orderId, actor.id, input);
+  } catch (err) {
+    return deliveryError(err);
+  }
+  refresh();
+  return { ok: true };
+}
+
+export async function markOriginalCollectedAction(_prev: StaffOrderState, formData: FormData): Promise<StaffOrderState> {
+  const actor = await requireCaseWorker();
+  try {
+    await markOriginalCollected(orderIdField.parse(formData.get("orderId")), actor.id);
+  } catch (err) {
+    return deliveryError(err);
+  }
+  refresh();
+  return { ok: true };
+}
+
+export async function markPickedUpAction(_prev: StaffOrderState, formData: FormData): Promise<StaffOrderState> {
+  const actor = await requireCaseWorker();
+  try {
+    await markPickedUp(orderIdField.parse(formData.get("orderId")), actor.id);
+  } catch (err) {
+    return deliveryError(err);
+  }
+  refresh();
+  return { ok: true };
+}
+
+/** Staff mark it delivered — with why (the member normally confirms). */
+export async function markDeliveredAction(_prev: StaffOrderState, formData: FormData): Promise<StaffOrderState> {
+  const actor = await requireCaseWorker();
+  const parsed = z.object({ orderId: orderIdField, note: reasonField }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "invalid" };
+  try {
+    await staffMarksDelivered(parsed.data.orderId, actor.id, parsed.data.note);
+  } catch (err) {
+    return deliveryError(err);
+  }
+  refresh();
+  return { ok: true };
+}
+
+/** The courier couldn't hand it over: reason + re-delivery fee (0 = none). */
+export async function markFailedAction(_prev: StaffOrderState, formData: FormData): Promise<StaffOrderState> {
+  const actor = await requireCaseWorker();
+  const parsed = z
+    .object({ orderId: orderIdField, reason: reasonField, feeXof: z.coerce.number().int().min(0, "fee").max(1_000_000, "fee") })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "invalid" };
+  try {
+    await markFailed(parsed.data.orderId, actor.id, parsed.data.reason, parsed.data.feeXof);
+  } catch (err) {
+    return deliveryError(err);
+  }
+  refresh();
+  return { ok: true };
+}
+
+export async function waiveFeeAction(_prev: StaffOrderState, formData: FormData): Promise<StaffOrderState> {
+  const actor = await requireCaseWorker();
+  const parsed = z.object({ orderId: orderIdField, reason: reasonField }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "invalid" };
+  try {
+    await waiveCharge(parsed.data.orderId, actor.id, parsed.data.reason);
+  } catch (err) {
+    return deliveryError(err);
+  }
+  refresh();
+  return { ok: true };
+}
+
+export async function confirmFeePaidAction(_prev: StaffOrderState, formData: FormData): Promise<StaffOrderState> {
+  const actor = await requireCaseWorker();
+  const parsed = z
+    .object({
+      orderId: orderIdField,
+      method: z.enum(["WAVE", "ORANGE_MONEY", "CASH", "OTHER"]),
+      reference: z
+        .string()
+        .trim()
+        .max(80)
+        .optional()
+        .transform((v) => (v ? v : null)),
+    })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, error: "invalid" };
+  if (parsed.data.method !== "CASH" && !parsed.data.reference) return { ok: false, error: "reference" };
+  try {
+    await confirmFeePaid(parsed.data.orderId, actor.id, { method: parsed.data.method, reference: parsed.data.reference });
+  } catch (err) {
+    return deliveryError(err);
+  }
   refresh();
   return { ok: true };
 }

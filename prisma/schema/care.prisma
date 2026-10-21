@@ -271,6 +271,17 @@ enum CaseEventType {
   PAYMENT_REPORTED
   PAYMENT_CONFIRMED
   PHARMACY_PAID
+  /// Delivery (step 5): the pharmacy confirmed Nomad's payment → ready.
+  PHARMACY_PAYMENT_CONFIRMED
+  COURIER_BOOKED
+  DELIVERY_FAILED
+  REDELIVERY_FEE_WAIVED
+  REDELIVERY_FEE_PAID
+  DELIVERY_RECEIVED
+  /// Nudges to staff (shown in the bell), each sent once per order.
+  ALERT_BOOK_COURIER
+  ALERT_PHARMACY_UNCONFIRMED
+  ALERT_DELIVERY_LATE
 }
 
 enum CaseActorType {

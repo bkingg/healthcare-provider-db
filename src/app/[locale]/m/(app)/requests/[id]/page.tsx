@@ -12,7 +12,8 @@ import { markSeenByMember, memberConversation } from "@/data/caseOps";
 import { ReplyForm } from "./reply-form";
 import { orderForCase } from "@/data/medicationOrders";
 import { MedicationOrderSummary } from "@/components/medication-order-summary";
-import { memberPriceView } from "@/data/orderView";
+import { memberDeliveryView, memberPriceView } from "@/data/orderView";
+import { DeliverySection } from "./delivery-section";
 import { OrderPrice } from "./order-price";
 import { EmergencyPanel } from "../../../_components/emergency-panel";
 import { StatusChip } from "../../../_components/status-chip";
@@ -38,6 +39,7 @@ export default async function MemberRequestPage(props: PageProps<"/[locale]/m/re
   if (!request) notFound();
   const [conversation, order] = await Promise.all([memberConversation(request.id), orderForCase(request.id)]);
   const priceView = order ? await memberPriceView(order.id, locale) : null;
+  const deliveryView = order ? await memberDeliveryView(order.id, locale) : null;
   // Opening the request marks Nomad's messages as read.
   await markSeenByMember(request.id);
 
@@ -92,6 +94,12 @@ export default async function MemberRequestPage(props: PageProps<"/[locale]/m/re
           <section id="price" className="flex flex-col gap-2">
             <h2 className="m-0 text-[13px] font-bold tracking-[0.08em] text-pn-gray-1 uppercase">{t("priceAndPayment")}</h2>
             <OrderPrice v={priceView} />
+          </section>
+        )}
+        {deliveryView && (
+          <section id="delivery" className="flex flex-col gap-2">
+            <h2 className="m-0 text-[13px] font-bold tracking-[0.08em] text-pn-gray-1 uppercase">{t("delivery")}</h2>
+            <DeliverySection v={deliveryView} />
           </section>
         )}
         <section id="conversation" className="flex flex-col gap-3">

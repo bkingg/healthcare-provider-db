@@ -5,6 +5,7 @@ import type { CurrentMember } from "@/lib/memberAuth";
 import type { PaymentMethod, Prisma } from "../../generated/prisma/client";
 import { deliverySettings } from "./pharmacyQuotes";
 import { getMemberCase } from "./memberApp";
+import { onMemberPaid, onPharmacyPaid, onPriceSent } from "./orderDelivery";
 
 /** The member's price, approval and payments for a medication order
  * (medication delivery, step 4). Every step writes a timeline entry; the
@@ -83,6 +84,7 @@ export async function sendPrice(orderId: string, staffId: string | null, overrid
       data: { caseId: order.caseId, type: "PRICE_SENT", actorType: staffId ? "STAFF" : "SYSTEM", staffId, data: { totalXof: price.medicinesXof + deliveryXof + feeXof, revised: Boolean(override) } },
     });
     if (order.status !== "AWAITING_APPROVAL") await setStatus(tx, orderId, "AWAITING_APPROVAL", { staffId });
+    await onPriceSent(tx, order.caseId, price.medicinesXof + deliveryXof + feeXof);
   });
 }
 
@@ -163,6 +165,7 @@ export async function confirmPayment(orderId: string, staffId: string, input: { 
     }
     await tx.caseEvent.create({ data: { caseId: order.caseId, type: "PAYMENT_CONFIRMED", actorType: "STAFF", staffId, data: { method: input.method, amountXof: input.amountXof, reference: input.reference || null } } });
     await setStatus(tx, orderId, "PAID", { staffId });
+    await onMemberPaid(tx, orderId, new Date());
   });
 }
 
@@ -197,6 +200,7 @@ export async function payPharmacy(orderId: string, staffId: string, input: { ban
     });
     await tx.caseEvent.create({ data: { caseId: order.caseId, type: "PHARMACY_PAID", actorType: "STAFF", staffId, data: { amountXof: input.amountXof, method, reference: input.reference } } });
     await setStatus(tx, orderId, "PREPARING", { staffId });
+    await onPharmacyPaid(tx, order.chosenQuote!.id);
   });
 }
 

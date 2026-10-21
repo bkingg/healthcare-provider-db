@@ -62,6 +62,7 @@ export const REFERENCE_LIST_KEYS = [
   "medicationSettings",
   "memberAppFeatures",
   "medicationTimeframes",
+  "memberMessageTemplates",
   "paymentLinks",
 ] as const;
 
@@ -75,7 +76,7 @@ export const REFERENCE_LIST_GROUPS = [
   { key: "memberApp", lists: ["memberAppFeatures", "caseCategories", "emergencyContacts"] },
   { key: "memberEnrollment", lists: ["organizations", "memberRelationships"] },
   { key: "caseManagement", lists: ["responseTargets", "noteTemplates"] },
-  { key: "medicationDelivery", lists: ["medicationTimeframes", "medicationRequirements", "medicationSettings", "paymentLinks"] },
+  { key: "medicationDelivery", lists: ["medicationTimeframes", "memberMessageTemplates", "medicationRequirements", "medicationSettings", "paymentLinks"] },
   // Everything about provider records, ordered by theme: details, contacts,
   // networks, payments and bank details, credentials and ratings, documents
   // and data quality.
@@ -201,6 +202,25 @@ export const REFERENCE_LIST_DEFS = {
       { key: "sortOrder", labelKey: "sortOrder", kind: "number", integer: true },
     ],
     defaultColumns: ["labelFr", "isOffered"],
+    defaultOrderBy: [{ sortOrder: "asc" }] as Record<string, "asc" | "desc">[],
+  },
+  // Automatic messages posted in the member's request chat at each step of
+  // a medication order. Fixed codes; admins edit the wording (EN/FR, with
+  // placeholders like {total}, {eta}, {fee}) or switch one off.
+  memberMessageTemplates: {
+    key: "memberMessageTemplates",
+    labelKey: "memberMessageTemplates",
+    model: "MemberMessageTemplate",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "labelEn",
+    editOnly: true,
+    fields: [
+      { key: "labelEn", labelKey: "labelEn", kind: "text", required: true },
+      { key: "bodyFr", labelKey: "templateBodyFr", kind: "textarea", rows: 4 },
+      { key: "bodyEn", labelKey: "templateBodyEn", kind: "textarea", rows: 4, required: true },
+      { key: "enabled", labelKey: "templateEnabled", kind: "checkbox" },
+    ],
+    defaultColumns: ["bodyFr", "enabled"],
     defaultOrderBy: [{ sortOrder: "asc" }] as Record<string, "asc" | "desc">[],
   },
   // Member app services switched on or off — for covered members and for

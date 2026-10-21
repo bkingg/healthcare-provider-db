@@ -10,7 +10,7 @@ export const MAX_QUANTITY = 20;
 
 export const medicationOrderSchema = z
   .object({
-    patientId: uuid,
+    patientId: z.uuid("patient"),
     lines: z
       .array(
         z.union([

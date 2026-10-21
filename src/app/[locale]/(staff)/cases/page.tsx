@@ -9,6 +9,7 @@ import { shortDuration } from "@/lib/caseTime";
 import { ageFromDateOfBirth, formatMemberNumber } from "@/lib/memberNumber";
 import { localizedText } from "@/lib/localizedText";
 import { caseQueue, queueCounts, refreshOverdueCases, type QueueFilters } from "@/data/caseOps";
+import { refreshDeliveryAlerts } from "@/data/orderDelivery";
 import { COLOUR_STYLE, type Colour } from "./_components/colour";
 import { CasesTabs } from "./_components/cases-tabs";
 import { CasesTable, type CaseRow } from "./_components/cases-table";
@@ -46,6 +47,7 @@ export default async function CasesPage(props: PageProps<"/[locale]/cases">) {
 
   // Overdue cases move up a colour whenever staff look — no background job.
   await refreshOverdueCases();
+  await refreshDeliveryAlerts();
   const searchParams = await props.searchParams;
   const filters = parseFilters(searchParams);
   const sort = parseCaseSort(searchParams.sort, searchParams.dir);

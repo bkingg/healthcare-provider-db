@@ -2,6 +2,7 @@
 
 import { quoteByToken, QuoteAnswerError, saveQuoteAnswer } from "@/data/pharmacyQuotes";
 import { quoteAnswerSchema } from "@/lib/validation/quoteAnswer";
+import { DeliveryStepError, pharmacyConfirmsPayment } from "@/data/orderDelivery";
 
 export type QuoteFormState = { ok: true; declined: boolean } | { ok: false; error: string } | null;
 
@@ -25,4 +26,18 @@ export async function submitQuoteAction(_prev: QuoteFormState, formData: FormDat
     throw err;
   }
   return { ok: true, declined: parsed.data.decline };
+}
+
+/** On its link, the chosen pharmacy confirms it received Nomad's payment —
+ * the order is then ready for pickup. */
+export async function confirmPharmacyPaymentAction(_prev: { ok: boolean; error?: string } | null, formData: FormData): Promise<{ ok: boolean; error?: string }> {
+  const quote = await quoteByToken(String(formData.get("token") ?? ""));
+  if (!quote) return { ok: false, error: "linkGone" };
+  try {
+    await pharmacyConfirmsPayment(quote.id);
+  } catch (err) {
+    if (err instanceof DeliveryStepError) return { ok: false, error: err.message };
+    throw err;
+  }
+  return { ok: true };
 }

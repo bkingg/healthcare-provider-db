@@ -59,7 +59,12 @@
       "PRICE_APPROVED": "{who} approved the medication price",
       "PRICE_DECLINED": "{who} declined the medication price",
       "PAYMENT_REPORTED": "{who} says they've paid — please check",
-      "other": "Medication order update"
+      "other": "Medication order update",
+      "PHARMACY_PAYMENT_CONFIRMED": "The pharmacy confirmed payment — book the courier",
+      "DELIVERY_RECEIVED": "{who} received the order",
+      "ALERT_BOOK_COURIER": "Order ready — no courier booked yet",
+      "ALERT_PHARMACY_UNCONFIRMED": "The pharmacy hasn't confirmed Nomad's payment",
+      "ALERT_DELIVERY_LATE": "Delivery is late"
     }
   },
   "Admin": {
@@ -165,7 +170,8 @@
       "medicationSettings": "Medication delivery settings",
       "paymentLinks": "Payment links",
       "memberAppFeatures": "Member app features",
-      "medicationTimeframes": "Delivery timeframes"
+      "medicationTimeframes": "Delivery timeframes",
+      "memberMessageTemplates": "Automatic messages"
     },
     "fields": {
       "paymentCategory": "Payment category",
@@ -216,8 +222,8 @@
       "canWorkCases": "Can work cases",
       "responseMinutes": "Response time (minutes)",
       "businessHoursOnly": "Count office hours only (Mon–Fri 09:00–17:00)",
-      "templateBodyEn": "Template (English) — “## ” for headings, “- ” for bullet points",
-      "templateBodyFr": "Template (French) — “## ” for headings, “- ” for bullet points",
+      "templateBodyEn": "Message (English)",
+      "templateBodyFr": "Message (French)",
       "requirementAppliesTo": "Applies to",
       "requirementKind": "Kind",
       "instructionsEn": "Instructions (English)",
@@ -229,7 +235,8 @@
       "featureEnabledNotCovered": "Members without cover (special requests)",
       "timeframeHelpEn": "Help text under the choice (English)",
       "timeframeHelpFr": "Help text under the choice (French)",
-      "timeframeOffered": "Offered to members"
+      "timeframeOffered": "Offered to members",
+      "templateEnabled": "Sent"
     },
     "marker": {
       "default": "Default",
@@ -1107,7 +1114,8 @@
     "addressSaved": "Your primary address is saved.",
     "fromPrimaryAddress": "Filled in from your primary address — change it if you're somewhere else.",
     "notCoveredBodyOrdersOnly": "You can still order medication: Nomad tells you the total before you pay. Covered by your employer or insurer? Call us and we'll link your cover.",
-    "welcomeBodyOrdersOnly": "You can now order medication. Nomad will contact you on WhatsApp or by phone."
+    "welcomeBodyOrdersOnly": "You can now order medication. Nomad will contact you on WhatsApp or by phone.",
+    "delivery": "Delivery"
   },
   "Cases": {
     "assigneeSearch": "Type a name or @handle",
@@ -1249,7 +1257,18 @@
       "PRICE_DECLINED": "Price declined: {ref}",
       "PAYMENT_REPORTED": "Member reported paying {amount} FCFA (transaction {ref})",
       "PAYMENT_CONFIRMED": "Payment confirmed: {amount} FCFA (transaction {ref})",
-      "PHARMACY_PAID": "Pharmacy paid: {amount} FCFA (transaction {ref})"
+      "PHARMACY_PAID": "Pharmacy paid: {amount} FCFA (transaction {ref})",
+      "PHARMACY_PAYMENT_CONFIRMED": "the pharmacy confirmed Nomad's payment — ready for pickup",
+      "PHARMACY_PAYMENT_CONFIRMED_STAFF": "recorded the pharmacy's confirmation (by phone) — ready for pickup",
+      "COURIER_BOOKED": "recorded the courier booking",
+      "DELIVERY_FAILED": "delivery failed ({reason}) — re-delivery fee {fee} FCFA",
+      "REDELIVERY_FEE_WAIVED": "cancelled the re-delivery fee ({reason})",
+      "REDELIVERY_FEE_PAID": "confirmed the re-delivery fee ({fee} FCFA)",
+      "DELIVERY_RECEIVED_MEMBER": "confirmed the order was received",
+      "DELIVERY_RECEIVED_STAFF": "marked the order delivered ({note})",
+      "ALERT_BOOK_COURIER": "reminder: the order is ready but no courier is booked",
+      "ALERT_PHARMACY_UNCONFIRMED": "reminder: the pharmacy hasn't confirmed Nomad's payment",
+      "ALERT_DELIVERY_LATE": "alert: the promised delivery time has passed"
     },
     "statusLabel": "Status",
     "conversationWith": "Conversation with {name}",
@@ -1500,7 +1519,8 @@
       "urgency": "Urgency",
       "location": "Location",
       "phone": "Call-back phone"
-    }
+    },
+    "delivery": "Delivery"
   },
   "MedicationCatalog": {
     "title": "Medication catalog",
@@ -1694,7 +1714,9 @@
       "IN_TRANSIT": "On the way",
       "DELIVERED": "Delivered",
       "CANCELLED": "Cancelled",
-      "UNAVAILABLE": "Not available"
+      "UNAVAILABLE": "Not available",
+      "READY_FOR_PICKUP": "Ready at the pharmacy",
+      "DELIVERY_FAILED": "Delivery failed"
     },
     "error": {
       "invalid": "Something went wrong — please try again.",
@@ -1778,12 +1800,21 @@
       "invalid": "Something went wrong — please try again.",
       "linkGone": "This link no longer works.",
       "decided": "This order has already been placed with a pharmacy.",
-      "locked": "This answer is fixed: the member already has a price based on it. Choose another pharmacy to change it."
+      "locked": "This answer is fixed: the member already has a price based on it. Choose another pharmacy to change it.",
+      "notPreparing": "This order isn't waiting for your confirmation.",
+      "notChosen": "This order went to another pharmacy."
     },
     "saved": "Saved.",
     "sending": "Sending…",
     "send": "Send my answer",
-    "decline": "We can't fill this order"
+    "decline": "We can't fill this order",
+    "nomadPaidTitle": "Nomad has paid you",
+    "nomadPaidBody": "Nomad sent you {amount} by {method} (transaction {ref}). Once you've received it, confirm below: the order is then ready and Nomad sends a courier.",
+    "courierBringsOriginal": "Controlled medicine: the courier will first collect the original prescription from the patient and bring it to you.",
+    "coldChainPack": "Contains a cold-chain item: please pack it in a cool bag.",
+    "confirmPaymentReceived": "I've received the payment — order ready",
+    "paymentConfirmedThanks": "Thank you! Nomad is booking a courier.",
+    "paymentAlreadyConfirmed": "Payment confirmed — a courier is on its way."
   },
   "Pharmacies": {
     "title": "Pharmacies asked",
@@ -2017,5 +2048,130 @@
     "change": "Change",
     "add": "Add",
     "changesNote": "To correct your details or add a family member, contact Nomad."
+  },
+  "Delivery": {
+    "status": {
+      "PREPARING": "Waiting for the pharmacy",
+      "READY_FOR_PICKUP": "Ready — book the courier",
+      "COURIER_REQUESTED": "Courier booked",
+      "ORIGINAL_COLLECTED": "Prescription collected",
+      "PICKED_UP": "On the way",
+      "DELIVERED": "Delivered",
+      "DELIVERY_FAILED": "Delivery failed"
+    },
+    "controlled": "Controlled medicine",
+    "coldChain": "Keep cold",
+    "coldChainHelp": "Cold chain: the pharmacy packs it in a cool bag; book a direct courier and deliver within the hour.",
+    "promisedBy": "Deliver by {when}",
+    "lateSince": "Late — was due {when}",
+    "waitingPharmacy": "Nomad paid {pharmacy} on {when}. Waiting for the pharmacy to confirm the payment on its link — the order is then ready for pickup.",
+    "pharmacyConfirmedByPhone": "Pharmacy confirmed by phone — mark ready",
+    "stops": "Courier stops",
+    "stopsControlled": "Courier stops (one booking, three stops)",
+    "collectOriginalStop": "collect the original prescription",
+    "map": "Map",
+    "readyBook": "Ready since {when}. Book the courier in Yango, then record it here.",
+    "trackingUrl": "Tracking link (from Yango)",
+    "bookingRef": "Booking reference",
+    "cost": "Yango price (FCFA)",
+    "eta": "Expected arrival",
+    "courierName": "Courier's name (optional)",
+    "courierPhone": "Courier's phone (optional)",
+    "bookingHelp": "The member gets a message and a “Follow my delivery” button with this link.",
+    "recordBooking": "Courier booked — tell the member",
+    "saveBooking": "Save changes",
+    "cancel": "Cancel",
+    "tracking": "Tracking link",
+    "refShort": "Ref. {ref}",
+    "etaShort": "Arrival ~{when}",
+    "bookedBy": "Booked {when} by {who}",
+    "originalCollected": "Prescription collected",
+    "pickedUp": "Picked up at the pharmacy",
+    "markDelivered": "Delivered",
+    "markFailed": "Delivery failed",
+    "editBooking": "Edit booking",
+    "deliveredNote": "How do you know it was delivered? (the member normally confirms in the app)",
+    "confirmDelivered": "Confirm delivered",
+    "failReason": "What happened?",
+    "failReasonPlaceholder": "Member not reachable, wrong address…",
+    "redeliveryFee": "Re-delivery fee (FCFA)",
+    "confirmFailed": "Record failed delivery",
+    "feeHelp": "The member is asked to pay this before a new courier is booked. Enter 0 for no fee.",
+    "feeDue": "Delivery failed ({reason}). Re-delivery fee due: {fee}.",
+    "memberSaysFeePaid": "The member says they paid by {method}, transaction {ref} ({when}).",
+    "methodLabel": "Method",
+    "transactionId": "Transaction ID",
+    "feeReceived": "Fee received — rebook",
+    "waiveReason": "Why cancel the fee?",
+    "waiveFee": "Cancel the fee",
+    "deliveredDone": "Delivered.",
+    "history": "Deliveries",
+    "attempt": "Trip {n}",
+    "outcome": {
+      "DELIVERED_MEMBER": "delivered (confirmed by the member)",
+      "DELIVERED_STAFF": "delivered (confirmed by staff)",
+      "FAILED": "failed"
+    },
+    "method": {
+      "WAVE": "Wave",
+      "ORANGE_MONEY": "Orange Money",
+      "CASH": "Cash",
+      "OTHER": "Other"
+    },
+    "error": {
+      "notPreparing": "The order isn't waiting for the pharmacy.",
+      "notReady": "The order isn't ready for a courier.",
+      "noCourier": "No courier is booked.",
+      "wrongStep": "That step doesn't fit where the delivery is.",
+      "noCharge": "No fee is due.",
+      "trackingUrl": "The tracking link must start with https://",
+      "linkOrRef": "Enter the tracking link or the booking reference.",
+      "costXof": "The price must be a whole number of FCFA.",
+      "etaAt": "Check the arrival time.",
+      "reason": "Give a reason (at least 3 characters).",
+      "fee": "Enter the fee in FCFA (0 for none).",
+      "reference": "Enter the transaction ID.",
+      "invalid": "Check what was entered.",
+      "other": "Something went wrong."
+    }
+  },
+  "MemberDelivery": {
+    "promisedBy": "Expected delivery: by {when}",
+    "step": {
+      "PAID": "Payment received",
+      "PREPARING": "Being prepared at the pharmacy",
+      "READY_FOR_PICKUP": "Ready at the pharmacy",
+      "COURIER_REQUESTED": "Courier booked",
+      "ORIGINAL_COLLECTED": "Original prescription collected",
+      "PICKED_UP": "On the way to you",
+      "DELIVERED": "Delivered"
+    },
+    "haveOriginalReady": "The courier comes to you first to collect the original prescription — please have it ready.",
+    "follow": "Follow my delivery",
+    "eta": "Expected arrival: around {when}",
+    "callCourier": "Call {name}",
+    "courier": "the courier",
+    "received": "I've received my order",
+    "thanks": "Thank you! Enjoy your recovery.",
+    "failed": "We couldn't deliver your order. A new delivery costs {fee}.",
+    "checkingFee": "Thank you. We're checking your payment, then we'll book a new courier.",
+    "noLinks": "Nomad will call you to arrange the payment.",
+    "afterPaying": "After paying, tell us here:",
+    "paidWith": "Paid with",
+    "transactionId": "Transaction ID (in your confirmation SMS)",
+    "iHavePaid": "I've paid",
+    "delivered": "Delivered {when}.",
+    "error": {
+      "wrongStep": "This step is already done.",
+      "noCharge": "There's no fee to pay.",
+      "reference": "Enter the transaction ID.",
+      "notFound": "This order couldn't be found.",
+      "other": "Something went wrong. Please try again."
+    },
+    "late": "Your delivery is running late — we're on it and will keep you posted here."
+  },
+  "OrderAuto": {
+    "deliverBy": "Expected delivery: by {when}.",
+    "eta": " (arrival around {when})"
   }
 }

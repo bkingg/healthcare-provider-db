@@ -12,6 +12,8 @@ import { shortDuration } from "@/lib/caseTime";
 import { localizedText } from "@/lib/localizedText";
 import { LinkifiedText } from "@/components/linkified-text";
 import { getCaseForStaff, listActiveNoteTemplates, listCaseWorkers, refreshOverdueCases } from "@/data/caseOps";
+import { refreshDeliveryAlerts } from "@/data/orderDelivery";
+import { DeliveryPanel } from "../_components/delivery-panel";
 import { NotesList } from "../_components/notes-list";
 import { ColourPill } from "../_components/colour";
 import { WriteBox } from "../_components/write-box";
@@ -37,7 +39,7 @@ import { isOpenAt } from "@/lib/openNow";
 import { formatProviderNumber as providerCode } from "@/lib/providerNumber";
 import { PharmacyPanel } from "../_components/pharmacy-panel";
 import { OrderPaymentPanel } from "../_components/order-payment-panel";
-import { staffPaymentView } from "@/data/orderView";
+import { staffDeliveryView, staffPaymentView } from "@/data/orderView";
 import type { NoteMentions } from "@/components/formatted-note";
 
 type TimelineEvent = NonNullable<Awaited<ReturnType<typeof getCaseForStaff>>>["events"][number];
@@ -71,6 +73,7 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
   const actor = await getCurrentActor();
   requireWorkCases(actor);
   await refreshOverdueCases();
+  await refreshDeliveryAlerts();
 
   const { id } = await props.params;
   // A bell link points at one note or action: open and highlight it.
@@ -159,6 +162,7 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
   // Reloaded after the check above, which may have chosen a quote.
   const orderShown = medicationOrder ? await orderForCase(id) : null;
   const paymentView = orderShown ? await staffPaymentView(orderShown.id, locale) : null;
+  const deliveryView = orderShown ? await staffDeliveryView(orderShown.id, locale) : null;
 
   const now = new Date();
   const due = c.responseDueAt;
@@ -230,6 +234,22 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
         return t(`event.${e.type}`, { amount: Number(d.amountXof ?? d.totalXof ?? 0).toLocaleString("fr-FR"), ref: String(d.reference ?? e.body ?? "—") });
       case "ORDER_STATUS_CHANGED":
         return t("event.ORDER_STATUS_CHANGED", { to: tOrder(`status.${String(d.to)}`) });
+      case "PHARMACY_PAYMENT_CONFIRMED":
+        return t(d.how === "STAFF" ? "event.PHARMACY_PAYMENT_CONFIRMED_STAFF" : "event.PHARMACY_PAYMENT_CONFIRMED");
+      case "COURIER_BOOKED":
+        return t("event.COURIER_BOOKED");
+      case "DELIVERY_FAILED":
+        return t("event.DELIVERY_FAILED", { reason: e.body ?? "—", fee: Number(d.feeXof ?? 0).toLocaleString("fr-FR") });
+      case "REDELIVERY_FEE_WAIVED":
+        return t("event.REDELIVERY_FEE_WAIVED", { reason: e.body ?? "—" });
+      case "REDELIVERY_FEE_PAID":
+        return t("event.REDELIVERY_FEE_PAID", { fee: Number(d.feeXof ?? 0).toLocaleString("fr-FR") });
+      case "DELIVERY_RECEIVED":
+        return e.actorType === "MEMBER" ? t("event.DELIVERY_RECEIVED_MEMBER") : t("event.DELIVERY_RECEIVED_STAFF", { note: e.body ?? "—" });
+      case "ALERT_BOOK_COURIER":
+      case "ALERT_PHARMACY_UNCONFIRMED":
+      case "ALERT_DELIVERY_LATE":
+        return t(`event.${e.type}`);
       case "PROVIDER_TAGGED":
       case "PROVIDER_UNTAGGED":
         return t(`event.${e.type}`, { code: String(d.code ?? "?") });
@@ -377,6 +397,12 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
                 <div className="mt-2 flex flex-col gap-2 border-t border-pn-rule pt-3">
                   <span className="text-[11px] font-bold tracking-[0.06em] text-pn-gray-2 uppercase">{t("priceAndPayment")}</span>
                   <OrderPaymentPanel v={paymentView} />
+                </div>
+              )}
+              {deliveryView && (
+                <div className="mt-2 flex flex-col gap-2 border-t border-pn-rule pt-3">
+                  <span className="text-[11px] font-bold tracking-[0.06em] text-pn-gray-2 uppercase">{t("delivery")}</span>
+                  <DeliveryPanel v={deliveryView} />
                 </div>
               )}
             </Section>

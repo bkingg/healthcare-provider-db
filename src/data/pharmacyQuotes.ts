@@ -31,6 +31,9 @@ const DEFAULTS: Record<string, number> = {
   NIGHT_END_HOUR: 7,
   PRICE_ROUND_XOF: 100,
   PRICE_VALID_MINUTES: 60,
+  COURIER_BOOKING_ALERT_MINUTES: 20,
+  PHARMACY_CONFIRM_ALERT_MINUTES: 30,
+  PHARMACY_LINK_DAYS: 3,
 };
 
 /** Admin > Value lists > Medication delivery settings, with safe defaults. */
@@ -182,6 +185,8 @@ export async function quoteByToken(token: string) {
           documents: { include: { file: { select: { id: true, contentType: true } } } },
           patient: { select: { firstName: true, lastName: true, dateOfBirth: true } },
           case: { select: { caseNumber: true } },
+          // Nomad's payment to this pharmacy (step 5: it confirms receipt).
+          payments: { where: { direction: "TO_PHARMACY", status: "CONFIRMED" }, orderBy: { createdAt: "desc" }, take: 1 },
         },
       },
     },

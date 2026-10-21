@@ -5,6 +5,7 @@ import { medicationLabel, requirementsFor } from "@/lib/medications";
 import type { MedicationOrderInput } from "@/lib/validation/medicationOrder";
 import type { CurrentMember } from "@/lib/memberAuth";
 import { createCaseTx } from "./caseOps";
+import { onOrderReceived } from "./orderDelivery";
 import { requestablePeople } from "./memberApp";
 import { prepareQuotes } from "./pharmacyQuotes";
 
@@ -158,6 +159,7 @@ export async function createMemberMedicationOrder(member: CurrentMember, input: 
         documents: { create: input.documents.map((d) => ({ requirementCode: d.requirementCode, fileId: d.fileId })) },
       },
     });
+    await onOrderReceived(tx, c.id, c.caseNumber);
     return c;
   });
 }

@@ -19,6 +19,7 @@ import { savePrimaryAddress, removePrimaryAddress } from "@/data/memberAddresses
 import { memberAddressSchema } from "@/lib/validation/memberAddress";
 import { memberFeatures } from "@/data/memberAppFeatures";
 import { offeredTimeframes } from "@/data/medicationTimeframes";
+import { DeliveryStepError, memberConfirmsReceived, memberReportsFeePaid } from "@/data/orderDelivery";
 
 export type LoginLinkState = { sent: true; devLink?: string } | { sent: false; error: string } | null;
 
@@ -135,6 +136,48 @@ export async function phoneSignInAction(prev: PhoneSignInState, formData: FormDa
     default:
       return { stage: "phone", error: "startAgain" };
   }
+}
+
+// --------------------------------------------------------------- delivery
+
+const reportFeeSchema = z.object({
+  caseId: z.uuid(),
+  method: z.enum(["WAVE", "ORANGE_MONEY", "OTHER"]),
+  reference: z.string().trim().min(3, "reference").max(80, "reference"),
+});
+
+/** The member taps "I've received my order". */
+export async function confirmReceivedAction(_prev: OrderStepState, formData: FormData): Promise<OrderStepState> {
+  const member = await getCurrentMember();
+  const locale = await getLocale();
+  if (!member) return redirect({ href: "/m/login", locale });
+  const caseId = z.uuid().safeParse(formData.get("caseId"));
+  if (!caseId.success) return { ok: false, error: "invalid" };
+  try {
+    await memberConfirmsReceived(member, caseId.data);
+  } catch (err) {
+    if (err instanceof DeliveryStepError) return { ok: false, error: err.message };
+    throw err;
+  }
+  revalidatePath("/[locale]/m/(app)/requests/[id]", "page");
+  return { ok: true };
+}
+
+/** The member says they paid the re-delivery fee. */
+export async function reportFeePaidAction(_prev: OrderStepState, formData: FormData): Promise<OrderStepState> {
+  const member = await getCurrentMember();
+  const locale = await getLocale();
+  if (!member) return redirect({ href: "/m/login", locale });
+  const parsed = reportFeeSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message === "reference" ? "reference" : "invalid" };
+  try {
+    await memberReportsFeePaid(member, parsed.data.caseId, parsed.data.method, parsed.data.reference);
+  } catch (err) {
+    if (err instanceof DeliveryStepError) return { ok: false, error: err.message };
+    throw err;
+  }
+  revalidatePath("/[locale]/m/(app)/requests/[id]", "page");
+  return { ok: true };
 }
 
 // ---------------------------------------------------------- primary address
