@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { schedulePush } from "@/lib/push";
 import { priceOrder, type PricingSettings } from "@/lib/orderPricing";
 import type { CurrentMember } from "@/lib/memberAuth";
 import type { PaymentMethod, Prisma } from "../../generated/prisma/client";
@@ -51,6 +52,7 @@ async function notifyOrderUpdate(tx: Tx, caseId: string, eventId: string) {
     ? [c.assignedToId]
     : (await tx.user.findMany({ where: { isActive: true, role: { canWorkCases: true, isActive: true } }, select: { id: true } })).map((u) => u.id);
   for (const userId of userIds) await tx.staffNotification.create({ data: { userId, kind: "ORDER_UPDATE", caseId, eventId } });
+  schedulePush();
 }
 
 /** Fixes and sends the member's price (automatically when a pharmacy is

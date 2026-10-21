@@ -1,6 +1,7 @@
 import "server-only";
 import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
+import { schedulePush } from "@/lib/push";
 import { formatDakarDateTime } from "@/lib/formatDate";
 import { deliverBy, fillTemplate } from "@/lib/deliveryPromise";
 import type { CurrentMember } from "@/lib/memberAuth";
@@ -40,6 +41,7 @@ export async function notifyStaff(tx: Tx, caseId: string, eventId: string) {
     ? [c.assignedToId]
     : (await tx.user.findMany({ where: { isActive: true, role: { canWorkCases: true, isActive: true } }, select: { id: true } })).map((u) => u.id);
   for (const userId of userIds) await tx.staffNotification.create({ data: { userId, kind: "ORDER_UPDATE", caseId, eventId } });
+  schedulePush();
 }
 
 /** Posts an automatic message (Admin > Automatic messages) in the member's
@@ -51,7 +53,9 @@ export async function postAutoMessage(tx: Tx, caseId: string, code: string, vars
   const c = await tx.careCase.findUniqueOrThrow({ where: { id: caseId }, select: { requestedBy: { select: { preferredLanguage: true } } } });
   const fr = c.requestedBy.preferredLanguage !== "en";
   const body = fillTemplate(fr ? (tpl.bodyFr ?? tpl.bodyEn) : tpl.bodyEn, vars);
-  if (body) await tx.caseEvent.create({ data: { caseId, type: "MESSAGE_TO_MEMBER", actorType: "SYSTEM", body, visibleToMember: true, data: { auto: code } } });
+  if (!body) return;
+  await tx.caseEvent.create({ data: { caseId, type: "MESSAGE_TO_MEMBER", actorType: "SYSTEM", body, visibleToMember: true, data: { auto: code } } });
+  schedulePush();
 }
 
 async function memberLocale(caseId: string, tx: Tx = prisma) {

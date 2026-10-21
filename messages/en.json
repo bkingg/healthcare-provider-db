@@ -2047,7 +2047,8 @@
     "noAddress": "No primary address yet",
     "change": "Change",
     "add": "Add",
-    "changesNote": "To correct your details or add a family member, contact Nomad."
+    "changesNote": "To correct your details or add a family member, contact Nomad.",
+    "alerts": "Alerts"
   },
   "Delivery": {
     "status": {
@@ -2173,5 +2174,18 @@
   "OrderAuto": {
     "deliverBy": "Expected delivery: by {when}.",
     "eta": " (arrival around {when})"
+  },
+  "Push": {
+    "promptTitle": "Get alerts on this phone",
+    "promptBody": "We'll let you know as soon as Nomad replies or your order moves forward — no need to keep checking. The alert never shows any medical details.",
+    "turnOn": "Turn on alerts",
+    "notNow": "Not now",
+    "installFirst": "On iPhone: tap Share, then \"Add to Home Screen\", and open Nomad from the new icon to turn alerts on.",
+    "toggle": "Alerts on this phone",
+    "toggleStaff": "Alerts on this device",
+    "onNote": "On. Alerts only say that something changed — details stay in the app.",
+    "denied": "Alerts are blocked for this site. Allow notifications in your browser settings, then try again.",
+    "unsupported": "This browser can't receive alerts.",
+    "failed": "Alerts couldn't be turned on. Try again."
   }
 }

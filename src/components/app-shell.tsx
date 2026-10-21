@@ -20,6 +20,7 @@ import { NotificationBell } from "@/components/notification-bell";
 import { bellFor } from "@/data/caseActions";
 import { toBellData } from "@/lib/bellData";
 import { NomadMark, NomadWordmark } from "@/components/brand";
+import { vapidPublicKey } from "@/lib/push";
 
 async function logoutAction() {
   "use server";
@@ -93,7 +94,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             <div className="flex h-[26px] w-[26px] items-center justify-center bg-pn-accent text-[11px] font-bold text-white" title={staffLabel(actor)}>
               {initials(actor.name, actor.email)}
             </div>
-            {bell && <NotificationBell initial={bell} />}
+            {bell && <NotificationBell initial={bell} pushKey={vapidPublicKey()} />}
             <Link href="/settings" aria-label={t("settings")} title={t("settings")} className="text-pn-gray-4 hover:text-white">
               <Settings size={15} strokeWidth={2} />
             </Link>

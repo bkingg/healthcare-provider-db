@@ -47,6 +47,7 @@ model Member {
   consentVersion String?          @map("consent_version")
 
   addresses      MemberAddress[]
+  pushSubscriptions PushSubscription[]
   loginTokens    MemberLoginToken[]
   sessions       MemberSession[]
   casesRequested CareCase[]         @relation("CasesRequested")

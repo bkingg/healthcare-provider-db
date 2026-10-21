@@ -2047,7 +2047,8 @@
     "noAddress": "Pas encore d'adresse principale",
     "change": "Modifier",
     "add": "Ajouter",
-    "changesNote": "Pour corriger vos informations ou ajouter un membre de votre famille, contactez Nomad."
+    "changesNote": "Pour corriger vos informations ou ajouter un membre de votre famille, contactez Nomad.",
+    "alerts": "Alertes"
   },
   "Delivery": {
     "status": {
@@ -2173,5 +2174,18 @@
   "OrderAuto": {
     "deliverBy": "Livraison prévue : au plus tard le {when}.",
     "eta": " (arrivée vers {when})"
+  },
+  "Push": {
+    "promptTitle": "Recevez les alertes sur ce téléphone",
+    "promptBody": "Nous vous prévenons dès que Nomad répond ou que votre commande avance — inutile de vérifier sans cesse. L'alerte n'affiche jamais de détail médical.",
+    "turnOn": "Activer les alertes",
+    "notNow": "Plus tard",
+    "installFirst": "Sur iPhone : touchez Partager, puis « Sur l'écran d'accueil », et ouvrez Nomad depuis la nouvelle icône pour activer les alertes.",
+    "toggle": "Alertes sur ce téléphone",
+    "toggleStaff": "Alertes sur cet appareil",
+    "onNote": "Activées. Les alertes indiquent seulement qu'il y a du nouveau — les détails restent dans l'application.",
+    "denied": "Les alertes sont bloquées pour ce site. Autorisez les notifications dans les réglages du navigateur, puis réessayez.",
+    "unsupported": "Ce navigateur ne peut pas recevoir d'alertes.",
+    "failed": "Impossible d'activer les alertes. Réessayez."
   }
 }

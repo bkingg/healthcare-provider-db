@@ -9,15 +9,16 @@ import { formatCaseNumber } from "@/lib/caseNumber";
 import { localizedText } from "@/lib/localizedText";
 import { shortDuration } from "@/lib/caseTime";
 import type { BellCase, BellData } from "@/lib/bellData";
+import { PushToggle } from "@/components/push-toggle";
 import { getBellAction, markAllNotificationsReadAction, markNotificationReadAction } from "@/app/[locale]/(staff)/cases/bell-actions";
 
 const REFRESH_MS = 60_000;
 
 /** The header bell: your next actions that are due now (they stay until
  * ticked off), then mentions and actions given to you. The number is both
- * together. Refreshes on every page change and every minute — there's no
- * live push, so a new mention shows up within about a minute. */
-export function NotificationBell({ initial }: { initial: BellData }) {
+ * together. Refreshes on every page change and every minute; phone alerts
+ * (switch at the bottom) say when something new comes in. */
+export function NotificationBell({ initial, pushKey }: { initial: BellData; pushKey: string | null }) {
   const t = useTranslations("Bell");
   const locale = useLocale();
   const router = useRouter();
@@ -172,6 +173,11 @@ export function NotificationBell({ initial }: { initial: BellData }) {
                 )}
               </section>
             </div>
+            {pushKey && (
+              <div className="border-t-2 border-pn-ink px-3 py-2">
+                <PushToggle who="staff" publicKey={pushKey} compact />
+              </div>
+            )}
           </Popover.Popup>
         </Popover.Positioner>
       </Popover.Portal>

@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { schedulePush } from "@/lib/push";
 import { responseDueAt } from "@/lib/businessHours";
 import { escalate, ragRank, type Rag } from "@/lib/caseRules";
 import { parseSearchParams } from "@/lib/validation/search";
@@ -367,6 +368,7 @@ export async function messageMember(caseId: string, body: string, staffId: strin
     const status = c.status === "NEW" ? "IN_PROGRESS" : c.status;
     await tx.careCase.update({ where: { id: caseId }, data: { status, responseDueAt: null, ...(c.assignedToId ? {} : { assignedToId: staffId }) } });
     await addEvent(tx, caseId, { type: "MESSAGE_TO_MEMBER", actorType: "STAFF", staffId, body, visibleToMember: true });
+    schedulePush();
     if (status !== c.status) await addEvent(tx, caseId, { type: "STATUS_CHANGED", actorType: "STAFF", staffId, data: { from: c.status, to: status } });
   });
 }

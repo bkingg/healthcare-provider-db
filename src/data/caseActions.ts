@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { schedulePush } from "@/lib/push";
 import { extractMentions } from "@/lib/mentions";
 import type { Prisma } from "../../generated/prisma/client";
 
@@ -30,6 +31,7 @@ export async function addActionTx(tx: Tx, caseId: string, input: NewAction, staf
   });
   if (input.ownerId !== staffId) {
     await tx.staffNotification.create({ data: { userId: input.ownerId, kind: "ACTION_ASSIGNED", caseId, actionId: action.id, actorId: staffId } });
+    schedulePush();
   }
   return action;
 }
@@ -77,6 +79,7 @@ export async function recordMentionsTx(tx: Tx, caseId: string, eventId: string, 
     await tx.caseMention.create({ data: { eventId, userId: p.id, handle: p.handle } });
     await tx.staffNotification.create({ data: { userId: p.id, kind: "MENTION", caseId, eventId, actorId: staffId } });
   }
+  if (people.length) schedulePush();
   return people;
 }
 

@@ -8,6 +8,8 @@ import { EmergencyPanel } from "../_components/emergency-panel";
 import { MemberSidebar, requestsNeedingMember } from "../_components/member-sidebar";
 import { PANES } from "../_components/panes";
 import { memberFeatures } from "@/data/memberAppFeatures";
+import { vapidPublicKey } from "@/lib/push";
+import { PushPrompt } from "@/components/push-toggle";
 
 export default async function MemberHomePage(props: PageProps<"/[locale]/m">) {
   const t = await getTranslations("MemberApp");
@@ -18,6 +20,7 @@ export default async function MemberHomePage(props: PageProps<"/[locale]/m">) {
   const params = await props.searchParams;
   const welcome = params.welcome === "1";
   const addressSaved = params.addressSaved === "1";
+  const pushKey = vapidPublicKey();
 
   return (
     <main className="flex flex-col">
@@ -35,6 +38,7 @@ export default async function MemberHomePage(props: PageProps<"/[locale]/m">) {
           <CheckCircle2 size={18} aria-hidden /> {t("addressSaved")}
         </p>
       )}
+      {pushKey && <PushPrompt publicKey={pushKey} />}
       <div className={PANES}>
         <MemberSidebar member={member} active={{ kind: "home" }} />
         {/* Computer only: the right-hand pane before a request is opened. */}

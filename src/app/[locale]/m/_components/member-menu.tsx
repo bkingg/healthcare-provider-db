@@ -6,6 +6,7 @@ import { Menu } from "@base-ui/react/menu";
 import { LogOut, MapPin, UserRound } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { signOutMemberAction } from "../actions";
+import { disablePush } from "@/lib/pushClient";
 
 /** Top right of the member header: the member's initials open a menu with
  * who's signed in, their profile, their primary address and — tucked away
@@ -43,7 +44,9 @@ export function MemberMenu({ name, memberId, covered }: { name: string; memberId
               <MapPin size={17} aria-hidden /> {t("primaryAddress")}
             </Menu.LinkItem>
             <Menu.Separator className="my-1 h-px bg-pn-rule" />
-            <Menu.Item onClick={() => startTransition(() => signOutMemberAction())} className={`${item} text-[#991b1b]`}>
+            <Menu.Item
+              // This phone stops getting the member's alerts once they sign out.
+              onClick={() => void disablePush().finally(() => startTransition(() => signOutMemberAction()))} className={`${item} text-[#991b1b]`}>
               <LogOut size={17} aria-hidden /> {t("signOut")}
             </Menu.Item>
           </Menu.Popup>

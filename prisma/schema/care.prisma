@@ -310,6 +310,8 @@ model CaseEvent {
   /// Small structured details, e.g. {"from":"NEW","to":"IN_PROGRESS"}.
   data            Json?
   visibleToMember Boolean       @default(false) @map("visible_to_member")
+  /// Messages to the member: when the phone alert went (each goes once).
+  pushedAt        DateTime?     @map("pushed_at")
   mentions        CaseMention[]
   notifications   StaffNotification[]
   createdAt       DateTime      @default(now()) @map("created_at")
@@ -439,6 +441,8 @@ model StaffNotification {
   actor     User?                 @relation("NotificationBy", fields: [actorId], references: [id])
   createdAt DateTime              @default(now()) @map("created_at")
   readAt    DateTime?             @map("read_at")
+  /// When the phone alert for it was sent (or skipped) — each goes once.
+  pushedAt  DateTime?             @map("pushed_at")
 
   @@index([userId, readAt, createdAt])
   @@map("staff_notification")
@@ -469,4 +473,28 @@ model CaseProviderTag {
   @@id([caseId, providerId])
   @@index([providerId])
   @@map("case_provider_tag")
+}
+
+/// A phone or browser that agreed to receive Nomad alerts (web push) — for
+/// a member or a staff user. Alerts are generic ("your request was
+/// updated"); the details stay in the app. Removed when the device says
+/// it's gone or the person turns alerts off / signs out on it.
+model PushSubscription {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  endpoint  String    @unique
+  p256dh    String
+  auth      String
+  memberId  String?   @map("member_id") @db.Uuid
+  member    Member?   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  userId    String?   @map("user_id") @db.Uuid
+  user      User?     @relation("UserPushSubscriptions", fields: [userId], references: [id], onDelete: Cascade)
+  /// "fr" or "en": the language of the alerts on this device.
+  locale    String    @default("fr")
+  userAgent String?   @map("user_agent")
+  lastSentAt DateTime? @map("last_sent_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([memberId])
+  @@index([userId])
+  @@map("push_subscription")
 }

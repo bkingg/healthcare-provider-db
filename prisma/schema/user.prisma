@@ -58,6 +58,8 @@ model User {
   pharmacyQuotesSent      PharmacyQuote[]        @relation("QuoteSentBy")
   orderPaymentsRecorded   MedicationOrderPayment[] @relation("PaymentRecordedBy")
 
+  pushSubscriptions PushSubscription[] @relation("UserPushSubscriptions")
+
   @@map("app_user")
 }
 

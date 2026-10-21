@@ -10,6 +10,8 @@ import { getPrimaryAddress } from "@/data/memberAddresses";
 import { EmergencyPanel } from "../../_components/emergency-panel";
 import { MemberSidebar } from "../../_components/member-sidebar";
 import { MAIN_PANE, PANES } from "../../_components/panes";
+import { vapidPublicKey } from "@/lib/push";
+import { PushToggle } from "@/components/push-toggle";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -28,6 +30,7 @@ export default async function MemberProfilePage() {
   const member = (await getCurrentMember())!;
   const [p, address] = await Promise.all([getMemberProfile(member), getPrimaryAddress(member.id)]);
   const date = (d: Date | null) => (d ? formatDakarDate(d, locale) : null);
+  const pushKey = vapidPublicKey();
   const section = "m-0 text-[13px] font-bold tracking-[0.08em] text-pn-gray-1 uppercase";
 
   return (
@@ -108,6 +111,15 @@ export default async function MemberProfilePage() {
               </span>
             </Link>
           </section>
+
+          {pushKey && (
+            <section className="flex flex-col gap-2">
+              <h2 className={section}>{t("alerts")}</h2>
+              <div className="border border-pn-rule bg-white px-4 py-3">
+                <PushToggle who="member" publicKey={pushKey} />
+              </div>
+            </section>
+          )}
 
           <p className="m-0 text-[14px] text-pn-gray-1">{t("changesNote")}</p>
         </div>
