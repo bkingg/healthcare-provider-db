@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { ResizeHandle } from "@/components/resize-handle";
-import { BarChart3, Building2, FilePlus, ListTree, Map as MapIcon, Search, Inbox, Upload, Users, UsersRound, Pill } from "lucide-react";
+import { BarChart3, Building2, FilePlus, ListTree, Map as MapIcon, Search, Inbox, Upload, Users, UsersRound, Pill, Sparkles } from "lucide-react";
 
 type WorkspaceItem = {
   href: string;
@@ -62,9 +62,10 @@ export function SidebarNav({
             href: "/admin",
             label: t("admin"),
             icon: ListTree,
-            match: (p: string) => p.startsWith("/admin") && !["/admin/users", "/admin/reports", "/admin/medications"].some((x) => p.startsWith(x)),
+            match: (p: string) => p.startsWith("/admin") && !["/admin/users", "/admin/reports", "/admin/medications", "/admin/copilot"].some((x) => p.startsWith(x)),
           },
           { href: "/admin/medications", label: t("medicationCatalog"), icon: Pill, match: (p: string) => p.startsWith("/admin/medications") },
+          { href: "/admin/copilot", label: t("copilot"), icon: Sparkles, match: (p: string) => p.startsWith("/admin/copilot") },
         ]
       : []),
     ...(canManageUsers ? [{ href: "/admin/users", label: t("users"), icon: Users, match: (p: string) => p.startsWith("/admin/users") }] : []),

@@ -16,7 +16,8 @@
     "resizeWorkspace": "Faites glisser pour redimensionner le panneau Espace de travail (double-clic pour réinitialiser)",
     "members": "Membres",
     "cases": "Dossiers",
-    "medicationCatalog": "Catalogue médicaments"
+    "medicationCatalog": "Catalogue médicaments",
+    "copilot": "Copilote IA"
   },
   "Header": {
     "settings": "Paramètres",
@@ -171,7 +172,9 @@
       "paymentLinks": "Liens de paiement",
       "memberAppFeatures": "Services de l'application membre",
       "medicationTimeframes": "Délais de livraison",
-      "memberMessageTemplates": "Messages automatiques"
+      "memberMessageTemplates": "Messages automatiques",
+      "copilotTasks": "Boutons du copilote IA",
+      "copilotSettings": "Budget et tarifs du copilote IA"
     },
     "fields": {
       "paymentCategory": "Catégorie de paiement",
@@ -236,7 +239,10 @@
       "timeframeHelpEn": "Texte d'aide sous le choix (anglais)",
       "timeframeHelpFr": "Texte d'aide sous le choix (français)",
       "timeframeOffered": "Proposé aux membres",
-      "templateEnabled": "Envoyé"
+      "templateEnabled": "Envoyé",
+      "canUseCopilot": "Peut utiliser le copilote IA",
+      "copilotTaskEnabled": "Activé",
+      "copilotInstructions": "Consignes données à l'IA"
     },
     "marker": {
       "default": "Défaut",
@@ -280,7 +286,8 @@
       "accessScreenText": "Accès et textes d'écran",
       "expandAll": "Tout déplier",
       "collapseAll": "Tout replier",
-      "medicationDelivery": "Livraison de médicaments"
+      "medicationDelivery": "Livraison de médicaments",
+      "copilot": "Copilote IA"
     }
   },
   "Login": {
@@ -1591,7 +1598,8 @@
     "amm": "AMM {n}",
     "priceToVerify": "à vérifier",
     "rcpLink": "RCP",
-    "photoLink": "Photo"
+    "photoLink": "Photo",
+    "aiFlags": "Suggestions IA"
   },
   "MedicationImport": {
     "breadcrumb": "Catalogue des médicaments",
@@ -2187,5 +2195,108 @@
     "denied": "Les alertes sont bloquées pour ce site. Autorisez les notifications dans les réglages du navigateur, puis réessayez.",
     "unsupported": "Ce navigateur ne peut pas recevoir d'alertes.",
     "failed": "Impossible d'activer les alertes. Réessayez."
+  },
+  "Copilot": {
+    "draftReply": "Rédiger avec l'IA",
+    "summarise": "Résumer avec l'IA",
+    "summariseAgain": "Résumer à nouveau",
+    "working": "L'IA rédige…",
+    "draftNotice": "Brouillon de l'IA — relisez et corrigez-le avant d'envoyer. Vous êtes responsable de ce qui est envoyé.",
+    "summaryNotice": "Résumé de l'IA — vérifiez-le avec le dossier avant de vous y fier.",
+    "testNotice": "Réponse de test : aucune IA n'est encore connectée (AI_PROVIDER=mock).",
+    "budgetWarn": "{percent} % du budget IA du mois est utilisé.",
+    "replaceQuestion": "Remplacer votre texte par le brouillon de l'IA ?",
+    "replace": "Remplacer",
+    "keepMine": "Garder mon texte",
+    "discard": "Supprimer le brouillon",
+    "close": "Fermer",
+    "saveAsNote": "Garder comme note interne",
+    "savedAsNote": "Enregistré comme note interne.",
+    "noteHeading": "Résumé IA (vérifié par l'équipe) :",
+    "error": {
+      "off": "Le copilote IA est désactivé.",
+      "taskOff": "Ce bouton IA est désactivé dans l'Admin.",
+      "budget": "Le budget IA du mois est épuisé — le copilote est en pause jusqu'au mois prochain (ou jusqu'à ce qu'un administrateur augmente le budget).",
+      "failed": "L'IA n'a pas répondu. Réessayez dans un instant."
+    }
+  },
+  "CopilotFlags": {
+    "title": "Suggestions d'indicateurs par l'IA",
+    "intro": "Classe réglementaire, ordonnance, chaîne du froid et psychotrope suggérés pour les médicaments pas encore vérifiés. Les valeurs surlignées diffèrent du catalogue. Rien ne change avant « Appliquer » — vérifiez chacune, idéalement avec un pharmacien.",
+    "suggest": "Suggérer pour les {count} médicaments suivants",
+    "added": "{count} suggestions ajoutées. {remaining} médicaments restent à vérifier.",
+    "nothingLeft": "Tous les médicaments actifs ont déjà une suggestion.",
+    "notAvailable": "Le copilote IA est désactivé, ou vous ne pouvez pas l'utiliser.",
+    "empty": "Aucune suggestion en attente.",
+    "medication": "Médicament",
+    "regulatoryClass": "Classe",
+    "prescription": "Ordonnance",
+    "why": "Pourquoi",
+    "decision": "Décision",
+    "now": "actuel : {value}",
+    "yes": "Oui",
+    "no": "Non",
+    "apply": "Appliquer",
+    "dismiss": "Écarter",
+    "testRow": "Réponse de test — pas de l'IA",
+    "confidence": {
+      "LOW": "Faible",
+      "MEDIUM": "Moyenne",
+      "HIGH": "Élevée"
+    }
+  },
+  "CopilotAdmin": {
+    "title": "Copilote IA",
+    "subtitle": "Des boutons qui rédigent des réponses aux membres, résument les dossiers et suggèrent les indicateurs du catalogue. L'équipe vérifie toujours la réponse. Les données personnelles sont remplacées par des repères avant que le texte ne quitte Nomad ; seul du texte est envoyé, jamais de fichiers.",
+    "status": "État",
+    "provider": {
+      "off": "Désactivé",
+      "mock": "Réponses de test (aucune IA connectée)",
+      "openai": "Activé — OpenAI"
+    },
+    "providerHint": {
+      "off": "Mettez AI_PROVIDER=mock pour essayer avec des réponses de test, ou AI_PROVIDER=openai avec OPENAI_API_KEY pour l'activer.",
+      "mock": "Les boutons fonctionnent de bout en bout avec des réponses inventées, marquées comme tests. Ajoutez OPENAI_API_KEY et mettez AI_PROVIDER=openai pour passer en réel.",
+      "openai": "Les réponses viennent d'OpenAI. OpenAI ne conserve pas les réponses."
+    },
+    "model": "Modèle : {model}",
+    "thisMonth": "Ce mois-ci",
+    "spent": "{spent} sur {budget} ({percent} %)",
+    "paused": "Budget atteint : le copilote est en pause jusqu'au mois prochain ou jusqu'à ce que le budget soit augmenté.",
+    "warn": "Plus de {percent} % du budget est utilisé.",
+    "editBudget": "Modifier le budget et les tarifs",
+    "byButton": "Ce mois-ci, par bouton",
+    "editButtons": "Activer/désactiver les boutons ou modifier les consignes",
+    "button": "Bouton",
+    "uses": "Utilisations",
+    "whatStaffDid": "Ce que l'équipe en a fait",
+    "usedRate": "Utilisé",
+    "cost": "Coût",
+    "usedRateHint": "Utilisé = parmi les réponses sur lesquelles l'équipe a tranché, la part envoyée, gardée ou appliquée. Un taux bas veut dire que les consignes sont à revoir.",
+    "pendingFlags": "{count} suggestions d'indicateurs à vérifier",
+    "latest": "Dernières utilisations",
+    "none": "Personne n'a encore utilisé le copilote.",
+    "when": "Quand",
+    "who": "Qui",
+    "case": "Dossier",
+    "result": "Résultat",
+    "tokens": "Jetons",
+    "test": "test",
+    "privacyNote": "* estimé (réponses de test). Le texte envoyé et reçu n'est pas conservé — seulement qui, quoi, le coût et le résultat.",
+    "task": {
+      "REPLY_DRAFT": "Brouillon de réponse",
+      "CASE_SUMMARY": "Résumé de dossier",
+      "CATALOG_FLAGS": "Indicateurs du catalogue"
+    },
+    "outcome": {
+      "PENDING": "Pas encore utilisé",
+      "SENT_AS_IS": "Envoyé tel quel",
+      "SENT_EDITED": "Envoyé après modification",
+      "SAVED_AS_NOTE": "Gardé en note",
+      "APPLIED": "Appliqué",
+      "DISMISSED": "Écarté",
+      "FAILED": "Échec",
+      "BLOCKED": "Non lancé"
+    }
   }
 }

@@ -31,6 +31,7 @@ import {
 } from "@/data/orderDelivery";
 import type { QuoteFormState } from "@/app/[locale]/q/actions";
 import { prisma } from "@/lib/prisma";
+import { recordReplySent } from "@/data/copilot";
 
 /** Every case action re-checks canWorkCases server-side — the nav link and
  * pages hide behind it too, but a form POST doesn't. */
@@ -132,6 +133,9 @@ export async function messageMemberAction(_prev: ActionResult | null, formData: 
     if (err instanceof ops.CaseHiddenFromMemberError) return fail({ form: ["hiddenFromMember"] });
     throw err;
   }
+  // Started from a copilot draft: note whether it went as is or edited.
+  const aiUsageId = id.safeParse(formData.get("aiUsageId"));
+  if (aiUsageId.success) await recordReplySent(aiUsageId.data, parsed.data.body, actor.id, parsed.data.caseId);
   refresh();
   return { success: true };
 }

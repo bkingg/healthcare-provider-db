@@ -151,6 +151,7 @@ model CareCase {
   memberLastSeenAt DateTime?      @map("member_last_seen_at")
   resolvedAt      DateTime?       @map("resolved_at")
   events          CaseEvent[]
+  copilotUsage    CopilotUsage[]
   providerOptions CaseProviderOption[]
   actions         CaseAction[]
   notifications   StaffNotification[]

@@ -16,7 +16,8 @@
     "resizeWorkspace": "Drag to resize the Workspace panel (double-click to reset)",
     "members": "Members",
     "cases": "Cases",
-    "medicationCatalog": "Medication catalog"
+    "medicationCatalog": "Medication catalog",
+    "copilot": "AI copilot"
   },
   "Header": {
     "settings": "Settings",
@@ -171,7 +172,9 @@
       "paymentLinks": "Payment links",
       "memberAppFeatures": "Member app features",
       "medicationTimeframes": "Delivery timeframes",
-      "memberMessageTemplates": "Automatic messages"
+      "memberMessageTemplates": "Automatic messages",
+      "copilotTasks": "AI copilot buttons",
+      "copilotSettings": "AI copilot budget and prices"
     },
     "fields": {
       "paymentCategory": "Payment category",
@@ -236,7 +239,10 @@
       "timeframeHelpEn": "Help text under the choice (English)",
       "timeframeHelpFr": "Help text under the choice (French)",
       "timeframeOffered": "Offered to members",
-      "templateEnabled": "Sent"
+      "templateEnabled": "Sent",
+      "canUseCopilot": "Can use the AI copilot",
+      "copilotTaskEnabled": "On",
+      "copilotInstructions": "Instructions given to the AI"
     },
     "marker": {
       "default": "Default",
@@ -280,7 +286,8 @@
       "accessScreenText": "Access & screen text",
       "expandAll": "Expand all",
       "collapseAll": "Collapse all",
-      "medicationDelivery": "Medication delivery"
+      "medicationDelivery": "Medication delivery",
+      "copilot": "AI copilot"
     }
   },
   "Login": {
@@ -1591,7 +1598,8 @@
     "amm": "AMM {n}",
     "priceToVerify": "to verify",
     "rcpLink": "RCP",
-    "photoLink": "Photo"
+    "photoLink": "Photo",
+    "aiFlags": "AI flag suggestions"
   },
   "MedicationImport": {
     "breadcrumb": "Medication catalog",
@@ -2187,5 +2195,108 @@
     "denied": "Alerts are blocked for this site. Allow notifications in your browser settings, then try again.",
     "unsupported": "This browser can't receive alerts.",
     "failed": "Alerts couldn't be turned on. Try again."
+  },
+  "Copilot": {
+    "draftReply": "Draft with AI",
+    "summarise": "Summarise with AI",
+    "summariseAgain": "Summarise again",
+    "working": "AI is writing…",
+    "draftNotice": "AI draft — read and correct it before sending. You're responsible for what's sent.",
+    "summaryNotice": "AI summary — check it against the case before relying on it.",
+    "testNotice": "Test answer: no AI is connected yet (AI_PROVIDER=mock).",
+    "budgetWarn": "{percent}% of this month's AI budget is used.",
+    "replaceQuestion": "Replace your text with the AI draft?",
+    "replace": "Replace",
+    "keepMine": "Keep my text",
+    "discard": "Discard draft",
+    "close": "Close",
+    "saveAsNote": "Keep as an internal note",
+    "savedAsNote": "Saved as an internal note.",
+    "noteHeading": "AI summary (checked by staff):",
+    "error": {
+      "off": "The AI copilot is switched off.",
+      "taskOff": "This AI button is switched off in Admin.",
+      "budget": "This month's AI budget is used up — the copilot is paused until next month (or until an admin raises the budget).",
+      "failed": "The AI didn't answer. Try again in a moment."
+    }
+  },
+  "CopilotFlags": {
+    "title": "AI flag suggestions",
+    "intro": "Suggested regulatory class, prescription, cold chain and psychotropic flags for catalog items nobody has checked yet. Highlighted values differ from the catalog. Nothing changes until you press Apply — check each one, ideally with a pharmacist.",
+    "suggest": "Suggest flags for the next {count} items",
+    "added": "{count} suggestions added. {remaining} items left to check.",
+    "nothingLeft": "Every active item already has a suggestion.",
+    "notAvailable": "The AI copilot is off, or you can't use it.",
+    "empty": "No suggestions waiting.",
+    "medication": "Medication",
+    "regulatoryClass": "Class",
+    "prescription": "Prescription",
+    "why": "Why",
+    "decision": "Decision",
+    "now": "now: {value}",
+    "yes": "Yes",
+    "no": "No",
+    "apply": "Apply",
+    "dismiss": "Dismiss",
+    "testRow": "Test answer — not from AI",
+    "confidence": {
+      "LOW": "Low",
+      "MEDIUM": "Medium",
+      "HIGH": "High"
+    }
+  },
+  "CopilotAdmin": {
+    "title": "AI copilot",
+    "subtitle": "Buttons that draft member replies, summarise cases and suggest catalog flags. Staff always review the answer. Personal details are replaced by placeholders before any text leaves Nomad; only text is sent, never files.",
+    "status": "Status",
+    "provider": {
+      "off": "Off",
+      "mock": "Test answers (no AI connected)",
+      "openai": "On — OpenAI"
+    },
+    "providerHint": {
+      "off": "Set AI_PROVIDER=mock to try it with test answers, or AI_PROVIDER=openai with OPENAI_API_KEY to switch it on.",
+      "mock": "Buttons work end to end with made-up answers marked as tests. Add OPENAI_API_KEY and set AI_PROVIDER=openai to go live.",
+      "openai": "Answers come from OpenAI. Responses aren't stored by OpenAI."
+    },
+    "model": "Model: {model}",
+    "thisMonth": "This month",
+    "spent": "{spent} of {budget} ({percent}%)",
+    "paused": "Budget reached: the copilot is paused until next month or until the budget is raised.",
+    "warn": "Over {percent}% of the budget is used.",
+    "editBudget": "Change budget and prices",
+    "byButton": "This month, by button",
+    "editButtons": "Switch buttons on/off or edit instructions",
+    "button": "Button",
+    "uses": "Uses",
+    "whatStaffDid": "What staff did",
+    "usedRate": "Used",
+    "cost": "Cost",
+    "usedRateHint": "Used = of the answers staff decided on, the share they sent, kept or applied. Low rates mean the instructions need work.",
+    "pendingFlags": "{count} catalog flag suggestions waiting for review",
+    "latest": "Latest uses",
+    "none": "Nobody has used the copilot yet.",
+    "when": "When",
+    "who": "Who",
+    "case": "Case",
+    "result": "Result",
+    "tokens": "Tokens",
+    "test": "test",
+    "privacyNote": "* estimated (test answers). The text sent and received isn't kept — only who, what, cost and outcome.",
+    "task": {
+      "REPLY_DRAFT": "Reply draft",
+      "CASE_SUMMARY": "Case summary",
+      "CATALOG_FLAGS": "Catalog flags"
+    },
+    "outcome": {
+      "PENDING": "Not used yet",
+      "SENT_AS_IS": "Sent as is",
+      "SENT_EDITED": "Sent after edits",
+      "SAVED_AS_NOTE": "Kept as note",
+      "APPLIED": "Applied",
+      "DISMISSED": "Dismissed",
+      "FAILED": "Failed",
+      "BLOCKED": "Not run"
+    }
   }
 }

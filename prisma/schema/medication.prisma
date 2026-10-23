@@ -68,6 +68,7 @@ model Medication {
 
   orderLines        MedicationOrderLine[]
   priceObservations MedicationPriceObservation[]
+  flagSuggestions   CopilotFlagSuggestion[]
 
   @@index([dci])
   @@index([brandName])

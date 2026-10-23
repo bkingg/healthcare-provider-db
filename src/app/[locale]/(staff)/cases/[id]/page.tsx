@@ -17,6 +17,8 @@ import { DeliveryPanel } from "../_components/delivery-panel";
 import { NotesList } from "../_components/notes-list";
 import { ColourPill } from "../_components/colour";
 import { WriteBox } from "../_components/write-box";
+import { CaseSummary } from "../_components/copilot-bits";
+import { canUseCopilot, enabledTasks } from "@/data/copilot";
 import { ColourOverride } from "../_components/colour-override";
 import { FindProviders } from "../_components/find-providers";
 import { AssigneePicker } from "../_components/assignee-picker";
@@ -175,6 +177,7 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
   const activity = c.events.filter((e) => !conversation.includes(e) && !notes.includes(e));
   const awaitingReply = conversation.at(-1)?.type === "MESSAGE_FROM_MEMBER" && c.status !== "CLOSED";
   const showMemberLinks = canManageMembers(actor);
+  const copilotTasks = canUseCopilot(actor) ? await enabledTasks() : null;
   const who = (e: TimelineEvent) =>
     e.actorType === "SYSTEM" ? t("actor.SYSTEM") : e.actorType === "MEMBER" ? `${e.member?.firstName ?? ""} ${e.member?.lastName ?? ""}`.trim() || t("actor.MEMBER") : (e.staff ? staffLabel(e.staff) : t("actor.STAFF"));
 
@@ -349,6 +352,7 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
       <div className="grid grid-cols-1 gap-6 px-5 py-5 md:grid-cols-2 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)_minmax(0,0.95fr)]">
         <div className="flex flex-col gap-6">
           <Section title={t("theRequest")}>
+            {copilotTasks?.CASE_SUMMARY && <CaseSummary caseId={c.id} />}
             <blockquote className="m-0 border-l-4 border-pn-ink bg-white px-3 py-2 text-[14px] whitespace-pre-line">
               <LinkifiedText text={c.description} />
             </blockquote>
@@ -589,7 +593,7 @@ export default async function CasePage(props: PageProps<"/[locale]/cases/[id]">)
                 </ol>
               </div>
               {c.visibleToMember ? (
-                <WriteBox variant="message" caseId={c.id} memberName={c.requestedBy.firstName} memberLanguage={c.requestedBy.preferredLanguage} />
+                <WriteBox variant="message" caseId={c.id} memberName={c.requestedBy.firstName} memberLanguage={c.requestedBy.preferredLanguage} copilot={Boolean(copilotTasks?.REPLY_DRAFT)} />
               ) : (
                 <p className="m-0 border-l-4 border-pn-border-muted bg-pn-panel px-3 py-2 text-[12.5px] text-pn-gray-1">{t("hiddenNoMessages", { name: c.requestedBy.firstName })}</p>
               )}

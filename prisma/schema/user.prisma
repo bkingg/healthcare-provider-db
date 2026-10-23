@@ -59,6 +59,7 @@ model User {
   orderPaymentsRecorded   MedicationOrderPayment[] @relation("PaymentRecordedBy")
 
   pushSubscriptions PushSubscription[] @relation("UserPushSubscriptions")
+  copilotUsage      CopilotUsage[]
 
   @@map("app_user")
 }
@@ -85,6 +86,9 @@ model UserRole {
   canManageMembers    Boolean  @default(false) @map("can_manage_members")
   /// See the operations dashboard and work cases (Cases screens).
   canWorkCases        Boolean  @default(false) @map("can_work_cases")
+  /// Use the AI copilot buttons (reply drafts, case summaries, catalog
+  /// flag suggestions).
+  canUseCopilot       Boolean  @default(false) @map("can_use_copilot")
   /// Caps how many rows a search can return for a user with this role — null
   /// means unlimited. Exists to let a Site Administrator restrict
   /// lower-privileged roles (e.g. an outsourced Case Manager) from

@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { FileUp, Snowflake } from "lucide-react";
+import { FileUp, Snowflake, Sparkles } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { getCurrentActor } from "@/lib/actor";
 import { requireEditValueLists } from "@/lib/rbac";
@@ -8,6 +8,7 @@ import { searchMedications, type CatalogFilters } from "@/data/medications";
 import { MedicationDialog } from "./_components/medication-dialog";
 import { RegulatoryBadge } from "./_components/regulatory-badge";
 import { setMedicationActiveAction } from "./actions";
+import { pendingFlagCount } from "@/data/copilot";
 
 function parseFilters(raw: Record<string, string | string[] | undefined>): CatalogFilters {
   const one = (k: string) => (typeof raw[k] === "string" ? (raw[k] as string) : undefined);
@@ -32,7 +33,7 @@ export default async function MedicationCatalogPage(props: PageProps<"/[locale]/
   const actor = await getCurrentActor();
   requireEditValueLists(actor);
   const filters = parseFilters(await props.searchParams);
-  const { items, total, limit, samples } = await searchMedications(filters);
+  const [{ items, total, limit, samples }, pendingFlags] = await Promise.all([searchMedications(filters), pendingFlagCount()]);
   const selectClass = "h-8 border-2 border-pn-border-muted bg-white px-2 text-[13px] tracking-normal text-pn-ink normal-case";
   const labelClass = "flex flex-col gap-1 text-[10.5px] tracking-[0.06em] text-pn-gray-2 uppercase";
 
@@ -49,6 +50,10 @@ export default async function MedicationCatalogPage(props: PageProps<"/[locale]/
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link href="/admin/medications/flags" className="flex h-8 items-center gap-[7px] border-2 border-[#5b21b6] px-3 text-xs font-semibold text-[#5b21b6] no-underline hover:bg-[#f5f3ff]">
+            <Sparkles size={14} /> {t("aiFlags")}
+            {pendingFlags > 0 && <span className="bg-[#5b21b6] px-1.5 text-[11px] text-white tabular-nums">{pendingFlags}</span>}
+          </Link>
           <Link href="/admin/medications/import" className="flex h-8 items-center gap-[7px] border-2 border-pn-ink px-3 text-xs font-semibold no-underline hover:bg-pn-surface-hover">
             <FileUp size={14} /> {t("import")}
           </Link>

@@ -1,13 +1,15 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { ListPlus, Lock, Send, X } from "lucide-react";
+import { ListPlus, Lock, Send, Sparkles, X } from "lucide-react";
 import type { ActionResult } from "@/lib/validation/common";
 import { mentionQueryAt } from "@/lib/mentions";
 import { addNoteAction, messageMemberAction } from "../actions";
 import { ActionFields } from "./action-fields";
 import type { Worker } from "./assignee-picker";
+import { draftReplyAction, dismissCopilotAction } from "../copilot-actions";
+import { CopilotNotice } from "./copilot-bits";
 
 const ACTION_FIELDS = ["actionTitle", "actionOwnerId", "actionDue"];
 
@@ -27,6 +29,7 @@ export function WriteBox({
   workers = [],
   meId = "",
   defaultOwnerId = null,
+  copilot = false,
 }: {
   variant: "message" | "note";
   caseId: string;
@@ -38,6 +41,8 @@ export function WriteBox({
   workers?: Worker[];
   meId?: string;
   defaultOwnerId?: string | null;
+  /** Messages only: show "Draft with AI". */
+  copilot?: boolean;
 }) {
   const t = useTranslations("Cases");
   const isMessage = variant === "message";
@@ -82,6 +87,39 @@ export function WriteBox({
     });
   }
 
+  // Copilot draft (messages only): which draft the text started from, so the
+  // log can tell "sent as is" from "edited".
+  const tc = useTranslations("Copilot");
+  const [drafting, startDraft] = useTransition();
+  const [draft, setDraft] = useState<{ usageId: string; text: string; test: boolean; warnPercent: number | null } | null>(null);
+  const [pendingDraft, setPendingDraft] = useState<typeof draft>(null);
+  const [draftError, setDraftError] = useState<string | null>(null);
+  function applyDraft(d: NonNullable<typeof draft>) {
+    if (draft && draft.usageId !== d.usageId) void dismissCopilotAction(draft.usageId);
+    setDraft(d);
+    setText(d.text);
+    setPendingDraft(null);
+  }
+  function askDraft() {
+    setDraftError(null);
+    startDraft(async () => {
+      const r = await draftReplyAction(caseId);
+      if (!r.ok) {
+        setDraftError(tc(`error.${r.error}`));
+        return;
+      }
+      const d = { usageId: r.usageId, text: r.text, test: r.test, warnPercent: r.budget.warn ? r.budget.percent : null };
+      // Never silently wipe what staff typed themselves.
+      if (text.trim() && text !== draft?.text) setPendingDraft(d);
+      else applyDraft(d);
+    });
+  }
+  function discardDraft() {
+    if (draft) void dismissCopilotAction(draft.usageId);
+    setDraft(null);
+    setText("");
+  }
+
   // "Add a next action" with this note.
   const [withAction, setWithAction] = useState(false);
   const [actionKey, setActionKey] = useState(0);
@@ -98,6 +136,8 @@ export function WriteBox({
       setPendingTemplate(null);
       setWithAction(false);
       setActionKey((k) => k + 1);
+      setDraft(null);
+      setPendingDraft(null);
     }
   }
   const errors = state && !state.success ? state.errors : {};
@@ -107,6 +147,7 @@ export function WriteBox({
   return (
     <form action={action} className="flex flex-col gap-2">
       <input type="hidden" name="caseId" value={caseId} />
+      {draft && text.trim() && <input type="hidden" name="aiUsageId" value={draft.usageId} />}
       {!isMessage && templates.length > 0 && (
         <>
           <label className="flex flex-col gap-1 text-[10.5px] font-semibold tracking-[0.06em] text-[#92400e] uppercase">
@@ -237,17 +278,56 @@ export function WriteBox({
           </button>
         )
       )}
+      {isMessage && pendingDraft && (
+        <div role="alert" className="flex flex-wrap items-center gap-2 border-l-4 border-[#5b21b6] bg-white px-2 py-1.5 text-[12px]">
+          <span className="flex-1">{tc("replaceQuestion")}</span>
+          <button type="button" onClick={() => applyDraft(pendingDraft)} className="cursor-pointer bg-[#5b21b6] px-2 py-0.5 font-semibold text-white">
+            {tc("replace")}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              void dismissCopilotAction(pendingDraft.usageId);
+              setPendingDraft(null);
+            }}
+            className="cursor-pointer border border-[#5b21b6] px-2 py-0.5 font-semibold text-[#5b21b6]"
+          >
+            {tc("keepMine")}
+          </button>
+        </div>
+      )}
+      {isMessage && draft && text.trim() && (
+        <div className="flex items-start justify-between gap-2 border-l-4 border-[#c4b5fd] bg-[#faf8ff] px-2 py-1.5">
+          <CopilotNotice kind="draft" test={draft.test} warnPercent={draft.warnPercent} />
+          <button type="button" onClick={discardDraft} className="flex-none cursor-pointer text-[11.5px] font-semibold text-pn-gray-2 hover:text-pn-ink hover:underline">
+            {tc("discard")}
+          </button>
+        </div>
+      )}
+      {isMessage && draftError && <p className="m-0 text-[12px] font-semibold text-[#b91c1c]">{draftError}</p>}
       {formError && <p className="m-0 text-[12px] text-[#b91c1c]">{t.has(`writeError.${formError}`) ? t(`writeError.${formError}`) : formError}</p>}
-      <button
-        type="submit"
-        disabled={pending || !text.trim()}
-        className={`flex h-8 cursor-pointer items-center gap-1.5 self-start px-3 text-xs font-semibold text-white disabled:opacity-40 ${
-          isMessage ? "bg-pn-accent hover:bg-pn-accent-hover" : "bg-[#b45309] hover:bg-[#92400e]"
-        }`}
-      >
-        {isMessage ? <Send size={12} aria-hidden /> : <Lock size={12} aria-hidden />}
-        {pending ? t("saving") : isMessage ? t("sendToMember", { name: memberName }) : withAction ? t("saveNoteAndAction") : t("saveNote")}
-      </button>
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="submit"
+          disabled={pending || !text.trim()}
+          className={`flex h-8 cursor-pointer items-center gap-1.5 self-start px-3 text-xs font-semibold text-white disabled:opacity-40 ${
+            isMessage ? "bg-pn-accent hover:bg-pn-accent-hover" : "bg-[#b45309] hover:bg-[#92400e]"
+          }`}
+        >
+          {isMessage ? <Send size={12} aria-hidden /> : <Lock size={12} aria-hidden />}
+          {pending ? t("saving") : isMessage ? t("sendToMember", { name: memberName }) : withAction ? t("saveNoteAndAction") : t("saveNote")}
+        </button>
+        {isMessage && copilot && (
+          <button
+            type="button"
+            onClick={askDraft}
+            disabled={drafting || pending}
+            className="flex h-8 cursor-pointer items-center gap-1.5 border-2 border-[#5b21b6] bg-white px-3 text-xs font-semibold text-[#5b21b6] hover:bg-[#f5f3ff] disabled:opacity-50"
+          >
+            <Sparkles size={12} aria-hidden /> {drafting ? tc("working") : tc("draftReply")}
+          </button>
+        )}
+      </div>
     </form>
   );
 }

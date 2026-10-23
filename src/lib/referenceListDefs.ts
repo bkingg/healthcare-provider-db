@@ -64,6 +64,8 @@ export const REFERENCE_LIST_KEYS = [
   "medicationTimeframes",
   "memberMessageTemplates",
   "paymentLinks",
+  "copilotTasks",
+  "copilotSettings",
 ] as const;
 
 export type ReferenceListKey = (typeof REFERENCE_LIST_KEYS)[number];
@@ -77,6 +79,7 @@ export const REFERENCE_LIST_GROUPS = [
   { key: "memberEnrollment", lists: ["organizations", "memberRelationships"] },
   { key: "caseManagement", lists: ["responseTargets", "noteTemplates"] },
   { key: "medicationDelivery", lists: ["medicationTimeframes", "memberMessageTemplates", "medicationRequirements", "medicationSettings", "paymentLinks"] },
+  { key: "copilot", lists: ["copilotTasks", "copilotSettings"] },
   // Everything about provider records, ordered by theme: details, contacts,
   // networks, payments and bank details, credentials and ratings, documents
   // and data quality.
@@ -163,6 +166,39 @@ export const REFERENCE_LIST_DEFS = {
       { key: "method", labelKey: "paymentMethod", kind: "select", required: true, options: ["WAVE", "ORANGE_MONEY", "OTHER"] },
       { key: "url", labelKey: "paymentUrl", kind: "text", required: true },
       { key: "sortOrder", labelKey: "sortOrder", kind: "number", integer: true },
+    ],
+    defaultOrderBy: [{ sortOrder: "asc" }] as Record<string, "asc" | "desc">[],
+  },
+  // The AI copilot's buttons: on/off and the instructions each one gives
+  // the AI. Fixed codes, so admins change the wording, not the rows.
+  copilotTasks: {
+    key: "copilotTasks",
+    labelKey: "copilotTasks",
+    model: "CopilotTaskSetting",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "labelEn",
+    editOnly: true,
+    fields: [
+      { key: "labelEn", labelKey: "labelEn", kind: "text", required: true },
+      { key: "labelFr", labelKey: "labelFr", kind: "text" },
+      { key: "enabled", labelKey: "copilotTaskEnabled", kind: "checkbox" },
+      { key: "instructions", labelKey: "copilotInstructions", kind: "textarea", rows: 12, required: true },
+    ],
+    defaultColumns: ["labelFr", "enabled"],
+    defaultOrderBy: [{ sortOrder: "asc" }] as Record<string, "asc" | "desc">[],
+  },
+  // The copilot's monthly budget and token prices, read by code.
+  copilotSettings: {
+    key: "copilotSettings",
+    labelKey: "copilotSettings",
+    model: "CopilotSetting",
+    codeField: { key: "code", labelKey: "code" },
+    primaryLabelField: "labelEn",
+    editOnly: true,
+    fields: [
+      { key: "labelEn", labelKey: "labelEn", kind: "text", required: true },
+      { key: "labelFr", labelKey: "labelFr", kind: "text" },
+      { key: "value", labelKey: "settingValue", kind: "number", integer: true, required: true },
     ],
     defaultOrderBy: [{ sortOrder: "asc" }] as Record<string, "asc" | "desc">[],
   },
@@ -571,6 +607,7 @@ export const REFERENCE_LIST_DEFS = {
       { key: "canEditProviderData", labelKey: "canEditProviderData", kind: "checkbox" },
       { key: "canManageMembers", labelKey: "canManageMembers", kind: "checkbox" },
       { key: "canWorkCases", labelKey: "canWorkCases", kind: "checkbox" },
+      { key: "canUseCopilot", labelKey: "canUseCopilot", kind: "checkbox" },
       { key: "maxSearchResults", labelKey: "maxSearchResults", kind: "number", integer: true },
     ],
     defaultOrderBy: { name: "asc" },
